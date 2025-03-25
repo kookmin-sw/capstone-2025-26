@@ -1,6 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <application
-        android:label="펫 다이어리"
+        android:label="Re wind"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
