@@ -37,6 +37,12 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'drf_yasg', 
+    'rest_framework', 
+    'rest_framework_simplejwt.token_blacklist', 
+    'user_manager', 
+    'kakao_manager', 
+    'naver_manager', 
 ]
 
 MIDDLEWARE = [
@@ -48,6 +54,12 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication', 
+    )
+}
 
 ROOT_URLCONF = 'config.urls'
 
@@ -99,6 +111,12 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+AUTH_USER_MODEL = "user_manager.User"
+
+SIMPLE_JWT = {
+    'TOKEN_OBTAIN_SERIALIZER': 'token_manager.serializer.CustomTokenObtainPairSerializer'
+}
+
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.1/topics/i18n/
@@ -121,3 +139,11 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# temp api key
+KAKAO_REST_API_KEY = "29da5b5ee2999f173be0ce8443322289"
+KAKAO_REDIRECT_URI = "http://127.0.0.1:8000/api/kakao/callback"
+
+NAVER_REST_API_KEY = "y8aLqw6Aa8x6ASMEEpqc"
+NAVER_SECRET_API_KEY = "dA3n3zJdkA"
+NAVER_REDIRECT_URI = "http://127.0.0.1:8000/api/naver/callback"
