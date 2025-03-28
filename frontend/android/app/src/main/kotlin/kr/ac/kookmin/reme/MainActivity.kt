@@ -1,4 +1,4 @@
-package kr.ac.kookmin.rewind
+package kr.ac.kookmin.reme
 
 import io.flutter.embedding.android.FlutterActivity
 

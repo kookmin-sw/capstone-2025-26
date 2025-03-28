@@ -1,4 +1,4 @@
-import 'package:rewind/screens/initialPage.dart';
+import 'package:reme/screens/initialPage.dart';
 
 class Routes{
   static const splash = "/";

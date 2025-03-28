@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:rewind/routes.dart';
+import 'package:reme/routes.dart';
 
 void main() {
   runApp(const MyApp());
