@@ -1,4 +1,4 @@
-package kr.ac.kookmin.pet_diary
+package kr.ac.kookmin.reme
 
 import io.flutter.embedding.android.FlutterActivity
 
