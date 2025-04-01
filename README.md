@@ -1,77 +1,22 @@
-[![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-22041afd0340ce965d47ae6ef1cefeee28c7c493a6346c4f15d667ab976d596c.svg)](https://classroom.github.com/a/gFPznrUY)
-# Welcome to GitHub
+# 성장을 위한 회고 - Re:Me
 
-캡스톤 팀 생성을 축하합니다.
+## 1. 프로젝트 소개 (작성중)
+회고란 지나간 일을 돌이켜 보며 성찰하고 배우는 과정을 말합니다. 더 나은 자신 혹은 더 나은 팀이 되기 위해 과거를 분석하고 개선점을 찾는 것을 목적으로 두고 있습니다.
 
-## 팀소개 및 페이지를 꾸며주세요.
+KPT, 4L, PMI 등 다양한 회고 방식이 있지만 혼자 하기에는 부담스럽고 회고가 습관화 되기에는 더욱 어렵습니다. 우리는 크루 기능을 통해 같은 목표를 가지고 있는 사람들이 모여 회고를 하고 서로의 피드백을 주고받음을 통해 회고의 습관을 들일 수 있도록 하고 목표의 달성 확률을 높여줍니다.
 
-- 프로젝트 소개
-  - 프로젝트 설치방법 및 데모, 사용방법, 프리뷰등을 readme.md에 작성.
-  - Api나 사용방법등 내용이 많을경우 wiki에 꾸미고 링크 추가.
-
-- 팀페이지 꾸미기
-  - 프로젝트 소개 및 팀원 소개
-  - index.md 예시보고 수정.
-
-- GitHub Pages 리파지토리 Settings > Options > GitHub Pages 
-  - Source를 marster branch
-  - Theme Chooser에서 태마선택
-  - 수정후 팀페이지 확인하여 점검.
-
-**팀페이지 주소** -> https://kookmin-sw.github.io/ '{{자신의 리파지토리 아이디}}'
-
-**예시)** 2023년 0조  https://kookmin-sw.github.io/capstone-2023-00/
-
-
-## 내용에 아래와 같은 내용들을 추가하세요.
-
-### 1. 프로잭트 소개
-
-프로젝트
-
-### 2. 소개 영상
-
-프로젝트 소개하는 영상을 추가하세요
-
-### 3. 팀 소개
-
-팀을 소개하세요.
-
-팀원정보 및 담당이나 사진 및 SNS를 이용하여 소개하세요.
-
-### 4. 사용법
-
-소스코드제출시 설치법이나 사용법을 작성하세요.
-
-### 5. 기타
-
-추가적인 내용은 자유롭게 작성하세요.
-
-
-## Markdown을 사용하여 내용꾸미기
-
-Markdown은 작문을 스타일링하기위한 가볍고 사용하기 쉬운 구문입니다. 여기에는 다음을위한 규칙이 포함됩니다.
-
-```markdown
-Syntax highlighted code block
-
-# Header 1
-## Header 2
-### Header 3
-
-- Bulleted
-- List
-
-1. Numbered
-2. List
-
-**Bold** and _Italic_ and `Code` text
-
-[Link](url) and ![Image](src)
+큰 목표를 생각하고 어떤 일부터 해야할 지 모르는 개인을 위해 인공지능을 사용하여 사용자가 큰 목표를 달성하기 위한 방법을 제공합니다.
+## 2. 설치 및 사용법
+- Frontend
+  
+  (TBD)
+- Backend 
+```bash
+git clone https://github.com/kookmin-sw/capstone-2025-26.git
+cd journey
 ```
-
-자세한 내용은 [GitHub Flavored Markdown](https://guides.github.com/features/mastering-markdown/).
-
-### Support or Contact
-
-readme 파일 생성에 추가적인 도움이 필요하면 [도움말](https://help.github.com/articles/about-readmes/) 이나 [contact support](https://github.com/contact) 을 이용하세요.
+## 3. 팀소개
+|[**강은성(klaqwe1)**](https://github.com/klaqwe1)|[**김민수(ms214)**](https://github.com/ms214)|[**김선우(SunwooKim11)**](https://github.com/SunwooKim11)|[**나성민(sungminna)**](https://github.com/sungminna)|[**송보경(Muon05)**](https://github.com/Muon05)|[**이다현(leleleehouse)**](https://github.com/leleleehouse)|
+|:---:|:---:|:---:|:---:|:---:|:---:|
+|Full Stack|Frontend|Backend, AI|Backend, PO|Backend, PO|Backend, AI|
+|****3022|****3037|****3039|****5225|****0303|****2006|
