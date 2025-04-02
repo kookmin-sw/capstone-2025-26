@@ -1,0 +1,51 @@
+name: Deploy Django Application
+
+on:
+  push:
+    branches:
+      - develop
+    paths:
+      - 'journey/**'  # journey 폴더 내 변경사항만 감지
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.13'  # 사용하는 Python 버전에 맞게 조정
+          
+          
+      - name: Install dependencies
+        run: |
+          cd journey
+          poetry install
+          poetry update
+          
+          
+      - name: Deploy to server
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd serv/capstone-2025-26
+            git fetch
+            git checkout develop
+            git pull
+            cd journey
+            poetry install
+            poetry run python manage.py migrate
+            
+            # Restart Django service (사용 중인 방식에 따라 조정)
+            # 예시 1: Gunicorn 사용 시
+            # sudo systemctl restart gunicorn
+            
+            # 예시 2: Supervisor 사용 시 
+            sudo supervisorctl restart config
