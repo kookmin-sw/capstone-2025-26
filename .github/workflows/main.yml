@@ -21,15 +21,6 @@ jobs:
           python-version: '3.13'  # 사용하는 Python 버전에 맞게 조정
           
           
-      - name: Install dependencies
-        run: |
-          ls
-          cd serv
-          cd capstone-2025-26
-          cd journey
-          poetry update
-          
-          
       - name: Deploy to server
         uses: appleboy/ssh-action@master
         with:
@@ -42,7 +33,7 @@ jobs:
             git checkout develop
             git pull
             cd journey
-            poetry install
+            poetry update
             poetry run python manage.py migrate
             
             # Restart Django service (사용 중인 방식에 따라 조정)
