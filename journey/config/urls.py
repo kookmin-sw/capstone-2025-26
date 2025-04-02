@@ -44,5 +44,6 @@ urlpatterns = [
         path('users/', include('user_manager.urls')), 
         path('kakao/', include('kakao_manager.urls')), 
         path('naver/', include('naver_manager.urls')), 
+        path('ai/', include('ai_manager.urls')), 
     ])), 
 ]
