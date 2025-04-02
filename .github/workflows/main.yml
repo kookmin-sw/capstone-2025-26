@@ -23,8 +23,10 @@ jobs:
           
       - name: Install dependencies
         run: |
+          ls
+          cd serv
+          cd capstone-2025-26
           cd journey
-          poetry install
           poetry update
           
           
@@ -45,7 +47,7 @@ jobs:
             
             # Restart Django service (사용 중인 방식에 따라 조정)
             # 예시 1: Gunicorn 사용 시
-            # sudo systemctl restart gunicorn
+            sudo systemctl restart gunicorn
             
             # 예시 2: Supervisor 사용 시 
-            sudo supervisorctl restart config
+            # sudo supervisorctl restart config
