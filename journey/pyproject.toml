@@ -17,7 +17,8 @@ dependencies = [
     "opentelemetry-sdk (>=1.31.1,<2.0.0)",
     "opentelemetry-instrumentation-django (>=0.52b1,<0.53)",
     "opentelemetry-exporter-otlp (>=1.31.1,<2.0.0)",
-    "opentelemetry-instrumentation-logging (>=0.52b1,<0.53)"
+    "opentelemetry-instrumentation-logging (>=0.52b1,<0.53)",
+    "gunicorn (>=23.0.0,<24.0.0)"
 ]
 
 [tool.poetry]
