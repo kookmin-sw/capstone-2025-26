@@ -28,21 +28,24 @@ jobs:
           username: ${{ secrets.USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            cd serv/capstone-2025-26
+            cd serv/capstone-2025-26 # Adjust if your project root on the server is different
             git pull fetch --all
             git reset --hard origin/develop
-            git pull
-            git checkout develop
-            git pull
-            cd journey
-            export PATH="$HOME/.poetry/bin:$PATH"
-            poetry install
-            poetry update
-            poetry run python manage.py migrate
+            git pull # Ensure we are on the latest develop commit
+            # Navigate to the directory with docker-compose.yml, assuming it's in the root or journey
+            # If docker-compose.yml is in the 'journey' directory, uncomment the next line
+            cd journey 
             
-            # Restart Django service (사용 중인 방식에 따라 조정)
-            # 예시 1: Gunicorn 사용 시
-            sudo systemctl restart gunicorn
+            # Build and restart containers using Docker Compose
+            docker-compose down # Stop existing containers (optional, but often safer)
+            docker-compose pull # Pull latest images if specified in compose file
+            docker-compose build # Build images if using Dockerfiles
+            docker-compose up -d --remove-orphans # Start services in detached mode and remove old containers
             
-            # 예시 2: Supervisor 사용 시 
-            # sudo supervisorctl restart config
+            # Optional: Run migrations if not handled within container startup
+            # docker-compose exec <your_django_service_name> python manage.py migrate
+
+            # Remove unused docker images and volumes (optional cleanup)
+            # docker image prune -af
+            # docker volume prune -f
+
