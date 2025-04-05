@@ -33,7 +33,7 @@ jobs:
             git checkout develop
             git pull
             cd journey
-            soruce $HOME/.poetry/env
+            source $HOME/.poetry/env
             poetry install
             poetry update
             poetry run python manage.py migrate
