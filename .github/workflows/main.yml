@@ -33,6 +33,8 @@ jobs:
             git checkout develop
             git pull
             cd journey
+            soruce /home/ubuntu/.local/bin/poetry
+            poetry install
             poetry update
             poetry run python manage.py migrate
             
