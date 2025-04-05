@@ -14,10 +14,10 @@ from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
 from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import OTLPMetricExporter
 import logging
 from typing import Optional
-from django.http import HttpRequest, HttpResponse
-from functools import wraps
 
-def init_telemetry(service_name: str, endpoint: str = "http://localhost:4317"):
+
+# 34.66.130.204 or localhost
+def init_telemetry(service_name: str, endpoint: str = "http://34.66.130.204:4317"):
     """Initialize OpenTelemetry with logging, metrics, and tracing"""
     resource = Resource.create({"service.name": service_name})
     
@@ -27,10 +27,12 @@ def init_telemetry(service_name: str, endpoint: str = "http://localhost:4317"):
     log_provider.add_log_record_processor(BatchLogRecordProcessor(otlp_log_exporter))
     set_logger_provider(log_provider)
     
-    logging.basicConfig(level=logging.INFO)
-    logger = logging.getLogger(__name__)
-    logger.addHandler(LoggingHandler())
-    LoggingInstrumentor().instrument(set_logger_provider=log_provider)
+    # Configure standard logging to use OTLP handler
+    handler = LoggingHandler(level=logging.INFO, logger_provider=log_provider)
+    logging.getLogger().addHandler(handler) 
+    logging.getLogger().setLevel(logging.INFO) # Set root logger level
+    logger = logging.getLogger(__name__) # Get logger after configuration
+    LoggingInstrumentor().instrument(logger_provider=log_provider) # Use logger_provider argument
     
     # Metrics
     metric_reader = PeriodicExportingMetricReader(
@@ -69,3 +71,4 @@ class RequestLoggingMiddleware:
         self.logger.info(f"🔹 Response: {response.status_code} {request.get_full_path()}")
         
         return response
+        

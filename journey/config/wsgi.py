@@ -10,12 +10,13 @@ https://docs.djangoproject.com/en/5.1/howto/deployment/wsgi/
 import os
 
 from django.core.wsgi import get_wsgi_application
-from config.otel import init_telemetry
-from opentelemetry.instrumentation.django import DjangoInstrumentor
+from config.otel import init_telemetry, instrument_django
+# from opentelemetry.instrumentation.django import DjangoInstrumentor
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
 
 application = get_wsgi_application()
 
 init_telemetry("django")
-DjangoInstrumentor().instrument()
+instrument_django()
+# DjangoInstrumentor().instrument()
