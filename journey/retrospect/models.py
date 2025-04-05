@@ -86,8 +86,8 @@ class Retrospect(models.Model):
     """회고 모델"""
     challenge = models.ForeignKey(Challenge, on_delete=models.CASCADE, related_name='retrospects')
     template = models.ForeignKey(Template, on_delete=models.SET_NULL, null=True, blank=True, related_name='retrospects') # 템플릿 없이 작성 가능
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='retrospects') # 작성자
-    crew = models.ForeignKey(Crew, on_delete=models.CASCADE, related_name='retrospects', null=True, blank=True) # 크루 회고일 경우
+    user = models.ForeignKey('user_manager.User', on_delete=models.CASCADE, related_name='retrospects') # 작성자
+    crew = models.ForeignKey('crew.Crew', on_delete=models.CASCADE, related_name='retrospects', null=True, blank=True) # 크루 회고일 경우
     content = models.TextField()
     kpi_result = models.FloatField(null=True, blank=True) # 챌린지 KPI 결과
     visibility = models.CharField(max_length=10, choices=RetrospectVisibility.choices, default=RetrospectVisibility.PRIVATE)

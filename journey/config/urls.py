@@ -45,5 +45,6 @@ urlpatterns = [
         path('kakao/', include('kakao_manager.urls')), 
         path('naver/', include('naver_manager.urls')), 
         path('ai/', include('ai_manager.urls')), 
+        path('crew/', include('crew.urls')),
     ])), 
 ]
