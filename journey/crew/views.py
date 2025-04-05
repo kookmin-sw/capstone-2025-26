@@ -114,7 +114,7 @@ class CrewViewSet(viewsets.ModelViewSet):
         membership.delete()
 
         # Optional: Update member_count. Consider using signals for robustness.
-        crew.member_count = CrewMembership.objects.filter(crew=crew, status=CrewMembershipStatus.ACCEPTED).count() - 1 # Recalculate or decrement
+        crew.member_count = CrewMembership.objects.filter(crew=crew, status=CrewMembershipStatus.ACCEPTED).count() # Recalculate or decrement
         crew.save(update_fields=['member_count'])
 
         return Response(status=status.HTTP_204_NO_CONTENT)
