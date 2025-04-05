@@ -130,7 +130,7 @@ SIMPLE_JWT = {
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Seoul'
 
 USE_I18N = True
 
@@ -149,9 +149,9 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # temp api key
 KAKAO_REST_API_KEY = "29da5b5ee2999f173be0ce8443322289"
-KAKAO_REDIRECT_URI = "http://127.0.0.1:8000/api/kakao/callback"
+KAKAO_REDIRECT_URI = "http://13.125.14.13:8000/api/kakao/callback"
 
 NAVER_REST_API_KEY = "y8aLqw6Aa8x6ASMEEpqc"
 NAVER_SECRET_API_KEY = "dA3n3zJdkA"
-NAVER_REDIRECT_URI = "http://127.0.0.1:8000/api/naver/callback"
+NAVER_REDIRECT_URI = "http://13.125.14.13:8000/api/naver/callback"
 
