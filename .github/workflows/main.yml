@@ -29,14 +29,16 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             cd serv/capstone-2025-26
-            git pull origin
+            git pull fetch --all
+            git reset --hard origin/develop
+            git pull
             git checkout develop
             git pull
             cd journey
-            source $HOME/.poetry/env
-            /home/ubuntu/.local/bin/poetry install
-            /home/ubuntu/.local/bin/poetry update
-            /home/ubuntu/.local/bin/poetry run python manage.py migrate
+            export PATH="$HOME/.poetry/bin:$PATH"
+            poetry install
+            poetry update
+            poetry run python manage.py migrate
             
             # Restart Django service (사용 중인 방식에 따라 조정)
             # 예시 1: Gunicorn 사용 시
