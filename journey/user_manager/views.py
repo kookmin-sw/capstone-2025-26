@@ -9,6 +9,8 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.exceptions import AuthenticationFailed
 from .serializer import UserSerializer, LoginSerializer
 from django.contrib.auth.hashers import check_password
+from .models import Notification
+from .serializers import NotificationSerializer
 
 
 User = get_user_model()
@@ -83,3 +85,33 @@ class UserViewSet(viewsets.ModelViewSet):
     def user_info(self, request):
         serializer = self.get_serializer(request.user)
         return Response(serializer.data)
+
+class NotificationViewSet(viewsets.ModelViewSet):
+    """
+    사용자의 알림을 조회, 생성, 읽음 처리하는 API (관리자 권한 필요)
+    """
+    serializer_class = NotificationSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        # 현재 로그인한 사용자의 알림만 반환 (GET 요청 시)
+        # 생성(POST)은 permission_classes에서 제어
+        return Notification.objects.filter(user=self.request.user).order_by('-created_at')
+
+    @action(detail=True, methods=['patch'], url_path='mark-as-read')
+    def mark_as_read(self, request, pk=None):
+        """ 특정 알림을 읽음 상태로 변경합니다. """
+        notification = self.get_object()
+        if notification.user != request.user:
+            return Response({'detail': 'You do not have permission to perform this action.'}, status=status.HTTP_403_FORBIDDEN)
+        notification.is_read = True
+        notification.save()
+        serializer = self.get_serializer(notification)
+        return Response(serializer.data)
+
+    @action(detail=False, methods=['patch'], url_path='mark-all-as-read')
+    def mark_all_as_read(self, request):
+        """ 사용자의 모든 알림을 읽음 상태로 변경합니다. """
+        notifications = self.get_queryset().filter(is_read=False)
+        notifications.update(is_read=True)
+        return Response({'status': 'all notifications marked as read'}, status=status.HTTP_200_OK)
