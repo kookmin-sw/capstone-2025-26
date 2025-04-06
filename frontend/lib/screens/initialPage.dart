@@ -59,7 +59,7 @@ class _InitialpageState extends State<Initialpage>
         height: 70,
         child: TabBar(
             indicatorColor: Colors.transparent,
-            labelColor: Colors.black,
+            labelColor: Color(0xFF333C4B),
             unselectedLabelColor: Colors.grey,
             controller: tabController,
             tabs: [
