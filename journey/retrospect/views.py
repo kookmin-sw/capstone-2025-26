@@ -1,12 +1,12 @@
 from django.shortcuts import render
-from rest_framework import viewsets, status
+from rest_framework import viewsets, status, permissions
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 from django.db.models import Q
-from .models import Retrospect, Template
-from .serializers import RetrospectSerializer, TemplateSerializer
+from .models import Retrospect, Template, Challenge, Plan
+from .serializers import RetrospectSerializer, TemplateSerializer, ChallengeSerializer, PlanSerializer
 from crew.models import Crew
-from .permissions import IsOwnerOrReadOnly, IsTemplateOwnerOrCrewMemberOrReadOnly
+from .permissions import IsOwnerOrReadOnly, IsTemplateOwnerOrCrewMemberOrReadOnly, IsChallengeOwnerOrCrewMemberOrReadOnly
 # Create your views here.
 
 
@@ -100,3 +100,113 @@ class TemplateViewSet(viewsets.ModelViewSet):
         else:
             # Should be caught by serializer validation, but as a safeguard:
             super().perform_create(serializer)
+
+class ChallengeViewSet(viewsets.ModelViewSet):
+    """ViewSet for the Challenge model."""
+    serializer_class = ChallengeSerializer
+    permission_classes = [IsAuthenticatedOrReadOnly, IsChallengeOwnerOrCrewMemberOrReadOnly]
+
+    def get_queryset(self):
+        """Filter Challenges:
+        - By default, show LIVE challenges (for user or their crews).
+        - Add query params to filter by status (e.g., ?status=SUCCESS, ?status=FAIL)
+        - Unauthenticated users likely see nothing or public crew challenges?
+          (Policy TBD, currently only authenticated users see relevant challenges)
+        """
+        user = self.request.user
+        if not user.is_authenticated:
+            return Challenge.objects.none() # No challenges for anonymous users for now
+
+        queryset = Challenge.objects.select_related('user', 'crew', 'plan').all()
+
+        # Filter by user/crew ownership
+        try:
+            user_crews = user.crews.all()
+        except AttributeError:
+            user_crews = Crew.objects.none()
+
+        queryset = queryset.filter(
+            Q(owner_type=Challenge.ChallengeOwnerType.USER, user=user) |
+            Q(owner_type=Challenge.ChallengeOwnerType.CREW, crew__in=user_crews)
+        ).distinct()
+
+        # Filter by status (default to LIVE)
+        status_filter = self.request.query_params.get('status', Challenge.ChallengeStatus.LIVE)
+        if status_filter in [Challenge.ChallengeStatus.LIVE, Challenge.ChallengeStatus.SUCCESS, Challenge.ChallengeStatus.FAIL]:
+            queryset = queryset.filter(status=status_filter)
+        # Add handling for 'all' or invalid status if needed
+
+        return queryset
+
+    def perform_create(self, serializer):
+        """Handle Challenge creation:
+        - Set user or crew based on owner_type.
+        - Generate Plan via LLM if initial_plan_description is provided.
+        - Generate KPI via LLM.
+        - Assign Plan and KPI results to the challenge instance.
+        """
+        owner_type = serializer.validated_data.get('owner_type')
+        user = self.request.user
+        crew = serializer.validated_data.get('crew')
+        challenge_name = serializer.validated_data.get('challenge_name')
+        initial_plan_description = serializer.validated_data.pop('initial_plan_description', None)
+        plan_instance = serializer.validated_data.get('plan') # Plan might be provided directly
+
+        # 1. Determine Ownership and Validate Permissions
+        challenge_owner_user = None
+        challenge_owner_crew = None
+        if owner_type == Challenge.ChallengeOwnerType.USER:
+            challenge_owner_user = user
+            if crew:
+                # This should be caught by serializer, but double-check
+                raise permissions.PermissionDenied("Cannot assign crew to a USER challenge.")
+        elif owner_type == Challenge.ChallengeOwnerType.CREW:
+            challenge_owner_crew = crew
+            if not crew:
+                 # This should be caught by serializer
+                 raise permissions.PermissionDenied("Crew is required for CREW challenge.")
+            if not user.crews.filter(pk=crew.pk).exists():
+                 raise permissions.PermissionDenied("You are not a member of this crew.")
+
+        # 2. Handle Plan Creation/Association
+        if initial_plan_description:
+            # Generate plan using LLM
+            plan_data = generate_plan_from_description(initial_plan_description)
+            # Create Plan object
+            plan_instance = Plan.objects.create(**plan_data)
+            # Remove 'plan' from validated_data if it was initially None due to description input
+            serializer.validated_data.pop('plan', None)
+
+        # 3. Generate KPI using LLM
+        kpi_description, kpi_metrics = generate_kpi_from_challenge(
+            challenge_name, plan_instance.plan_list
+        )
+
+        # 4. Save the Challenge instance with all data
+        serializer.save(
+            user=challenge_owner_user,
+            crew=challenge_owner_crew,
+            plan=plan_instance,
+            kpi_description=kpi_description,
+            kpi_metrics=kpi_metrics,
+            status=Challenge.ChallengeStatus.LIVE # Default status on creation
+        )
+
+# --- Placeholder for LLM functions ---
+# These would likely live in a separate service/module
+def generate_plan_from_description(description: str) -> dict:
+    # Placeholder: Replace with actual LLM call
+    # Simulates generating a plan list based on the description
+    print(f"[LLM Placeholder] Generating plan for: {description}")
+    # Example structure for plan_list
+    plan_steps = [f"Step 1 based on '{description}'", f"Step 2 based on '{description}'", "Step 3 generic"]
+    return {"plan_list": plan_steps}
+
+def generate_kpi_from_challenge(challenge_name: str, plan_list: list) -> tuple[str, dict]:
+    # Placeholder: Replace with actual LLM call
+    print(f"[LLM Placeholder] Generating KPI for: {challenge_name} with plan: {plan_list}")
+    kpi_desc = f"KPI description generated for {challenge_name}."
+    # Example structure for kpi_metrics
+    kpi_metrics = {"completion_rate": 0, "step_1_focus": 0, "consistency": 0}
+    return kpi_desc, kpi_metrics
+# --- End Placeholder ---

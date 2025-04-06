@@ -49,6 +49,7 @@ urlpatterns = [
         path('ai/', include('ai_manager.urls')), 
         path('crew/', include('crew.urls')),
         path('community/', include('community.urls')),
+        path('retrospect/', include('retrospect.urls')),
     ])), 
 ]
 
