@@ -46,5 +46,6 @@ urlpatterns = [
         path('naver/', include('naver_manager.urls')), 
         path('ai/', include('ai_manager.urls')), 
         path('crew/', include('crew.urls')),
+        path('community/', include('community.urls')),
     ])), 
 ]
