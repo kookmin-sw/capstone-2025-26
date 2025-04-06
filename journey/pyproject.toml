@@ -21,7 +21,8 @@ dependencies = [
   "gunicorn>=23.0.0,<24.0.0",
   "langchain>=0.3.23,<0.4.0",
   "langfuse>=2.60.2,<3.0.0",
-  "langchain-google-vertexai>=2.0.19,<3.0.0; python_version >= '3.13' and python_version < '4.0'"
+  "langchain-google-vertexai>=2.0.19,<3.0.0; python_version >= '3.13' and python_version < '4.0'",
+  "google-cloud-aiplatform (>=1.87.0,<2.0.0)"
 ]
 
 [tool.poetry]
