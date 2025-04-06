@@ -39,7 +39,6 @@ jobs:
             # Build and restart containers using Docker Compose
             sudo docker compose down # Stop existing containers (optional, but often safer)
             sudo docker compose pull # Pull latest images if specified in compose file
-            sudo docker compose build # Build images if using Dockerfiles
             sudo docker compose up -d --remove-orphans # Start services in detached mode and remove old containers
             
             # Optional: Run migrations if not handled within container startup
