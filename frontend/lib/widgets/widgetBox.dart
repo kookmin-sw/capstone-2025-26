@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:reme/themes/color.dart';
 
 class WidgetBox extends StatelessWidget {
   double? width, height;
@@ -31,7 +32,7 @@ class WidgetBox extends StatelessWidget {
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w800,
-                    color: Color(0xFF333C4B)
+                    color: fontColor
                   ),
                 ),
               ),
@@ -53,9 +54,9 @@ class WidgetBox extends StatelessWidget {
                       begin: Alignment.centerLeft,
                       end: Alignment.centerRight,
                       colors: [
-                        Color(0xFFFFFFFF),
+                        Colors.white,
                         Color(0xFFF8FAF9),
-                        Color(0xFFFFFFFF)
+                        Colors.white,
                       ]
                     )
                   ),
@@ -81,7 +82,7 @@ class WidgetBox extends StatelessWidget {
                           child: Text(
                               "더보기",
                             style: TextStyle(
-                              color: const Color(0xFF4D5967),
+                              color: moreBtnColor,
                               fontSize: 12,
                               fontWeight: FontWeight.w500,
                               height: 1.50,

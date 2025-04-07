@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:reme/themes/color.dart';
 
 class CustomListitem extends StatelessWidget {
   double width, height;
@@ -14,16 +15,16 @@ class CustomListitem extends StatelessWidget {
         children: [
           Text(
             content,
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 18.0,
               fontWeight: FontWeight.w500,
-              color: Color(0xFF333C4B)
+              color: fontColor
             ),
           ),
           Spacer(),
-          Icon(
+          const Icon(
               Icons.chevron_right_outlined,
-            color: Color(0xFFD7D7D7),
+            color: greyColor,
           )
         ],
       ),
