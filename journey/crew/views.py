@@ -5,7 +5,8 @@ from rest_framework.response import Response
 from .models import Crew, CrewMembership, CrewMembershipStatus, CrewMembershipRole
 from .serializers import CrewSerializer, CrewMembershipSerializer
 from .permissions import IsCrewCreatorOrReadOnly # Import the custom permission
-
+from retrospect.models import Template, Retrospect, Challenge
+from retrospect.serializers import TemplateSerializer, RetrospectSerializer, ChallengeSerializer
 # Create your views here.
 
 class CrewViewSet(viewsets.ModelViewSet):
@@ -194,5 +195,29 @@ class CrewViewSet(viewsets.ModelViewSet):
 
         serializer = CrewMembershipSerializer(membership)
         return Response(serializer.data, status=status.HTTP_200_OK) # OK, showing the rejected status
+
+    @action(detail=True, methods=['get'], url_path='templates')
+    def crew_templates(self, request):
+        """Returns a list of templates for a specific crew."""
+        crew = self.get_object()
+        templates = Template.objects.filter(crew=crew)
+        serializer = TemplateSerializer(templates, many=True, context={'request': request})
+        return Response(serializer.data)
+
+    @action(detail=True, methods=['get'], url_path='retrospects')
+    def crew_retrospects(self, request):
+        """Returns a list of retrospects for a specific crew."""
+        crew = self.get_object()
+        retrospects = Retrospect.objects.filter(crew=crew)
+        serializer = RetrospectSerializer(retrospects, many=True, context={'request': request})
+        return Response(serializer.data)
+
+    @action(detail=True, methods=['get'], url_path='challenges')
+    def crew_challenges(self, request):
+        """Returns a list of challenges for a specific crew."""
+        crew = self.get_object()
+        challenges = Challenge.objects.filter(crew=crew)
+        serializer = ChallengeSerializer(challenges, many=True, context={'request': request})
+        return Response(serializer.data)
 
     # Standard ModelViewSet actions (list, create, retrieve, update, destroy) are still available
