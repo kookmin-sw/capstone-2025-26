@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:reme/screens/home.dart';
 
 class Initialpage extends StatefulWidget {
   const Initialpage({super.key});
@@ -11,6 +12,14 @@ class _InitialpageState extends State<Initialpage>
     with SingleTickerProviderStateMixin {
   TabController? tabController;
   int _selectIndex = 0;
+
+  final List<Widget> _pageOptions = [
+    Home(),
+    Container(),//dummy Widget - crew
+    Container(),//dummy Widget - restro
+    Container(),//dummy Widget - challenge
+    Container()//dummy Widget - profile
+  ];
 
   @override
   void initState() {
@@ -45,10 +54,6 @@ class _InitialpageState extends State<Initialpage>
         backgroundColor: Colors.white,
         centerTitle: false,
         actions: [
-          IconButton(
-              onPressed: (){},
-              icon: Icon(Icons.search_outlined)
-          ),
           IconButton(
               onPressed: (){},
               icon: Icon(Icons.notifications_outlined)
@@ -86,7 +91,9 @@ class _InitialpageState extends State<Initialpage>
             ]
         ),
       ),
-
+      body: SingleChildScrollView(
+          child: _pageOptions.elementAt(_selectIndex),
+      ),
     );
   }
 }
