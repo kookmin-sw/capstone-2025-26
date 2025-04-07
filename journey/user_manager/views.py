@@ -8,10 +8,9 @@ from token_manager.serializer import CustomTokenObtainPairSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.exceptions import AuthenticationFailed
-from .serializer import UserSerializer, LoginSerializer
 from django.contrib.auth.hashers import check_password
 from .models import Notification
-from .serializers import NotificationSerializer
+from .serializer import UserSerializer, LoginSerializer, NotificationSerializer
 from retrospect.models import Challenge, ChallengeOwnerType, ChallengeStatus
 from retrospect.serializers import ChallengeSerializer
 from crew.models import Crew, CrewMembership, CrewMembershipStatus
