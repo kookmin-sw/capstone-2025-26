@@ -4,10 +4,10 @@ from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from django.db.models import Q
-from .models import Retrospect, Template, Challenge, Plan, ChallengeStatus
-from .serializers import RetrospectSerializer, TemplateSerializer, ChallengeSerializer, PlanSerializer
+from .models import Retrospect, Template, Challenge, Plan, ChallengeStatus, RetrospectWeeklyAnalysis
+from .serializers import RetrospectSerializer, TemplateSerializer, ChallengeSerializer, PlanSerializer, RetrospectWeeklyAnalysisSerializer
 from crew.models import Crew
-from .permissions import IsOwnerOrReadOnly, IsTemplateOwnerOrCrewMemberOrReadOnly, IsChallengeOwnerOrCrewMemberOrReadOnly
+from .permissions import IsOwnerOrReadOnly, IsTemplateOwnerOrCrewMemberOrReadOnly, IsChallengeOwnerOrCrewMemberOrReadOnly, IsRetrospectWeeklyAnalysisOwnerOrCrewMemberOrReadOnly
 # Create your views here.
 
 
@@ -109,14 +109,13 @@ class ChallengeViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         """Filter Challenges:
-        - By default, show LIVE challenges (for user or their crews).
-        - Add query params to filter by status (e.g., ?status=SUCCESS, ?status=FAIL)
-        - Unauthenticated users likely see nothing or public crew challenges?
-          (Policy TBD, currently only authenticated users see relevant challenges)
+        - By default, show challenges of all statuses (for user or their crews).
+        - Add query params to filter by status (e.g., ?status=SUCCESS, ?status=FAIL, ?status=LIVE)
+        - Unauthenticated users see nothing.
         """
         user = self.request.user
         if not user.is_authenticated:
-            return Challenge.objects.none() # No challenges for anonymous users for now
+            return Challenge.objects.none()
 
         queryset = Challenge.objects.select_related('user', 'crew', 'plan').all()
 
@@ -131,11 +130,15 @@ class ChallengeViewSet(viewsets.ModelViewSet):
             Q(owner_type=Challenge.ChallengeOwnerType.CREW, crew__in=user_crews)
         ).distinct()
 
-        # Filter by status (default to LIVE)
-        status_filter = self.request.query_params.get('status', Challenge.ChallengeStatus.LIVE)
-        if status_filter in [Challenge.ChallengeStatus.LIVE, Challenge.ChallengeStatus.SUCCESS, Challenge.ChallengeStatus.FAIL]:
+        # Filter by status query parameter (defaults to None -> show all)
+        status_filter = self.request.query_params.get('status', None) 
+        valid_statuses = [choice[0] for choice in ChallengeStatus.choices]
+
+        if status_filter and status_filter in valid_statuses:
             queryset = queryset.filter(status=status_filter)
-        # Add handling for 'all' or invalid status if needed
+        # Add handling for invalid status if needed (currently ignored)
+        elif status_filter: 
+            pass # Ignore invalid status, show all
 
         return queryset
 
@@ -240,3 +243,36 @@ def generate_kpi_from_challenge(challenge_name: str, plan_list: list) -> tuple[s
     kpi_metrics = {"completion_rate": 0, "step_1_focus": 0, "consistency": 0}
     return kpi_desc, kpi_metrics
 # --- End Placeholder ---
+
+
+class RetrospectWeeklyAnalysisViewSet(viewsets.ModelViewSet):
+    """ViewSet for the RetrospectWeeklyAnalysis model."""
+    serializer_class = RetrospectWeeklyAnalysisSerializer
+    permission_classes = [IsAuthenticatedOrReadOnly, IsRetrospectWeeklyAnalysisOwnerOrCrewMemberOrReadOnly]
+
+    def get_queryset(self):
+        """Filter RetrospectWeeklyAnalysis:
+        - By default, show LIVE challenges (for user or their crews).
+        - Add query params to filter by status (e.g., ?status=SUCCESS, ?status=FAIL)
+        - Unauthenticated users likely see nothing or public crew challenges?
+          (Policy TBD, currently only authenticated users see relevant challenges)
+        """
+        user = self.request.user
+        if not user.is_authenticated:
+            return RetrospectWeeklyAnalysis.objects.none() # No challenges for anonymous users for now
+
+        queryset = RetrospectWeeklyAnalysis.objects.select_related('user', 'crew').all()
+
+        # Filter by user/crew ownership
+        try:
+            user_crews = user.crews.all()
+        except AttributeError:
+            user_crews = Crew.objects.none()
+
+        queryset = queryset.filter(
+            Q(owner_type=RetrospectWeeklyAnalysis.RetrospectWeeklyAnalysisOwnerType.USER, user=user) |
+            Q(owner_type=RetrospectWeeklyAnalysis.RetrospectWeeklyAnalysisOwnerType.CREW, crew__in=user_crews)
+        ).distinct()
+
+        return queryset
+        
