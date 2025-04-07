@@ -19,13 +19,6 @@ class WidgetBox extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withOpacity(0.1), // 투명도 70% 회색
-              spreadRadius: 3, // 퍼짐 효과
-              blurRadius: 10, // 뭉갬 효과
-            )
-          ]
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
