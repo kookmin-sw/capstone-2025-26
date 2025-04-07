@@ -26,7 +26,7 @@ class WidgetBox extends StatelessWidget {
           children: [
             if(title != '')
               Container(
-                padding: EdgeInsets.fromLTRB(28, 24, 0, 10),
+                padding: EdgeInsets.fromLTRB(28, 24, 0, 0),
                 child: Text(
                   title,
                   style: const TextStyle(
@@ -37,8 +37,7 @@ class WidgetBox extends StatelessWidget {
                 ),
               ),
             Container(
-              margin: EdgeInsets.fromLTRB(20, 0, 20, 0),
-              padding: EdgeInsets.fromLTRB(10, 10, 0, 5),
+              margin: EdgeInsets.fromLTRB(20, 10, 20, 20),
               child: Column(
                 children: children,
               ),

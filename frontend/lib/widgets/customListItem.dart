@@ -11,6 +11,7 @@ class CustomListitem extends StatelessWidget {
     return Container(
       width: width,
       height: height,
+      padding: EdgeInsets.fromLTRB(10, 10, 0, 9),
       child: Row(
         children: [
           Text(
