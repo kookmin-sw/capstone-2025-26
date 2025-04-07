@@ -19,6 +19,8 @@ from django.urls import path, include, re_path
 from rest_framework import permissions
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
+from django.conf import settings
+from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 
 
 schema_view = get_schema_view(
@@ -47,5 +49,10 @@ urlpatterns = [
         path('ai/', include('ai_manager.urls')), 
         path('crew/', include('crew.urls')),
         path('community/', include('community.urls')),
+        path('retrospect/', include('retrospect.urls')),
     ])), 
 ]
+
+# Add this block to serve static files during development (DEBUG=True)
+if settings.DEBUG:
+    urlpatterns += staticfiles_urlpatterns()

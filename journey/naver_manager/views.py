@@ -65,7 +65,6 @@ class NaverCallbackView(APIView):
             if response.status_code == 200:
                 data = response.json()
                 data = data.get('response')
-                print(data)
                 id = data.get('id')
                 nickname = data.get('nickname')
                 profile_image = data.get('profile_image')

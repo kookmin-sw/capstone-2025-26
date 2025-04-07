@@ -55,7 +55,7 @@ class Template(models.Model):
 
 class Challenge(models.Model):
     """챌린지 모델"""
-    plan = models.ForeignKey(Plan, on_delete=models.PROTECT, related_name='challenges') # 계획이 있어야 챌린지 생성 가능
+    plan = models.ForeignKey(Plan, on_delete=models.PROTECT, related_name='challenges', null=True, blank=True)
     user = models.ForeignKey('user_manager.User', on_delete=models.CASCADE, related_name='challenges', null=True, blank=True) # 개인 챌린지일 경우
     crew = models.ForeignKey('crew.Crew', on_delete=models.CASCADE, related_name='challenges', null=True, blank=True) # 크루 챌린지일 경우
     challenge_name = models.CharField(max_length=255)
