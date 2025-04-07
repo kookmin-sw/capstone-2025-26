@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'drf_yasg', 
     'rest_framework', 
     'rest_framework_simplejwt.token_blacklist', 
+    'django_prometheus',
     'user_manager', 
     'kakao_manager', 
     'naver_manager', 
@@ -51,6 +52,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'django_prometheus.middleware.PrometheusBeforeMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -59,6 +61,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'config.otel.RequestLoggingMiddleware', 
+    'django_prometheus.middleware.PrometheusAfterMiddleware',
 ]
 
 REST_FRAMEWORK = {
