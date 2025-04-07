@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 
-class ProfileBox extends StatelessWidget {
+class CrewBox extends StatelessWidget {
   double height;
-  String name, subIntro;
-  ImageProvider profileImage;
-  ProfileBox({super.key, required this.height, required this.profileImage, required this.name, required this.subIntro});
+  String? category;
+  String title;
+  ImageProvider? profileImage;
+  Color? categoryColor;
+  CrewBox({super.key, required this.height, this.profileImage, this.category, required this.title, this.categoryColor});
 
   @override
   Widget build(BuildContext context) {
@@ -12,7 +14,7 @@ class ProfileBox extends StatelessWidget {
       height: height,
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
               color: Colors.grey.withOpacity(0.1), // 투명도 70% 회색
@@ -22,28 +24,36 @@ class ProfileBox extends StatelessWidget {
           ]
       ),
       margin: EdgeInsets.all(10),
-      padding: EdgeInsets.all(8),
+      padding: EdgeInsets.all(20),
       child: Row(
         children: [
           CircleAvatar(
             backgroundImage: profileImage,
-            radius: 60,
+            radius: 27.5,
           ),
+          SizedBox(width: 15,),
           Column(
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                name,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
+              if(category != null)
+              Container(
+                padding: EdgeInsets.fromLTRB(13, 0, 13, 0),
+                color: categoryColor,
+                child: Text(
+                  category!,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
               Text(
-                subIntro,
+                title,
                 style: const TextStyle(
-                  color: Colors.grey,
+                  color: Colors.black,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
                 ),
               )
             ],
