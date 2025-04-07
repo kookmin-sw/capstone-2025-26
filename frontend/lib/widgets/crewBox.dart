@@ -6,7 +6,8 @@ class CrewBox extends StatelessWidget {
   String title;
   ImageProvider? profileImage;
   Color? categoryColor;
-  CrewBox({super.key, required this.height, this.profileImage, this.category, required this.title, this.categoryColor});
+  EdgeInsets marginLTRB;
+  CrewBox({super.key, required this.height, this.profileImage, this.category, required this.title, this.categoryColor, required this.marginLTRB});
 
   @override
   Widget build(BuildContext context) {
@@ -16,7 +17,7 @@ class CrewBox extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
       ),
-      margin: EdgeInsets.all(10),
+      margin: marginLTRB,
       padding: EdgeInsets.all(20),
       child: Row(
         children: [
