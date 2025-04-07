@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 class CustomListitem extends StatelessWidget {
   double width, height;
   String content;
-  CustomListitem({super.key, required this.width, required this.height, required this.content});
+  CustomListitem({super.key, this.width=double.maxFinite, required this.height, required this.content});
 
   @override
   Widget build(BuildContext context) {

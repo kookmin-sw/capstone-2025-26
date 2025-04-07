@@ -7,7 +7,7 @@ class WidgetBox extends StatelessWidget {
   bool isMore;
   EdgeInsets marginLTRB;
   Function()? onTap;
-  WidgetBox({super.key, this.width, this.height, required this.children, this.title='', required this.isMore, required this.marginLTRB, this.onTap});
+  WidgetBox({super.key, this.width=double.maxFinite, this.height, required this.children, this.title='', required this.isMore, required this.marginLTRB, this.onTap});
 
   @override
   Widget build(BuildContext context) {
