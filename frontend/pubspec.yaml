@@ -78,8 +78,23 @@ flutter:
    - family: Pretendard
      fonts:
        - asset: assets/font/Pretendard-Bold.otf
+         weight: 700
        - asset: assets/font/Pretendard-Light.otf
+         weight: 300
        - asset: assets/font/Pretendard-Regular.otf
+         weight: 400
+       - asset: assets/font/Pretendard-Black.otf
+         weight: 900
+       - asset: assets/font/Pretendard-ExtraBold.otf
+         weight: 800
+       - asset: assets/font/Pretendard-ExtraLight.otf
+         weight: 200
+       - asset: assets/font/Pretendard-Medium.otf
+         weight: 500
+       - asset: assets/font/Pretendard-SemiBold.otf
+         weight: 600
+       - asset: assets/font/Pretendard-Thin.otf
+         weight: 100
          style: italic
   #   - family: Trajan Pro
   #     fonts:

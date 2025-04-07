@@ -15,7 +15,9 @@ class CustomListitem extends StatelessWidget {
           Text(
             content,
             style: TextStyle(
-              fontSize: 18.0
+              fontSize: 18.0,
+              fontWeight: FontWeight.w500,
+              color: Color(0xFF333C4B)
             ),
           ),
           Spacer(),
