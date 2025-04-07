@@ -62,16 +62,17 @@ class WidgetBox extends StatelessWidget {
                   child: Column(
                     children: [
                       Container(
-                        width: 394,
-                        height: 2,
-                        decoration: const ShapeDecoration(
-                          shape: RoundedRectangleBorder(
-                            side: BorderSide(
-                              width: 1,
-                              strokeAlign: BorderSide.strokeAlignCenter,
-                              color: Colors.white,
-                            ),
-                          ),
+                        height: 1,
+                        decoration: const BoxDecoration(
+                          gradient: LinearGradient(
+                              begin: Alignment.centerLeft,
+                              end: Alignment.centerRight,
+                              colors: [
+                                Colors.white,
+                                Color(0xFFE6EAED),
+                                Colors.white
+                              ]
+                          )
                         ),
                       ),
                       Container(
