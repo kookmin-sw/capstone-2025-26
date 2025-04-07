@@ -4,35 +4,67 @@ from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from django.db.models import Q
-from .models import Retrospect, Template, Challenge, Plan, ChallengeStatus, RetrospectWeeklyAnalysis
+from .models import (Retrospect, Template, Challenge, Plan, ChallengeStatus, 
+                 RetrospectWeeklyAnalysis, RetrospectVisibility, TemplateOwnerType, 
+                 ChallengeOwnerType, RetrospectOwnerType, RetrospectWeeklyAnalysisOwnerType)
 from .serializers import RetrospectSerializer, TemplateSerializer, ChallengeSerializer, PlanSerializer, RetrospectWeeklyAnalysisSerializer
-from crew.models import Crew
-from .permissions import IsOwnerOrReadOnly, IsTemplateOwnerOrCrewMemberOrReadOnly, IsChallengeOwnerOrCrewMemberOrReadOnly, IsRetrospectWeeklyAnalysisOwnerOrCrewMemberOrReadOnly
+from crew.models import Crew, CrewMembership, CrewMembershipStatus # Import CrewMembership models
+from .permissions import (IsRetrospectOwnerOrCrewMemberOrReadOnly, # Use the new permission class
+                          IsTemplateOwnerOrCrewMemberOrReadOnly, 
+                          IsChallengeOwnerOrCrewMemberOrReadOnly, 
+                          IsRetrospectWeeklyAnalysisOwnerOrCrewMemberOrReadOnly)
 # Create your views here.
 
 
 class RetrospectViewSet(viewsets.ModelViewSet):
     """ViewSet for the Retrospect model."""
     serializer_class = RetrospectSerializer
-    permission_classes = [IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
+    # Updated permission class
+    permission_classes = [IsAuthenticatedOrReadOnly, IsRetrospectOwnerOrCrewMemberOrReadOnly]
 
     def get_queryset(self):
         """
-        Returns a queryset containing only the retrospects created by the
-        currently authenticated user.
+        Filter retrospects based on user authentication, ownership, crew membership,
+        and visibility settings.
         """
         user = self.request.user
-        # Ensure the user is authenticated to view their retrospects
-        if not user.is_authenticated:
-            return Retrospect.objects.none() # Return empty queryset for anonymous users
-
-        # Filter to only include retrospects where the user is the author
-        return Retrospect.objects.select_related(
+        base_queryset = Retrospect.objects.select_related(
             'user', 'crew', 'challenge', 'template'
-        ).filter(user=user)
+        ).all()
+
+        if not user.is_authenticated:
+            # Unauthenticated users only see PUBLIC retrospects
+            return base_queryset.filter(visibility=RetrospectVisibility.PUBLIC)
+        
+        # Authenticated users see:
+        # 1. Their own USER retrospects (regardless of visibility)
+        # 2. CREW retrospects of crews they are members of (if visibility is CREW or PUBLIC)
+        # 3. All PUBLIC retrospects (covered by the first filter if owner or the second if member, or separate Q)
+
+        # Get IDs of crews the user is an accepted member of
+        user_crew_ids = CrewMembership.objects.filter(
+            user=user, 
+            status=CrewMembershipStatus.ACCEPTED
+        ).values_list('crew_id', flat=True)
+
+        queryset = base_queryset.filter(
+            # Own USER retrospects (any visibility)
+            Q(owner_type=RetrospectOwnerType.USER, user=user) |
+            # CREW retrospects for their crews (CREW or PUBLIC visibility)
+            (Q(owner_type=RetrospectOwnerType.CREW, crew_id__in=user_crew_ids) & 
+             Q(visibility__in=[RetrospectVisibility.CREW, RetrospectVisibility.PUBLIC])) |
+            # Other PUBLIC retrospects (might overlap, but ensures all public are included)
+            Q(visibility=RetrospectVisibility.PUBLIC)
+        ).distinct() # Use distinct to avoid duplicates if a user owns a public retrospect
+        
+        return queryset
 
     def perform_create(self, serializer):
-        """Set the user field automatically when creating a retrospect."""
+        """Set the user field automatically when creating a retrospect.
+           The owner_type and crew (if applicable) should be validated by the serializer.
+           The creator is always the request.user.
+        """
+        # Ensure the user is always set as the creator
         serializer.save(user=self.request.user)
 
     # Add specific actions if needed, e.g., linking to crew, etc.
@@ -48,7 +80,6 @@ class RetrospectViewSet(viewsets.ModelViewSet):
 class TemplateViewSet(viewsets.ModelViewSet):
     """ViewSet for the Template model."""
     serializer_class = TemplateSerializer
-    # Use IsAuthenticatedOrReadOnly for create/list, custom perm for object-level R/U/D
     permission_classes = [IsAuthenticatedOrReadOnly, IsTemplateOwnerOrCrewMemberOrReadOnly]
 
     def get_queryset(self):
@@ -61,19 +92,20 @@ class TemplateViewSet(viewsets.ModelViewSet):
         base_queryset = Template.objects.select_related('user', 'crew').all()
 
         if user.is_authenticated:
-            try:
-                user_crews = user.crews.all()
-            except AttributeError:
-                user_crews = Crew.objects.none()
+            # Corrected: Get crew IDs via CrewMembership
+            user_crew_ids = CrewMembership.objects.filter(
+                user=user,
+                status=CrewMembershipStatus.ACCEPTED
+            ).values_list('crew_id', flat=True)
 
             return base_queryset.filter(
-                Q(owner_type=Template.TemplateOwnerType.COMMON) |
-                Q(owner_type=Template.TemplateOwnerType.USER, user=user) |
-                Q(owner_type=Template.TemplateOwnerType.CREW, crew__in=user_crews)
+                Q(owner_type=TemplateOwnerType.COMMON) |
+                Q(owner_type=TemplateOwnerType.USER, user=user) |
+                Q(owner_type=TemplateOwnerType.CREW, crew_id__in=user_crew_ids)
             ).distinct()
         else:
             # Unauthenticated users only see common templates
-            return base_queryset.filter(owner_type=Template.TemplateOwnerType.COMMON)
+            return base_queryset.filter(owner_type=TemplateOwnerType.COMMON)
 
     def perform_create(self, serializer):
         """Set user or crew based on owner_type if not provided.
@@ -82,24 +114,22 @@ class TemplateViewSet(viewsets.ModelViewSet):
         owner_type = serializer.validated_data.get('owner_type')
         user = self.request.user
 
-        if owner_type == Template.TemplateOwnerType.USER:
-            # Assign the current user if creating a USER template
-            serializer.save(user=user, crew=None) # Explicitly set crew to None
-        elif owner_type == Template.TemplateOwnerType.CREW:
-            # Crew must be provided in the request data for CREW type
-            # The serializer validates its presence.
-            # We should also validate if the user is part of the specified crew.
+        if owner_type == TemplateOwnerType.USER:
+            serializer.save(user=user, crew=None)
+        elif owner_type == TemplateOwnerType.CREW:
             crew = serializer.validated_data.get('crew')
-            if not user.crews.filter(pk=crew.pk).exists():
+            # Corrected: Check membership using CrewMembership
+            if not CrewMembership.objects.filter(
+                crew=crew, 
+                user=user, 
+                status=CrewMembershipStatus.ACCEPTED
+            ).exists():
                  raise permissions.PermissionDenied("You do not have permission to create a template for this crew.")
-            serializer.save(user=None) # Explicitly set user to None
-        elif owner_type == Template.TemplateOwnerType.COMMON:
-            # Optionally restrict who can create COMMON templates (e.g., admins)
-            # For now, assume any authenticated user can, but without user/crew link
+            serializer.save(user=None, crew=crew)
+        elif owner_type == TemplateOwnerType.COMMON:
             # Add permission check here if needed: if not user.is_staff: raise ...
             serializer.save(user=None, crew=None)
         else:
-            # Should be caught by serializer validation, but as a safeguard:
             super().perform_create(serializer)
 
 class ChallengeViewSet(viewsets.ModelViewSet):
@@ -119,26 +149,25 @@ class ChallengeViewSet(viewsets.ModelViewSet):
 
         queryset = Challenge.objects.select_related('user', 'crew', 'plan').all()
 
-        # Filter by user/crew ownership
-        try:
-            user_crews = user.crews.all()
-        except AttributeError:
-            user_crews = Crew.objects.none()
+        # Corrected: Get crew IDs via CrewMembership
+        user_crew_ids = CrewMembership.objects.filter(
+            user=user,
+            status=CrewMembershipStatus.ACCEPTED
+        ).values_list('crew_id', flat=True)
 
         queryset = queryset.filter(
-            Q(owner_type=Challenge.ChallengeOwnerType.USER, user=user) |
-            Q(owner_type=Challenge.ChallengeOwnerType.CREW, crew__in=user_crews)
+            Q(owner_type=ChallengeOwnerType.USER, user=user) |
+            Q(owner_type=ChallengeOwnerType.CREW, crew_id__in=user_crew_ids)
         ).distinct()
 
-        # Filter by status query parameter (defaults to None -> show all)
-        status_filter = self.request.query_params.get('status', None) 
+        # Filter by status query parameter
+        status_filter = self.request.query_params.get('status', None)
         valid_statuses = [choice[0] for choice in ChallengeStatus.choices]
 
         if status_filter and status_filter in valid_statuses:
             queryset = queryset.filter(status=status_filter)
-        # Add handling for invalid status if needed (currently ignored)
-        elif status_filter: 
-            pass # Ignore invalid status, show all
+        elif status_filter:
+            pass # Ignore invalid status
 
         return queryset
 
@@ -154,95 +183,74 @@ class ChallengeViewSet(viewsets.ModelViewSet):
         crew = serializer.validated_data.get('crew')
         challenge_name = serializer.validated_data.get('challenge_name')
         initial_plan_description = serializer.validated_data.pop('initial_plan_description', None)
-        plan_instance = serializer.validated_data.get('plan') # Plan might be provided directly
+        plan_instance = serializer.validated_data.get('plan')
 
-        # 1. Determine Ownership and Validate Permissions
         challenge_owner_user = None
         challenge_owner_crew = None
-        if owner_type == Challenge.ChallengeOwnerType.USER:
+        if owner_type == ChallengeOwnerType.USER:
             challenge_owner_user = user
             if crew:
-                # This should be caught by serializer, but double-check
                 raise permissions.PermissionDenied("Cannot assign crew to a USER challenge.")
-        elif owner_type == Challenge.ChallengeOwnerType.CREW:
+        elif owner_type == ChallengeOwnerType.CREW:
             challenge_owner_crew = crew
             if not crew:
-                 # This should be caught by serializer
                  raise permissions.PermissionDenied("Crew is required for CREW challenge.")
-            if not user.crews.filter(pk=crew.pk).exists():
+            # Corrected: Check membership using CrewMembership
+            if not CrewMembership.objects.filter(
+                crew=crew,
+                user=user,
+                status=CrewMembershipStatus.ACCEPTED
+            ).exists():
                  raise permissions.PermissionDenied("You are not a member of this crew.")
 
-        # 2. Handle Plan Creation/Association
         if initial_plan_description:
-            # Generate plan using LLM
             plan_data = generate_plan_from_description(initial_plan_description)
-            # Create Plan object
             plan_instance = Plan.objects.create(**plan_data)
-            # Remove 'plan' from validated_data if it was initially None due to description input
             serializer.validated_data.pop('plan', None)
 
-        # 3. Generate KPI using LLM
         kpi_description, kpi_metrics = generate_kpi_from_challenge(
-            challenge_name, plan_instance.plan_list
+            challenge_name, plan_instance.plan_list if plan_instance else [] # Handle case where plan might not exist yet
         )
 
-        # 4. Save the Challenge instance with all data
         serializer.save(
             user=challenge_owner_user,
             crew=challenge_owner_crew,
             plan=plan_instance,
             kpi_description=kpi_description,
             kpi_metrics=kpi_metrics,
-            status=Challenge.ChallengeStatus.LIVE # Default status on creation
+            status=ChallengeStatus.LIVE
         )
 
     @action(detail=True, methods=['patch'], url_path='update-status')
     def update_status(self, request, pk=None):
-        """
-        Allows updating the status of a specific challenge.
-        Expects {"status": "NEW_STATUS"} in the request body.
-        NEW_STATUS must be one of 'LIVE', 'SUCCESS', 'FAIL'.
-        Permissions are checked by IsChallengeOwnerOrCrewMemberOrReadOnly.
-        """
-        challenge = self.get_object() # Retrieves the challenge instance
-        # get_object() already handles 404 Not Found
-
+        """Allows updating the status of a challenge."""
+        challenge = self.get_object()
         new_status = request.data.get('status')
 
-        # Validate the new status
         valid_statuses = [choice[0] for choice in ChallengeStatus.choices]
         if not new_status:
             return Response({'detail': 'Status field is required.'}, status=status.HTTP_400_BAD_REQUEST)
         if new_status not in valid_statuses:
-            return Response({'detail': f'Invalid status. Must be one of {valid_statuses}.'}, 
-                            status=status.HTTP_400_BAD_REQUEST)
+            return Response({'detail': f'Invalid status. Must be one of {valid_statuses}.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Update the status
         challenge.status = new_status
         challenge.save(update_fields=['status'])
 
-        # Serialize and return the updated challenge
         serializer = self.get_serializer(challenge)
         return Response(serializer.data)
 
-# --- Placeholder for LLM functions ---
-# These would likely live in a separate service/module
+# --- Placeholder LLM functions --- #
 def generate_plan_from_description(description: str) -> dict:
-    # Placeholder: Replace with actual LLM call
-    # Simulates generating a plan list based on the description
     print(f"[LLM Placeholder] Generating plan for: {description}")
-    # Example structure for plan_list
     plan_steps = [f"Step 1 based on '{description}'", f"Step 2 based on '{description}'", "Step 3 generic"]
     return {"plan_list": plan_steps}
 
 def generate_kpi_from_challenge(challenge_name: str, plan_list: list) -> tuple[str, dict]:
-    # Placeholder: Replace with actual LLM call
     print(f"[LLM Placeholder] Generating KPI for: {challenge_name} with plan: {plan_list}")
     kpi_desc = f"KPI description generated for {challenge_name}."
-    # Example structure for kpi_metrics
     kpi_metrics = {"completion_rate": 0, "step_1_focus": 0, "consistency": 0}
     return kpi_desc, kpi_metrics
-# --- End Placeholder ---
+# --- End Placeholder --- #
 
 
 class RetrospectWeeklyAnalysisViewSet(viewsets.ModelViewSet):
@@ -251,28 +259,66 @@ class RetrospectWeeklyAnalysisViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticatedOrReadOnly, IsRetrospectWeeklyAnalysisOwnerOrCrewMemberOrReadOnly]
 
     def get_queryset(self):
-        """Filter RetrospectWeeklyAnalysis:
-        - By default, show LIVE challenges (for user or their crews).
-        - Add query params to filter by status (e.g., ?status=SUCCESS, ?status=FAIL)
-        - Unauthenticated users likely see nothing or public crew challenges?
-          (Policy TBD, currently only authenticated users see relevant challenges)
+        """Filter weekly analyses:
+        - Authenticated users see their own USER analyses and analyses
+          belonging to Crews they are members of.
+        - Unauthenticated users see nothing (or maybe public ones if that becomes a feature).
         """
         user = self.request.user
         if not user.is_authenticated:
-            return RetrospectWeeklyAnalysis.objects.none() # No challenges for anonymous users for now
+            return RetrospectWeeklyAnalysis.objects.none()
 
-        queryset = RetrospectWeeklyAnalysis.objects.select_related('user', 'crew').all()
+        base_queryset = RetrospectWeeklyAnalysis.objects.select_related('user', 'crew').all()
 
-        # Filter by user/crew ownership
-        try:
-            user_crews = user.crews.all()
-        except AttributeError:
-            user_crews = Crew.objects.none()
+        # Get IDs of crews the user is an accepted member of
+        user_crew_ids = CrewMembership.objects.filter(
+            user=user,
+            status=CrewMembershipStatus.ACCEPTED
+        ).values_list('crew_id', flat=True)
 
-        queryset = queryset.filter(
-            Q(owner_type=RetrospectWeeklyAnalysis.RetrospectWeeklyAnalysisOwnerType.USER, user=user) |
-            Q(owner_type=RetrospectWeeklyAnalysis.RetrospectWeeklyAnalysisOwnerType.CREW, crew__in=user_crews)
+        queryset = base_queryset.filter(
+            Q(owner_type=RetrospectWeeklyAnalysisOwnerType.USER, user=user) |
+            Q(owner_type=RetrospectWeeklyAnalysisOwnerType.CREW, crew_id__in=user_crew_ids)
         ).distinct()
 
+        # Add filtering by date range, etc., if needed via query params
+        start_date = self.request.query_params.get('start_date')
+        end_date = self.request.query_params.get('end_date')
+        if start_date:
+            queryset = queryset.filter(start_date__gte=start_date)
+        if end_date:
+            queryset = queryset.filter(end_date__lte=end_date)
+
         return queryset
+
+    def perform_create(self, serializer):
+        """Set user or crew based on owner_type.
+           Validate that the user can create the specified type.
+        """
+        owner_type = serializer.validated_data.get('owner_type')
+        user = self.request.user
+
+        if owner_type == RetrospectWeeklyAnalysisOwnerType.USER:
+            # Assign the current user if creating a USER analysis
+            serializer.save(user=user, crew=None)
+        elif owner_type == RetrospectWeeklyAnalysisOwnerType.CREW:
+            # Crew must be provided in the request data for CREW type
+            # The serializer validates its presence.
+            # Validate if the user is part of the specified crew.
+            crew = serializer.validated_data.get('crew')
+            if not CrewMembership.objects.filter(
+                crew=crew,
+                user=user,
+                status=CrewMembershipStatus.ACCEPTED
+            ).exists():
+                 raise permissions.PermissionDenied("You do not have permission to create an analysis for this crew.")
+            serializer.save(user=None, crew=crew)
+        else:
+            # Should be caught by serializer validation, but as a safeguard:
+            super().perform_create(serializer)
+
+    # Add other necessary actions, e.g., for generating the analysis summary/KPI via LLM or calculation
+    # @action(detail=False, methods=['post'], url_path='generate-weekly')
+    # def generate_weekly_analysis(self, request):
+    #     ...
         
