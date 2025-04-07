@@ -5,9 +5,9 @@ class WidgetBox extends StatelessWidget {
   List<Widget> children;
   String title;
   bool isMore;
-  EdgeInsets marginLRTB;
+  EdgeInsets marginLTRB;
   Function()? onTap;
-  WidgetBox({super.key, this.width, this.height, required this.children, this.title='', required this.isMore, required this.marginLRTB, this.onTap});
+  WidgetBox({super.key, this.width, this.height, required this.children, this.title='', required this.isMore, required this.marginLTRB, this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -15,7 +15,7 @@ class WidgetBox extends StatelessWidget {
       child: Container(
         width: this.width,
         height: this.height,
-        margin: marginLRTB,
+        margin: marginLTRB,
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),
