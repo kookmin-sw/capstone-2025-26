@@ -1,8 +1,9 @@
-from rest_framework import viewsets, status
+from rest_framework import viewsets, status, generics
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django.contrib.auth import get_user_model
+from django.db.models import Q
 from token_manager.serializer import CustomTokenObtainPairSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.authentication import JWTAuthentication
@@ -11,6 +12,9 @@ from .serializer import UserSerializer, LoginSerializer
 from django.contrib.auth.hashers import check_password
 from .models import Notification
 from .serializers import NotificationSerializer
+from retrospect.models import Challenge, ChallengeOwnerType, ChallengeStatus
+from retrospect.serializers import ChallengeSerializer
+from crew.models import Crew, CrewMembership, CrewMembershipStatus
 
 
 User = get_user_model()
@@ -115,3 +119,43 @@ class NotificationViewSet(viewsets.ModelViewSet):
         notifications = self.get_queryset().filter(is_read=False)
         notifications.update(is_read=True)
         return Response({'status': 'all notifications marked as read'}, status=status.HTTP_200_OK)
+
+class UserChallengeStatusView(generics.ListAPIView):
+    """
+    Lists challenges associated with the currently authenticated user.
+    This includes challenges owned directly by the user and challenges
+    owned by crews the user is a member of.
+    Can be filtered by status query parameter: ?status=LIVE / SUCCESS / FAIL
+    """
+    serializer_class = ChallengeSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        try:
+            # Get IDs of crews the user is an accepted member of
+            user_crew_ids = CrewMembership.objects.filter(
+                user=user, 
+                status=CrewMembershipStatus.ACCEPTED
+            ).values_list('crew_id', flat=True)
+        except NameError: # Catch NameError if CrewMembership/Status not imported
+             user_crew_ids = []
+
+        # Base queryset: challenges owned by user OR owned by a crew the user is in
+        queryset = Challenge.objects.filter(
+            Q(owner_type=ChallengeOwnerType.USER, user=user) |
+            Q(owner_type=ChallengeOwnerType.CREW, crew_id__in=user_crew_ids)
+        ).select_related('user', 'crew', 'plan').prefetch_related('retrospects').distinct()
+        
+        # Filter by status query parameter
+        status_filter = self.request.query_params.get('status', None)
+        valid_statuses = [choice[0] for choice in ChallengeStatus.choices]
+
+        if status_filter and status_filter in valid_statuses:
+            queryset = queryset.filter(status=status_filter)
+        elif status_filter:
+            # Optional: Return empty queryset or error for invalid status
+            # Currently ignores invalid status, returning the base queryset
+            pass 
+
+        return queryset

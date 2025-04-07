@@ -5,7 +5,7 @@ from rest_framework.response import Response
 from .models import Crew, CrewMembership, CrewMembershipStatus, CrewMembershipRole
 from .serializers import CrewSerializer, CrewMembershipSerializer
 from .permissions import IsCrewCreatorOrReadOnly # Import the custom permission
-from retrospect.models import Template, Retrospect, Challenge
+from retrospect.models import Template, Retrospect, Challenge, ChallengeStatus
 from retrospect.serializers import TemplateSerializer, RetrospectSerializer, ChallengeSerializer
 # Create your views here.
 
@@ -213,11 +213,37 @@ class CrewViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
     @action(detail=True, methods=['get'], url_path='challenges')
-    def crew_challenges(self, request):
-        """Returns a list of challenges for a specific crew."""
+    def crew_challenges(self, request, pk=None):
+        """Returns a list of challenges for a specific crew, optionally filtered by status.
+
+        Checks if the user is a member of the crew.
+        Filters by status query param: ?status=LIVE / SUCCESS / FAIL
+        """
         crew = self.get_object()
-        challenges = Challenge.objects.filter(crew=crew)
-        serializer = ChallengeSerializer(challenges, many=True, context={'request': request})
+        user = request.user
+
+        # Check if user is an accepted member of the crew
+        if not CrewMembership.objects.filter(crew=crew, user=user, status=CrewMembershipStatus.ACCEPTED).exists():
+            # Optionally, allow public viewing or creator override depending on deeper permission logic
+            return Response({'detail': 'You must be a member of this crew to view its challenges.'}, 
+                            status=status.HTTP_403_FORBIDDEN)
+
+        # Base queryset for the crew's challenges
+        queryset = Challenge.objects.filter(crew=crew)
+
+        # Filter by status query parameter
+        status_filter = request.query_params.get('status', None)
+        valid_statuses = [choice[0] for choice in ChallengeStatus.choices]
+        
+        if status_filter and status_filter in valid_statuses:
+            queryset = queryset.filter(status=status_filter)
+        elif status_filter:
+             # Optional: Return error for invalid status, or just ignore it and return all
+             # For now, ignore invalid status and return all challenges for the crew
+             pass 
+
+        # Serialize the (potentially filtered) challenges
+        serializer = ChallengeSerializer(queryset, many=True, context={'request': request})
         return Response(serializer.data)
 
     # Standard ModelViewSet actions (list, create, retrieve, update, destroy) are still available

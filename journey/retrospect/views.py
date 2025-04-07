@@ -2,8 +2,9 @@ from django.shortcuts import render
 from rest_framework import viewsets, status, permissions
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
+from rest_framework.decorators import action
 from django.db.models import Q
-from .models import Retrospect, Template, Challenge, Plan
+from .models import Retrospect, Template, Challenge, Plan, ChallengeStatus
 from .serializers import RetrospectSerializer, TemplateSerializer, ChallengeSerializer, PlanSerializer
 from crew.models import Crew
 from .permissions import IsOwnerOrReadOnly, IsTemplateOwnerOrCrewMemberOrReadOnly, IsChallengeOwnerOrCrewMemberOrReadOnly
@@ -191,6 +192,35 @@ class ChallengeViewSet(viewsets.ModelViewSet):
             kpi_metrics=kpi_metrics,
             status=Challenge.ChallengeStatus.LIVE # Default status on creation
         )
+
+    @action(detail=True, methods=['patch'], url_path='update-status')
+    def update_status(self, request, pk=None):
+        """
+        Allows updating the status of a specific challenge.
+        Expects {"status": "NEW_STATUS"} in the request body.
+        NEW_STATUS must be one of 'LIVE', 'SUCCESS', 'FAIL'.
+        Permissions are checked by IsChallengeOwnerOrCrewMemberOrReadOnly.
+        """
+        challenge = self.get_object() # Retrieves the challenge instance
+        # get_object() already handles 404 Not Found
+
+        new_status = request.data.get('status')
+
+        # Validate the new status
+        valid_statuses = [choice[0] for choice in ChallengeStatus.choices]
+        if not new_status:
+            return Response({'detail': 'Status field is required.'}, status=status.HTTP_400_BAD_REQUEST)
+        if new_status not in valid_statuses:
+            return Response({'detail': f'Invalid status. Must be one of {valid_statuses}.'}, 
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        # Update the status
+        challenge.status = new_status
+        challenge.save(update_fields=['status'])
+
+        # Serialize and return the updated challenge
+        serializer = self.get_serializer(challenge)
+        return Response(serializer.data)
 
 # --- Placeholder for LLM functions ---
 # These would likely live in a separate service/module
