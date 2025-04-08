@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:reme/screens/home.dart';
+import 'package:reme/screens/restroPage.dart';
 
 class Initialpage extends StatefulWidget {
   const Initialpage({super.key});
@@ -16,7 +17,7 @@ class _InitialpageState extends State<Initialpage>
   final List<Widget> _pageOptions = [
     Home(),
     Container(),//dummy Widget - crew
-    Container(),//dummy Widget - restro
+    RetroPage(),//dummy Widget - restro
     Container(),//dummy Widget - challenge
     Container()//dummy Widget - profile
   ];
