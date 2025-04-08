@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:reme/themes/color.dart';
 
 class CrewBox extends StatelessWidget {
   double height;
@@ -39,13 +40,14 @@ class CrewBox extends StatelessWidget {
                   style: const TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
+                    color: fontColor
                   ),
                 ),
               ),
               Text(
                 title,
                 style: const TextStyle(
-                  color: Colors.black,
+                  color: fontColor,
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
                 ),
