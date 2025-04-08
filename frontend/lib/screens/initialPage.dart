@@ -17,7 +17,7 @@ class _InitialpageState extends State<Initialpage>
   final List<Widget> _pageOptions = [
     Home(),
     Container(),//dummy Widget - crew
-    RetroPage(),//dummy Widget - restro
+    RetroPage(),// Retrospect
     Container(),//dummy Widget - challenge
     Container()//dummy Widget - profile
   ];
