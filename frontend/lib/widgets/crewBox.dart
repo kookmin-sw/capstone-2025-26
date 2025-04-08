@@ -25,6 +25,7 @@ class CrewBox extends StatelessWidget {
           CircleAvatar(
             backgroundImage: profileImage,
             radius: 27.5,
+            backgroundColor: Colors.white
           ),
           SizedBox(width: 15,),
           Column(
