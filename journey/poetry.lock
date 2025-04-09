@@ -307,6 +307,21 @@ argon2 = ["argon2-cffi (>=19.1.0)"]
 bcrypt = ["bcrypt"]
 
 [[package]]
+name = "django-prometheus"
+version = "2.3.1"
+description = "Django middlewares to monitor your application with Prometheus.io."
+optional = false
+python-versions = "*"
+groups = ["main"]
+files = [
+    {file = "django-prometheus-2.3.1.tar.gz", hash = "sha256:f9c8b6c780c9419ea01043c63a437d79db2c33353451347894408184ad9c3e1e"},
+    {file = "django_prometheus-2.3.1-py2.py3-none-any.whl", hash = "sha256:cf9b26f7ba2e4568f08f8f91480a2882023f5908579681bcf06a4d2465f12168"},
+]
+
+[package.dependencies]
+prometheus-client = ">=0.7"
+
+[[package]]
 name = "djangorestframework"
 version = "3.15.2"
 description = "Web APIs for Django, made easy."
@@ -1581,7 +1596,7 @@ files = [
     {file = "packaging-24.2.tar.gz", hash = "sha256:c228a6dc5e932d346bc5739379109d49e8853dd8223571c7c5b55260edc0b97f"},
 ]
 
-[[package]]
+
 name = "proto-plus"
 version = "1.26.1"
 description = "Beautiful, Pythonic protocol buffers"
@@ -1598,6 +1613,21 @@ protobuf = ">=3.19.0,<7.0.0"
 
 [package.extras]
 testing = ["google-api-core (>=1.31.5)"]
+
+name = "prometheus-client"
+version = "0.21.1"
+description = "Python client for the Prometheus monitoring system."
+optional = false
+python-versions = ">=3.8"
+groups = ["main"]
+files = [
+    {file = "prometheus_client-0.21.1-py3-none-any.whl", hash = "sha256:594b45c410d6f4f8888940fe80b5cc2521b305a1fafe1c58609ef715a001f301"},
+    {file = "prometheus_client-0.21.1.tar.gz", hash = "sha256:252505a722ac04b0456be05c05f75f45d760c2911ffc45f2a06bcaed9f3ae3fb"},
+]
+
+[package.extras]
+twisted = ["twisted"]
+
 
 [[package]]
 name = "protobuf"
@@ -2552,5 +2582,6 @@ cffi = ["cffi (>=1.11)"]
 
 [metadata]
 lock-version = "2.1"
+
 python-versions = ">=3.13,<4.0"
 content-hash = "e97462a4f256b74c476ff2c36d200b61e139a9fa3bd6c96d8ba09eb6236a47ec"

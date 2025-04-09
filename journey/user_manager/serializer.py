@@ -1,8 +1,8 @@
-from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from django.contrib.auth.hashers import make_password
 from django.utils.translation import gettext_lazy as _
-from . models import Provider
+from . models import Provider, Notification 
+from rest_framework import serializers
 
 User = get_user_model()
 
@@ -49,3 +49,9 @@ class KakaoUserSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         validated_data['password'] = make_password(validated_data['password'])
         return super().create(validated_data)
+
+class NotificationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Notification
+        fields = ['id', 'user', 'type', 'content', 'is_read', 'created_at', 'content_type', 'object_id']
+        read_only_fields = ['id', 'created_at'] # User is now writable 
