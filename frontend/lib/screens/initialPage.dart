@@ -41,6 +41,7 @@ class _InitialpageState extends State<Initialpage>
   void dispose() {
     // TODO: implement dispose
     tabController!.dispose();
+    scrollController.dispose();
     super.dispose();
   }
 
@@ -97,7 +98,7 @@ class _InitialpageState extends State<Initialpage>
       body: SingleChildScrollView(
         physics: RangeMaintainingScrollPhysics(),
         controller: scrollController,
-          child: _pageOptions.elementAt(_selectIndex),
+        child: _pageOptions.elementAt(_selectIndex),
       ),
     );
   }
