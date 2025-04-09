@@ -12,6 +12,7 @@ class Initialpage extends StatefulWidget {
 class _InitialpageState extends State<Initialpage>
     with SingleTickerProviderStateMixin {
   TabController? tabController;
+  ScrollController scrollController = ScrollController();
   int _selectIndex = 0;
 
   final List<Widget> _pageOptions = [
@@ -29,6 +30,7 @@ class _InitialpageState extends State<Initialpage>
     tabController = TabController(length: 5, vsync: this);
     tabController!.addListener(
         () => setState((){
+          scrollController.jumpTo(0);
           _selectIndex = tabController!.index;
           print(_selectIndex);
         })
@@ -93,6 +95,8 @@ class _InitialpageState extends State<Initialpage>
         ),
       ),
       body: SingleChildScrollView(
+        physics: RangeMaintainingScrollPhysics(),
+        controller: scrollController,
           child: _pageOptions.elementAt(_selectIndex),
       ),
     );
