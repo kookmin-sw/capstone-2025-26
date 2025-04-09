@@ -1,8 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:reme/routes.dart';
+import 'package:posthog_flutter/posthog_flutter.dart';
 
-void main() {
-  runApp(const MyApp());
+Future<void> main() async {
+  // init WidgetsFlutterBinding if not yet
+  WidgetsFlutterBinding.ensureInitialized();
+  final config = PostHogConfig('phc_vcpqApKqc66zUcHBBqPntqdLGrPwww4mcwtJ2M5nQ3l');
+  config.debug = true;
+  config.captureApplicationLifecycleEvents = true;
+  // or EU Host: 'https://eu.i.posthog.com'
+  config.host = 'https://us.i.posthog.com';
+  await Posthog().setup(config);
+  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
