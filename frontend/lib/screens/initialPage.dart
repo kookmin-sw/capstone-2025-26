@@ -63,7 +63,10 @@ class _InitialpageState extends State<Initialpage>
               icon: Icon(Icons.notifications_outlined)
           ),
         ],
+        toolbarHeight: 55, // appBar 높이 설정
+
       ),
+      backgroundColor: Color(0xFFF3F4F6),
       bottomNavigationBar: Container(
         height: 70,
         child: TabBar(
