@@ -25,7 +25,7 @@ class _RetroPageState extends State<RetroPage> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.fromLTRB(10, 20, 10, 20),
+      padding: EdgeInsets.fromLTRB(10, 10, 10, 20),
       child: Column(
         children: [
           CrewBox(
