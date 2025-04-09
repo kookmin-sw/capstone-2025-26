@@ -1,58 +1,84 @@
-# views.py
 import os
-from django.http import JsonResponse
-from django.views import View
+from rest_framework import viewsets, status, permissions
+from rest_framework.response import Response
+from rest_framework.decorators import action
+from .serializers import AIQuerySerializer, LLMResponseSerializer
+from .permissions import IsAuthenticated
+from drf_yasg import openapi
+from drf_yasg.utils import swagger_auto_schema
 
-# Langchain 관련 임포트 (기본 Langchain 및 langchain_community 사용 예)
-from langchain.llms import BaseLLM
+
+# Langchain 관련 임포트 
 from langchain.chains import LLMChain
+from langchain_google_vertexai.chat_models import ChatVertexAI
+from langchain.prompts import PromptTemplate
 
 # Import LangChain components with Vertex AI
-from langchain_google_vertexai import ChatVertexAI
-from langchain.schema.messages import HumanMessage, SystemMessage
-from langchain_core.prompts import ChatPromptTemplate
+import vertexai
+from vertexai.preview import reasoning_engines
 
-# SerpAPI를 통한 Google 검색 결과 보강 (옵션)
-from langchain.utilities import GoogleSearchAPIWrapper
+vertexai.init(
+    project=os.getenv("PROJECT_ID"),
+    location=os.getenv("LOCATION"),
+    staging_bucket=os.getenv("BUCKET_NAME"),
+)
 
-# Langfuse 트레이싱 임포트 (가상의 예시)
-from langfuse import LangfuseClient
+llm = ChatVertexAI(
+    project=os.getenv("PROJECT_ID"),
+    location="us-central1",  # e.g., 'us-central1'
+    model_name="gemini-2.0-flash-lite-001",
+    max_output_tokens=1024,
+    temperature=0.7,
+)
+# Initialize Langfuse handler
+from langfuse.callback import CallbackHandler
+# .env 파일에서 환경변수 지정해줘야함.
+langfuse_handler = CallbackHandler(
+    secret_key=os.getenv("LANGFUSE_SECRET_KEY"),
+    public_key=os.getenv("LANGFUSE_PUBLIC_KEY"),
+    host=os.getenv("LANGFUSE_HOST"), 
+)
 
-# Langfuse 클라이언트 초기화 (환경변수에서 API 키를 가져온다고 가정)
-lf_client = LangfuseClient(api_key=os.getenv("LANGFUSE_API_KEY"))
 
-class LLMRequestView(View):
-    def post(self, request, *args, **kwargs):
-        # 클라이언트로부터 요청 데이터 가져오기
-        input_text = request.POST.get("input", "")
-        
-        # (옵션) 검색 보강: GoogleSearchAPIWrapper 사용
-        google_search = GoogleSearchAPIWrapper(api_key=os.getenv("SERPAPI_API_KEY"),
-                                               engine="google")
-        search_results = google_search.run(input_text)  # 간단한 검색 호출
-        
-        # Gemini Flash Lite 2.0 호출: langchain_community나 자체 래퍼 사용
-        llm = GeminiFlashLiteLLM(
-            api_key=os.getenv("GEMINI_API_KEY"),
-            model_version="flash_lite_2.0",
-            extra_context=search_results  # 검색 결과를 컨텍스트에 포함 (옵션)
-        )
-        
-        # 체인 구성: 예시로 간단한 체인을 사용 (실제 체인은 요구사항에 맞게 구성)
-        chain = LLMChain(llm=llm, prompt_template="Input: {input}\nResponse:")
-        
-        # Langfuse에 요청 시작 로그 기록
-        lf_client.log_event(event_type="llm_request_start", details={"input": input_text})
-        
-        try:
-            # LLM 요청 실행
-            response = chain.run({"input": input_text})
-            
-            # Langfuse에 성공 로그 기록
-            lf_client.log_event(event_type="llm_request_success", details={"response": response})
-            
-            return JsonResponse({"response": response})
-        except Exception as e:
-            # Langfuse에 에러 로그 기록
-            lf_client.log_event(event_type="llm_request_error", details={"error": str(e)})
-            return JsonResponse({"error": str(e)}, status=500)
+class LLMViewSet(viewsets.ViewSet):
+    """
+    API endpoint for handling LLM requests.
+    """
+    permission_classes = [IsAuthenticated]
+
+    @swagger_auto_schema(
+    request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        required=["query_text"],
+        properties={
+            "query_text": openapi.Schema(type=openapi.TYPE_STRING, description="Input query text")
+        }
+    )
+)
+    @action(detail=False, methods=['post'], url_path='dummy', permission_classes=[permissions.AllowAny])
+    def dummy(self, request):
+        serializer = AIQuerySerializer(data=request.data)
+        if serializer.is_valid():
+            query_text = serializer.validated_data['query_text']
+
+            # prompt 템플릿 생성: BasePromptTemplate 인스턴스를 사용
+            prompt_template = PromptTemplate(
+                template="Query: {query}\nResponse:",
+                input_variables=["query"]
+            )
+
+            # 체인 구성: prompt는 query_text를 포함하는 형식으로 작성
+            chain = LLMChain(llm=llm, prompt=prompt_template)
+
+            try:
+                # LLM 요청 실행
+                response = chain.invoke({"query": query_text}, config={"callbacks": [langfuse_handler]})
+                
+                response_serializer = LLMResponseSerializer(data={'response': response})
+                response_serializer.is_valid()  # 별도 유효성 검증 없이 데이터를 반환
+                return Response(response_serializer.data, status=status.HTTP_200_OK)
+            except Exception as e:
+                return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+

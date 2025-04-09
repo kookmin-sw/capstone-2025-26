@@ -1,7 +1,11 @@
 # urls.py
-from django.urls import path
-from .views import llm_request
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
+from .views import LLMViewSet
+
+router = DefaultRouter()
+router.register(r'', LLMViewSet, basename='')
 
 urlpatterns = [
-    path('api/llm/', llm_request, name='llm_request'),
+    path('', include(router.urls)),
 ]
