@@ -14,6 +14,7 @@ class _InitialpageState extends State<Initialpage>
   TabController? tabController;
   ScrollController scrollController = ScrollController();
   int _selectIndex = 0;
+  double _opacity = 1.0;
 
   final List<Widget> _pageOptions = [
     Home(),
@@ -35,6 +36,12 @@ class _InitialpageState extends State<Initialpage>
           print(_selectIndex);
         })
     );
+    scrollController.addListener(() {
+      setState(() {
+        // 스크롤 위치에 따라 opacity 조정
+        _opacity = 1 - (scrollController.offset / 200).clamp(0.0, 1.0);
+      });
+    });
   }
 
   @override
@@ -48,24 +55,6 @@ class _InitialpageState extends State<Initialpage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          "Re:Me",
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        backgroundColor: Colors.white,
-        centerTitle: false,
-        actions: [
-          IconButton(
-              onPressed: (){},
-              icon: Icon(Icons.notifications_outlined)
-          ),
-        ],
-        toolbarHeight: 55, // appBar 높이 설정
-
-      ),
       backgroundColor: Color(0xFFF3F4F6),
       bottomNavigationBar: Container(
         height: 70,
@@ -98,11 +87,36 @@ class _InitialpageState extends State<Initialpage>
             ]
         ),
       ),
-      body: SingleChildScrollView(
+      body:CustomScrollView(
         physics: RangeMaintainingScrollPhysics(),
+        slivers: [
+          SliverAppBar(
+            title: const Text(
+              "Re:Me",
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            backgroundColor: Colors.white,
+            centerTitle: false,
+            actions: [
+              IconButton(
+                  onPressed: (){},
+                  icon: Icon(Icons.notifications_outlined)
+              ),
+            ],
+            toolbarHeight: 55,
+            floating: true, // 최상단으로 올리지 않아도 appbar 표시
+            scrolledUnderElevation: 0, // 스크롤시 appbar 색상 변경 안되게
+            snap: false,
+
+
+          ),
+          SliverList(delegate: SliverChildListDelegate([_pageOptions.elementAt(_selectIndex)]))
+        ],
         controller: scrollController,
-        child: _pageOptions.elementAt(_selectIndex),
-      ),
+
+      )
     );
   }
 }
