@@ -21,7 +21,7 @@ class OAuthUserManager:
             else:
                 ## give random unusable password
                 password = email + str(random.random())[3:]
-                kakao = Provider.objects.filter(domail='kakao.com')
+                kakao = Provider.objects.filter(domain='kakao.com')
                 has_provider = kakao.count()
                 if has_provider:
                     kakao = kakao[0]
