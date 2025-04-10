@@ -17,11 +17,11 @@ class _InitialpageState extends State<Initialpage>
   double _opacity = 1.0;
 
   final List<Widget> _pageOptions = [
-    Home(),
-    Container(),//dummy Widget - crew
-    RetroPage(),// Retrospect
-    Container(),//dummy Widget - challenge
-    Container()//dummy Widget - profile
+    const Home(),
+    Container(), //dummy Widget - crew
+    const RetroPage(), // Retrospect
+    Container(), //dummy Widget - challenge
+    Container() //dummy Widget - profile
   ];
 
   @override
@@ -29,13 +29,11 @@ class _InitialpageState extends State<Initialpage>
     // TODO: implement initState
     super.initState();
     tabController = TabController(length: 5, vsync: this);
-    tabController!.addListener(
-        () => setState((){
+    tabController!.addListener(() => setState(() {
           scrollController.jumpTo(0);
           _selectIndex = tabController!.index;
           print(_selectIndex);
-        })
-    );
+        }));
     scrollController.addListener(() {
       setState(() {
         // 스크롤 위치에 따라 opacity 조정
@@ -55,68 +53,64 @@ class _InitialpageState extends State<Initialpage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFFF3F4F6),
-      bottomNavigationBar: Container(
-        height: 70,
-        child: TabBar(
-            indicatorColor: Colors.transparent,
-            labelColor: Color(0xFF333C4B),
-            unselectedLabelColor: Colors.grey,
-            controller: tabController,
-            tabs: [
-              Tab(
-                icon: Icon(Icons.home_outlined),
-                text: "홈",
-              ),
-              Tab(
-                icon: Icon(Icons.keyboard_command_key_outlined),
-                text: "크루",
-              ),
-              Tab(
-                icon: Icon(Icons.layers_outlined),
-                text: "회고",
-              ),
-              Tab(
-                icon: Icon(Icons.hotel_class_outlined),
-                text: "목표",
-              ),
-              Tab(
-                icon: Icon(Icons.person_2_outlined),
-                text: "프로필",
-              ),
-            ]
+        backgroundColor: const Color(0xFFF3F4F6),
+        bottomNavigationBar: SizedBox(
+          height: 70,
+          child: TabBar(
+              indicatorColor: Colors.transparent,
+              labelColor: const Color(0xFF333C4B),
+              unselectedLabelColor: Colors.grey,
+              controller: tabController,
+              tabs: const [
+                Tab(
+                  icon: Icon(Icons.home_outlined),
+                  text: "홈",
+                ),
+                Tab(
+                  icon: Icon(Icons.keyboard_command_key_outlined),
+                  text: "크루",
+                ),
+                Tab(
+                  icon: Icon(Icons.layers_outlined),
+                  text: "회고",
+                ),
+                Tab(
+                  icon: Icon(Icons.hotel_class_outlined),
+                  text: "목표",
+                ),
+                Tab(
+                  icon: Icon(Icons.person_2_outlined),
+                  text: "프로필",
+                ),
+              ]),
         ),
-      ),
-      body:CustomScrollView(
-        physics: RangeMaintainingScrollPhysics(),
-        slivers: [
-          SliverAppBar(
-            title: const Text(
-              "Re:Me",
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
+        body: CustomScrollView(
+          physics: const BouncingScrollPhysics(),
+          slivers: [
+            SliverAppBar(
+              title: const Text(
+                "Re:Me",
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                ),
               ),
+              backgroundColor: Colors.white,
+              centerTitle: false,
+              actions: [
+                IconButton(
+                    onPressed: () {},
+                    icon: const Icon(Icons.notifications_outlined)),
+              ],
+              toolbarHeight: 55,
+              floating: true, // 최상단으로 올리지 않아도 appbar 표시
+              scrolledUnderElevation: 0, // 스크롤시 appbar 색상 변경 안되게
+              snap: true,
             ),
-            backgroundColor: Colors.white,
-            centerTitle: false,
-            actions: [
-              IconButton(
-                  onPressed: (){},
-                  icon: Icon(Icons.notifications_outlined)
-              ),
-            ],
-            toolbarHeight: 55,
-            floating: true, // 최상단으로 올리지 않아도 appbar 표시
-            scrolledUnderElevation: 0, // 스크롤시 appbar 색상 변경 안되게
-            snap: false,
-
-
-          ),
-          SliverList(delegate: SliverChildListDelegate([_pageOptions.elementAt(_selectIndex)]))
-        ],
-        controller: scrollController,
-
-      )
-    );
+            SliverList(
+                delegate: SliverChildListDelegate(
+                    [_pageOptions.elementAt(_selectIndex)]))
+          ],
+          controller: scrollController,
+        ));
   }
 }
