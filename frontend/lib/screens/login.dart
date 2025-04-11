@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:reme/routes.dart';
+import 'package:reme/screens/socialLoginWebView.dart';
 
 class LoginPage extends StatelessWidget {
   const LoginPage({super.key});
@@ -25,7 +27,12 @@ class LoginPage extends StatelessWidget {
               InkWell(
                 child: Image(image: AssetImage('assets/img/kakao_login_large_wide.png')),
                 onTap: (){
-                  print("카카오 로그인 눌림");
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => SocialLoginWebView(social: "kakao")
+                      )
+                  );
                 },
               ),
             ],
