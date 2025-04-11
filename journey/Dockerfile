@@ -30,6 +30,8 @@ COPY . /app/
 # Expose port 8000 for the application
 EXPOSE 8000
 
+RUN poetry run python manage.py migrate
+
 # Specify the command to run the application using Gunicorn
 # Replace 'config' with the actual name of your Django project directory containing wsgi.py
-CMD ["gunicorn", "config.wsgi:application", "--bind", "0.0.0.0:8000"] 
+CMD ["poetry", "run", "gunicorn", "config.wsgi:application", "--bind", "0.0.0.0:8000"] 
