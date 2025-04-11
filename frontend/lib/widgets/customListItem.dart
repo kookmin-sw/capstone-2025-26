@@ -1,27 +1,31 @@
 import 'package:flutter/material.dart';
+import 'package:reme/themes/color.dart';
 
 class CustomListitem extends StatelessWidget {
   double width, height;
   String content;
-  CustomListitem({super.key, required this.width, required this.height, required this.content});
+  CustomListitem({super.key, this.width=double.maxFinite, required this.height, required this.content});
 
   @override
   Widget build(BuildContext context) {
     return Container(
       width: width,
       height: height,
+      padding: EdgeInsets.fromLTRB(10, 10, 0, 9),
       child: Row(
         children: [
           Text(
             content,
-            style: TextStyle(
-              fontSize: 18.0
+            style: const TextStyle(
+              fontSize: 18.0,
+              fontWeight: FontWeight.w500,
+              color: fontColor
             ),
           ),
           Spacer(),
-          Icon(
+          const Icon(
               Icons.chevron_right_outlined,
-            color: Color(0xFFD7D7D7),
+            color: greyColor,
           )
         ],
       ),

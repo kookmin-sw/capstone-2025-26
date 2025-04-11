@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:reme/themes/color.dart';
 
 class WidgetBox extends StatelessWidget {
   double? width, height;
@@ -7,7 +8,7 @@ class WidgetBox extends StatelessWidget {
   bool isMore;
   EdgeInsets marginLTRB;
   Function()? onTap;
-  WidgetBox({super.key, this.width, this.height, required this.children, this.title='', required this.isMore, required this.marginLTRB, this.onTap});
+  WidgetBox({super.key, this.width=double.maxFinite, this.height, required this.children, this.title='', required this.isMore, required this.marginLTRB, this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -25,19 +26,18 @@ class WidgetBox extends StatelessWidget {
           children: [
             if(title != '')
               Container(
-                padding: EdgeInsets.fromLTRB(28, 24, 0, 10),
+                padding: EdgeInsets.fromLTRB(28, 24, 0, 0),
                 child: Text(
                   title,
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w800,
-                    color: Color(0xFF333C4B)
+                    color: fontColor
                   ),
                 ),
               ),
             Container(
-              margin: EdgeInsets.fromLTRB(20, 0, 20, 0),
-              padding: EdgeInsets.fromLTRB(10, 10, 0, 5),
+              margin: EdgeInsets.fromLTRB(20, 10, 20, 20),
               child: Column(
                 children: children,
               ),
@@ -53,25 +53,26 @@ class WidgetBox extends StatelessWidget {
                       begin: Alignment.centerLeft,
                       end: Alignment.centerRight,
                       colors: [
-                        Color(0xFFFFFFFF),
+                        Colors.white,
                         Color(0xFFF8FAF9),
-                        Color(0xFFFFFFFF)
+                        Colors.white,
                       ]
                     )
                   ),
                   child: Column(
                     children: [
                       Container(
-                        width: 394,
-                        height: 2,
-                        decoration: const ShapeDecoration(
-                          shape: RoundedRectangleBorder(
-                            side: BorderSide(
-                              width: 1,
-                              strokeAlign: BorderSide.strokeAlignCenter,
-                              color: Colors.white,
-                            ),
-                          ),
+                        height: 1,
+                        decoration: const BoxDecoration(
+                          gradient: LinearGradient(
+                              begin: Alignment.centerLeft,
+                              end: Alignment.centerRight,
+                              colors: [
+                                Colors.white,
+                                Color(0xFFE6EAED),
+                                Colors.white
+                              ]
+                          )
                         ),
                       ),
                       Container(
@@ -80,7 +81,7 @@ class WidgetBox extends StatelessWidget {
                           child: Text(
                               "더보기",
                             style: TextStyle(
-                              color: const Color(0xFF4D5967),
+                              color: moreBtnColor,
                               fontSize: 12,
                               fontWeight: FontWeight.w500,
                               height: 1.50,
