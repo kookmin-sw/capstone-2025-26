@@ -27,6 +27,9 @@ RUN poetry install --no-root
 # Copy project
 COPY . /app/
 
+# Copy environment file
+COPY .env /app/.env
+
 # Expose port 8000 for the application
 EXPOSE 8000
 
