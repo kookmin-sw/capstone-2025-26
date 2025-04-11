@@ -1,0 +1,1 @@
+/Users/kimminsoo/Desktop/Project/capstone-2025-26/frontend/build/app/intermediates/cxx/Debug/3j33472h/obj/arm64-v8a
