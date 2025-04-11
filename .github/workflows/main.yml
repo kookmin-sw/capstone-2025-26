@@ -6,6 +6,7 @@ on:
       - develop
     paths:
       - 'journey/**'  # journey 폴더 내 변경사항만 감지
+      - '.github/workflows/**'
 
 jobs:
   deploy:
