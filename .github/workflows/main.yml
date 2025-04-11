@@ -14,12 +14,26 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
+
+      - name: Create .env file
+        run: |
+          mkdir -p journey # Ensure journey directory exists in the runner workspace
+          echo "${{ secrets.MAP }}" > journey/.env
+        shell: bash
         
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.13'  # 사용하는 Python 버전에 맞게 조정
           
+      - name: Copy .env file to server
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: "journey/.env"
+          target: "serv/capstone-2025-26/journey/" # Target directory on the server
           
       - name: Deploy to server
         uses: appleboy/ssh-action@master
@@ -29,12 +43,14 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             cd serv/capstone-2025-26 # Adjust if your project root on the server is different
-            git pull fetch --all
+            git fetch --all
             git reset --hard origin/develop
-            git pull # Ensure we are on the latest develop commit
-            # Navigate to the directory with docker-compose.yml, assuming it's in the root or journey
-            # If docker-compose.yml is in the 'journey' directory, uncomment the next line
+            # git pull is redundant after reset --hard
+            
+            # Navigate to the directory with docker-compose.yml
             cd journey 
+            
+            # .env file is copied via scp in the previous step
             
             # Build and restart containers using Docker Compose
             sudo docker compose down # Stop existing containers (optional, but often safer)
