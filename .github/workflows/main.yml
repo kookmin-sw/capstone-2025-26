@@ -33,7 +33,7 @@ jobs:
           username: ${{ secrets.USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           source: "journey/.env"
-          target: "serv/capstone-2025-26/journey/" # Target directory on the server
+          target: "serv/" # Target directory on the server
           
       - name: Deploy to server
         uses: appleboy/ssh-action@master
@@ -49,7 +49,7 @@ jobs:
             
             # Navigate to the directory with docker-compose.yml
             cd journey 
-            
+            cp ~/serv/.env .
             # .env file is copied via scp in the previous step
             
             # Build and restart containers using Docker Compose
