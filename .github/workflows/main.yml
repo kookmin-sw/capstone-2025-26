@@ -19,7 +19,7 @@ jobs:
       - name: Create .env file
         run: |
           mkdir -p journey # Ensure journey directory exists in the runner workspace
-          echo "${{ secrets.MAP }}" > journey/.env
+          echo "${{ secrets.MAP }}" > jour/.env
         shell: bash
         
       - name: Set up Python
@@ -33,7 +33,7 @@ jobs:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: "journey/.env"
+          source: "jour/.env"
           target: "serv/" # Target directory on the server
           
       - name: Deploy to server
@@ -50,7 +50,7 @@ jobs:
             
             # Navigate to the directory with docker-compose.yml
             cd journey 
-            cp ~/serv/.env .
+            cp ~/serv/jour/.env .
             # .env file is copied via scp in the previous step
             
             # Build and restart containers using Docker Compose
