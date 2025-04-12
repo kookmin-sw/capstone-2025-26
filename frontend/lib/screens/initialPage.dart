@@ -54,63 +54,67 @@ class _InitialpageState extends State<Initialpage>
   Widget build(BuildContext context) {
     return Scaffold(
         backgroundColor: const Color(0xFFF3F4F6),
-        bottomNavigationBar: SizedBox(
-          height: 70,
-          child: TabBar(
-              indicatorColor: Colors.transparent,
-              labelColor: const Color(0xFF333C4B),
-              unselectedLabelColor: Colors.grey,
-              controller: tabController,
-              tabs: const [
-                Tab(
-                  icon: Icon(Icons.home_outlined),
-                  text: "홈",
-                ),
-                Tab(
-                  icon: Icon(Icons.keyboard_command_key_outlined),
-                  text: "크루",
-                ),
-                Tab(
-                  icon: Icon(Icons.layers_outlined),
-                  text: "회고",
-                ),
-                Tab(
-                  icon: Icon(Icons.hotel_class_outlined),
-                  text: "목표",
-                ),
-                Tab(
-                  icon: Icon(Icons.person_2_outlined),
-                  text: "프로필",
-                ),
-              ]),
+        bottomNavigationBar: SafeArea(
+          child: SizedBox(
+            height: 70,
+            child: TabBar(
+                indicatorColor: Colors.transparent,
+                labelColor: const Color(0xFF333C4B),
+                unselectedLabelColor: Colors.grey,
+                controller: tabController,
+                tabs: const [
+                  Tab(
+                    icon: Icon(Icons.home_outlined),
+                    text: "홈",
+                  ),
+                  Tab(
+                    icon: Icon(Icons.keyboard_command_key_outlined),
+                    text: "크루",
+                  ),
+                  Tab(
+                    icon: Icon(Icons.layers_outlined),
+                    text: "회고",
+                  ),
+                  Tab(
+                    icon: Icon(Icons.hotel_class_outlined),
+                    text: "목표",
+                  ),
+                  Tab(
+                    icon: Icon(Icons.person_2_outlined),
+                    text: "프로필",
+                  ),
+                ]),
+          ),
         ),
-        body: CustomScrollView(
-          physics: const BouncingScrollPhysics(),
-          slivers: [
-            SliverAppBar(
-              title: const Text(
-                "Re:Me",
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
+        body: SafeArea(
+          child: CustomScrollView(
+            physics: const BouncingScrollPhysics(),
+            slivers: [
+              SliverAppBar(
+                title: const Text(
+                  "Re:Me",
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
+                backgroundColor: Colors.white,
+                centerTitle: false,
+                actions: [
+                  IconButton(
+                      onPressed: () {},
+                      icon: const Icon(Icons.notifications_outlined)),
+                ],
+                toolbarHeight: 55,
+                floating: true, // 최상단으로 올리지 않아도 appbar 표시
+                scrolledUnderElevation: 0, // 스크롤시 appbar 색상 변경 안되게
+                snap: true,
               ),
-              backgroundColor: Colors.white,
-              centerTitle: false,
-              actions: [
-                IconButton(
-                    onPressed: () {},
-                    icon: const Icon(Icons.notifications_outlined)),
-              ],
-              toolbarHeight: 55,
-              floating: true, // 최상단으로 올리지 않아도 appbar 표시
-              scrolledUnderElevation: 0, // 스크롤시 appbar 색상 변경 안되게
-              snap: true,
-            ),
-            SliverList(
-                delegate: SliverChildListDelegate(
-                    [_pageOptions.elementAt(_selectIndex)]))
-          ],
-          controller: scrollController,
+              SliverList(
+                  delegate: SliverChildListDelegate(
+                      [_pageOptions.elementAt(_selectIndex)]))
+            ],
+            controller: scrollController,
+          ),
         ));
   }
 }
