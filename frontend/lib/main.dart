@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:reme/routes.dart';
 import 'package:posthog_flutter/posthog_flutter.dart';
 
@@ -20,6 +21,10 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
+    String isLogin; // 로그인 여부에 따라 시작 지점 저장
+    const storage = FlutterSecureStorage();
+    if(storage.read(key: "AccessToken") != null) isLogin = Routes.splash;
+    else isLogin = Routes.login;
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Flutter Demo',
@@ -43,7 +48,7 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
         fontFamily: 'Pretendard',
       ),
-      initialRoute: Routes.splash,
+      initialRoute: isLogin,
       routes: namedRoute,
     );
   }
