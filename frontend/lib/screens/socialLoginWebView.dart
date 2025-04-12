@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:reme/models/tokens.dart';
 import 'package:reme/utils/secret.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
@@ -39,9 +40,7 @@ class _WebViewState extends State<SocialLoginWebView> {
               refresh_token = await parseToken(25); // 파싱한 refreshToken 위치
               refresh_token = refresh_token!.replaceAll('\\', "").replaceAll("\"", ""); // parsing한 토큰 역슬레시와 따옴표 지우기
               access_token = access_token!.replaceAll('\\', "").replaceAll("\"", ""); // parsing한 토큰 역슬레시와 따옴표 지우기
-              print("AccessToken: "+access_token!);
-              print("RefreshToken: "+refresh_token!);
-              Navigator.pop(context);
+              Navigator.pop(context, Tokens(access_token, refresh_token));
             }
           }
       ))
