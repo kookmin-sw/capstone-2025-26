@@ -34,7 +34,7 @@ class _WebViewState extends State<SocialLoginWebView> {
       ..setNavigationDelegate(NavigationDelegate( // Webview 설정
           onPageFinished: (String url) async { // 페이지가 로딩이 완료되었을 때
             print("loading 완료");
-            if(url.contains("callback")){
+            if(url.contains("/callback/")){
               access_token = await parseToken(27); // 파싱한 accessToken 위치
               refresh_token = await parseToken(25); // 파싱한 refreshToken 위치
               refresh_token = refresh_token!.replaceAll('\\', "").replaceAll("\"", ""); // parsing한 토큰 역슬레시와 따옴표 지우기
