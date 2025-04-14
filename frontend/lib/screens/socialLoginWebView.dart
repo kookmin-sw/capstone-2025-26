@@ -15,6 +15,7 @@ class _WebViewState extends State<SocialLoginWebView> {
   String service;
   String? access_token;
   String? refresh_token;
+  int loading = 0;
   late WebViewController _webViewController;
 
   _WebViewState(this.service);
@@ -33,8 +34,20 @@ class _WebViewState extends State<SocialLoginWebView> {
     _webViewController = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted) // WebView안에서 Javascript 실행할지
       ..setNavigationDelegate(NavigationDelegate( // Webview 설정
+          onPageStarted: (url){
+            setState(() {
+              loading = 0;
+            });
+          },
+          onProgress: (int percent){
+            setState(() {
+              loading = percent;
+            });
+          },
           onPageFinished: (String url) async { // 페이지가 로딩이 완료되었을 때
-            print("loading 완료");
+            setState(() {
+              loading = 100;
+            });
             if(url.contains("/callback/")){
               access_token = await parseToken(27); // 파싱한 accessToken 위치
               refresh_token = await parseToken(25); // 파싱한 refreshToken 위치
@@ -50,8 +63,19 @@ class _WebViewState extends State<SocialLoginWebView> {
   Widget build(BuildContext context) {
 
     return SafeArea(
-      child: WebViewWidget(
-          controller: _webViewController
+      child: Stack(
+        children: [
+          if(loading < 100)
+            Center(
+              child: CircularProgressIndicator(
+                value: loading / 100.0,
+                strokeAlign: 40,
+              ),
+            ),
+          WebViewWidget(
+            controller: _webViewController
+          ),
+        ]
       ),
     );
   }
