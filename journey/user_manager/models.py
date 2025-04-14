@@ -1,4 +1,5 @@
 from django.contrib.auth.models import AbstractUser
+from .managers import CustomUserManager
 from django.utils.translation import gettext_lazy as _
 from django.db import models
 from django.contrib.contenttypes.fields import GenericForeignKey
@@ -19,6 +20,9 @@ class Provider(models.Model):
     name = models.CharField(max_length=50)
 
 class User(AbstractUser):
+    # UserManager(objects=UserManager())는 여전히 username을 사용함
+    # 그래서 username = None으로 설정하면 에러남
+    # UserManager 직접 재정의해야함
     email = models.EmailField(_('email address'), max_length=255, unique=True)
     nickname = models.CharField(max_length=15, unique=False)
     username = None
@@ -32,6 +36,8 @@ class User(AbstractUser):
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['nickname']
+
+    objects = CustomUserManager()
 
 class Notification(models.Model):
     """알림 모델"""

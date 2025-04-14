@@ -45,10 +45,10 @@ class Plan(models.Model):
 class Template(models.Model):
     """회고 템플릿 모델"""
     user = models.ForeignKey('user_manager.User', on_delete=models.SET_NULL, null=True, blank=True, related_name='templates')
-    crew = models.ForeignKey('crew.Crew', on_delete=models.SET_NULL, null=True, blank=True, related_name='templates')
+    crew = models.ForeignKey('crew.Crew', on_delete=models.SET_NULL, null=True, blank=True, related_name='templates') # 개인 회고 템플릿인 경우 NULL
     owner_type = models.CharField(max_length=10, choices=TemplateOwnerType.choices)
     name = models.CharField(max_length=255)
-    steps = models.JSONField()
+    steps = models.JSONField() # 회고 작성 예시
 
     def __str__(self):
         return self.name
@@ -60,11 +60,11 @@ class Challenge(models.Model):
     crew = models.ForeignKey('crew.Crew', on_delete=models.CASCADE, related_name='challenges', null=True, blank=True) # 크루 챌린지일 경우
     challenge_name = models.CharField(max_length=255)
     deadline = models.DateTimeField()
-    kpi_description = models.TextField(blank=True) # 기존 kpi 필드를 이름 변경하거나 대체
     kpi_metrics = models.JSONField(null=True, blank=True) # 구조화된 KPI 저장 (예: {"metric1": "...", "metric2": "..."})
     owner_type = models.CharField(max_length=10, choices=ChallengeOwnerType.choices)
     status = models.CharField(max_length=10, choices=ChallengeStatus.choices, default=ChallengeStatus.LIVE)
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return self.challenge_name
