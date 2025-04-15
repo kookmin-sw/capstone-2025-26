@@ -57,7 +57,6 @@ INSTALLED_APPS = [
     'community', 
     'crew',
     'retrospect',
-    'django_extensions' 
 ]
 
 MIDDLEWARE = [
