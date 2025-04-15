@@ -56,7 +56,7 @@ INSTALLED_APPS = [
     'ai_manager',
     'community', 
     'crew',
-    'retrospect', 
+    'retrospect',
 ]
 
 MIDDLEWARE = [
