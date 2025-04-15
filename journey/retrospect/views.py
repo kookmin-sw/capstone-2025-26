@@ -1,6 +1,9 @@
 from django.shortcuts import render
+from rest_framework.views import APIView
 from rest_framework import viewsets, status, permissions
-from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
+from rest_framework.exceptions import NotFound, PermissionDenied
+
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from django.db.models import Q
@@ -13,6 +16,9 @@ from .permissions import (IsRetrospectOwnerOrCrewMemberOrReadOnly, # Use the new
                           IsTemplateOwnerOrCrewMemberOrReadOnly, 
                           IsChallengeOwnerOrCrewMemberOrReadOnly, 
                           IsRetrospectWeeklyAnalysisOwnerOrCrewMemberOrReadOnly)
+from ai_manager.services.plan_generator import generate_plan_from_retrospect  # 이건 너가 만든 함수
+
+
 # Create your views here.
 
 
@@ -325,3 +331,38 @@ class PlanViewSet(viewsets.ModelViewSet):
     queryset = Plan.objects.all()
     serializer_class = PlanSerializer
     permission_classes = [permissions.IsAuthenticated]
+
+class GenerateNextPlanAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, challenge_id):
+        user = request.user
+
+        # 1. 챌린지 가져오기
+        try:
+            challenge = Challenge.objects.get(id=challenge_id)
+        except Challenge.DoesNotExist:
+            raise NotFound("해당 챌린지를 찾을 수 없습니다.")
+
+        # 2. 회고 ID 입력 받기
+        retrospect_id = request.data.get("retrospect_id")
+        if not retrospect_id:
+            return Response({"error": "retrospect_id는 필수입니다."}, status=400)
+
+        try:
+            retrospect = Retrospect.objects.get(id=retrospect_id, challenge=challenge)
+        except Retrospect.DoesNotExist:
+            raise NotFound("회고가 존재하지 않거나 이 챌린지에 속하지 않습니다.")
+
+        if retrospect.user != user:
+            raise PermissionDenied("이 회고에 대한 접근 권한이 없습니다.")
+
+        # 3. Plan 생성 함수 호출
+        try:
+            plan = generate_plan_from_retrospect(challenge, retrospect)
+        except Exception as e:
+            return Response({"error": str(e)}, status=500)
+
+        # 4. 응답 반환
+        serializer = PlanSerializer(plan)
+        return Response({"plan": serializer.data}, status=201)
