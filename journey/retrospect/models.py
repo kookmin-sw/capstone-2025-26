@@ -55,7 +55,6 @@ class Template(models.Model):
 
 class Challenge(models.Model):
     """챌린지 모델"""
-    plan = models.ForeignKey(Plan, on_delete=models.PROTECT, related_name='challenges', null=True, blank=True)
     user = models.ForeignKey('user_manager.User', on_delete=models.CASCADE, related_name='challenges', null=True, blank=True) # 개인 챌린지일 경우
     crew = models.ForeignKey('crew.Crew', on_delete=models.CASCADE, related_name='challenges', null=True, blank=True) # 크루 챌린지일 경우
     challenge_name = models.CharField(max_length=255)
@@ -65,6 +64,8 @@ class Challenge(models.Model):
     status = models.CharField(max_length=10, choices=ChallengeStatus.choices, default=ChallengeStatus.LIVE)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    ChallengeOwnerType = ChallengeOwnerType
 
     def __str__(self):
         return self.challenge_name
@@ -84,6 +85,7 @@ class UserChallengeStatus(models.Model):
 
 class Retrospect(models.Model):
     """회고 모델"""
+    plan = models.ForeignKey(Plan, on_delete=models.SET_NULL, null=True, blank=True, related_name='retrospects') # 계획 없이 작성 가능 , 따로 계획 안세우고 싶을수도 있으니까
     challenge = models.ForeignKey(Challenge, on_delete=models.CASCADE, related_name='retrospects')
     template = models.ForeignKey(Template, on_delete=models.SET_NULL, null=True, blank=True, related_name='retrospects') # 템플릿 없이 작성 가능
     user = models.ForeignKey('user_manager.User', on_delete=models.CASCADE, related_name='retrospects') # 작성자

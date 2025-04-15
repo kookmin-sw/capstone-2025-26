@@ -66,12 +66,23 @@ class RetrospectViewSet(viewsets.ModelViewSet):
         return queryset
 
     def perform_create(self, serializer):
-        """Set the user field automatically when creating a retrospect.
-           The owner_type and crew (if applicable) should be validated by the serializer.
-           The creator is always the request.user.
-        """
-        # Ensure the user is always set as the creator
-        serializer.save(user=self.request.user)
+        """회고 생성 시 Plan을 자동 생성하고 연결"""
+
+        user = self.request.user
+        retrospect = serializer.save(user=user)
+
+        try:
+            #회고 기반 Plan 생성
+            plan = generate_plan_from_retrospect(retrospect.challenge, retrospect)
+
+            #회고에 Plan 연결 후 저장
+            retrospect.plan = plan
+            retrospect.save(update_fields=['plan'])
+        
+        except Exception as e:
+            # 회고는 저장됐지만 Plan 생성 실패
+            print(f"[ERROR] 회고 기반 Plan 생성 실패: {e}")
+
 
     # Add specific actions if needed, e.g., linking to crew, etc.
     # Example: List retrospects for a specific challenge or user might be useful
@@ -153,7 +164,7 @@ class ChallengeViewSet(viewsets.ModelViewSet):
         if not user.is_authenticated:
             return Challenge.objects.none()
 
-        queryset = Challenge.objects.select_related('user', 'crew', 'plan').all()
+        queryset = Challenge.objects.select_related('user', 'crew').all()
 
         # Corrected: Get crew IDs via CrewMembership
         user_crew_ids = CrewMembership.objects.filter(
@@ -180,7 +191,6 @@ class ChallengeViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         """Handle Challenge creation:
         - Set user or crew based on owner_type.
-        - Generate Plan via LLM if initial_plan_description is provided.
         - Generate KPI via LLM.
         - Assign Plan and KPI results to the challenge instance.
         """
@@ -188,8 +198,7 @@ class ChallengeViewSet(viewsets.ModelViewSet):
         user = self.request.user
         crew = serializer.validated_data.get('crew')
         challenge_name = serializer.validated_data.get('challenge_name')
-        initial_plan_description = serializer.validated_data.pop('initial_plan_description', None)
-        plan_instance = serializer.validated_data.get('plan')
+        
 
         challenge_owner_user = None
         challenge_owner_crew = None
@@ -209,19 +218,11 @@ class ChallengeViewSet(viewsets.ModelViewSet):
             ).exists():
                  raise permissions.PermissionDenied("You are not a member of this crew.")
 
-        if initial_plan_description:
-            plan_data = generate_plan_from_description(initial_plan_description)
-            plan_instance = Plan.objects.create(**plan_data)
-            serializer.validated_data.pop('plan', None)
-
-        kpi_metrics = generate_kpi_from_challenge(
-            challenge_name, plan_instance.plan_list if plan_instance else [] # Handle case where plan might not exist yet
-        )
+        kpi_metrics = generate_kpi_from_challenge(challenge_name)
 
         serializer.save(
             user=challenge_owner_user,
             crew=challenge_owner_crew,
-            plan=plan_instance,
             kpi_metrics=kpi_metrics,
             status=ChallengeStatus.LIVE
         )
@@ -250,8 +251,8 @@ def generate_plan_from_description(description: str) -> dict:
     plan_steps = [f"Step 1 based on '{description}'", f"Step 2 based on '{description}'", "Step 3 generic"]
     return {"plan_list": plan_steps}
 
-def generate_kpi_from_challenge(challenge_name: str, plan_list: list) -> tuple[str, dict]:
-    print(f"[LLM Placeholder] Generating KPI for: {challenge_name} with plan: {plan_list}")
+def generate_kpi_from_challenge(challenge_name: str) -> tuple[str, dict]:
+    print(f"[LLM Placeholder] Generating KPI for: {challenge_name}")
     kpi_desc = f"KPI description generated for {challenge_name}."
     kpi_metrics = {"completion_rate": 0, "step_1_focus": 0, "consistency": 0}
     return kpi_desc, kpi_metrics
