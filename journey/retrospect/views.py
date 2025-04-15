@@ -65,6 +65,10 @@ class RetrospectViewSet(viewsets.ModelViewSet):
         
         return queryset
     
+    # 실제 회고 생성 시 발생하는 NOT NULL constraint 실패(예: user_id가 NULL인 경우) 때문에 추가
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+    
     # 분리하는게 좋을 것 같아서 일단 주석처리
     # def perform_create(self, serializer):
     #     """회고 생성 시 Plan을 자동 생성하고 연결"""
@@ -334,6 +338,11 @@ class PlanViewSet(viewsets.ModelViewSet):
     serializer_class = PlanSerializer
     permission_classes = [permissions.IsAuthenticated]
 
+
+# 회고 쓰면 자동으로 생성되기 보다는
+# 회고 쓰면 사용자한테 플랜 자동생성 할거냐 물어보고 하는게 나은것같아서 분리함
+# GenericAPIView 쓴 이유는 swagger 문서 자동 생성을 위함 
+
 class GenerateNextPlanAPIView(GenericAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = GenerateNextPlanSerializer
@@ -361,6 +370,9 @@ class GenerateNextPlanAPIView(GenericAPIView):
 
         try:
             plan = generate_plan_from_retrospect(challenge, retrospect)
+            # 회고의 외래키에 생성한 Plan을 할당하고 저장
+            retrospect.plan = plan
+            retrospect.save(update_fields=['plan'])
         except Exception as e:
             return Response({"error": str(e)}, status=500)
 

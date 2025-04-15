@@ -17,12 +17,17 @@ llm = ChatVertexAI(
     temperature=0.7,
 )
 
-# Langfuse 핸들러
-langfuse_handler = CallbackHandler(
-    secret_key=os.getenv("LANGFUSE_SECRET_KEY"),
-    public_key=os.getenv("LANGFUSE_PUBLIC_KEY"),
-    host=os.getenv("LANGFUSE_HOST"),
-)
+# Langfuse 핸들러 - 토큰 사용량 데이터 형식 문제 해결
+try:
+    langfuse_handler = CallbackHandler(
+        secret_key=os.getenv("LANGFUSE_SECRET_KEY"),
+        public_key=os.getenv("LANGFUSE_PUBLIC_KEY"),
+        host=os.getenv("LANGFUSE_HOST"),
+    )
+except Exception as e:
+    print(f"Langfuse 핸들러 초기화 오류: {str(e)}")
+    # Langfuse 핸들러 초기화 실패 시 None으로 설정
+    langfuse_handler = None
 
 
 def generate_plan_from_retrospect(challenge, retrospect):
@@ -75,7 +80,9 @@ def generate_plan_from_retrospect(challenge, retrospect):
 
     # 🔹 4. LLM 실행 + Plan 저장
     try:
-        response = chain.invoke(input_data, config={"callbacks": [langfuse_handler]})
+        # Langfuse 핸들러가 None이면 콜백 없이 실행
+        callbacks = [langfuse_handler] if langfuse_handler else []
+        response = chain.invoke(input_data, config={"callbacks": callbacks})
         response_str = str(response).strip()
         print(f"Generated Plan: {response}")
 

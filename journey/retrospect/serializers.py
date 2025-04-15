@@ -16,7 +16,7 @@ class RetrospectSerializer(serializers.ModelSerializer):
     # 모델에는 없음 
     initial_plan_description = serializers.CharField(
         write_only=True,
-        required=True,
+        required=False,  # 필수 필드에서 선택적 필드로 변경
         help_text="LLM을 사용해 초기 계획을 생성하기 위해 설명을 입력하세요."
     )
     class Meta:
@@ -48,8 +48,9 @@ class RetrospectSerializer(serializers.ModelSerializer):
         # Field to receive the initial plan description for LLM generation (not part of the model)
         initial_description = data.get('initial_plan_description') #llm으로 보낼 요청
 
-        if not initial_description:
-             raise serializers.ValidationError("'initial_plan_description' must be provided.")
+        # 회고 생성 시에만 initial_plan_description 필드가 필요함
+        if self.context.get('request') and self.context['request'].method == 'POST' and not initial_description:
+             raise serializers.ValidationError("'initial_plan_description' must be provided for creating a retrospect.")
 
         # 모델에는 없는 필드이므로, 이후 create() 메서드에 전달되지 않도록 제거        
         data.pop('initial_plan_description', None)
