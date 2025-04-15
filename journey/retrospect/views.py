@@ -208,7 +208,7 @@ class ChallengeViewSet(viewsets.ModelViewSet):
             plan_instance = Plan.objects.create(**plan_data)
             serializer.validated_data.pop('plan', None)
 
-        kpi_description, kpi_metrics = generate_kpi_from_challenge(
+        kpi_metrics = generate_kpi_from_challenge(
             challenge_name, plan_instance.plan_list if plan_instance else [] # Handle case where plan might not exist yet
         )
 
@@ -216,7 +216,6 @@ class ChallengeViewSet(viewsets.ModelViewSet):
             user=challenge_owner_user,
             crew=challenge_owner_crew,
             plan=plan_instance,
-            kpi_description=kpi_description,
             kpi_metrics=kpi_metrics,
             status=ChallengeStatus.LIVE
         )

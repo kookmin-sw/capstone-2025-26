@@ -33,6 +33,7 @@ class User(AbstractUser):
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['nickname']
 
+
 class Notification(models.Model):
     """알림 모델"""
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notifications') # 알림 수신자

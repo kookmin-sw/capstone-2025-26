@@ -307,6 +307,21 @@ argon2 = ["argon2-cffi (>=19.1.0)"]
 bcrypt = ["bcrypt"]
 
 [[package]]
+name = "django-extensions"
+version = "4.1"
+description = "Extensions for Django"
+optional = false
+python-versions = ">=3.9"
+groups = ["main"]
+files = [
+    {file = "django_extensions-4.1-py3-none-any.whl", hash = "sha256:0699a7af28f2523bf8db309a80278519362cd4b6e1fd0a8cd4bf063e1e023336"},
+    {file = "django_extensions-4.1.tar.gz", hash = "sha256:7b70a4d28e9b840f44694e3f7feb54f55d495f8b3fa6c5c0e5e12bcb2aa3cdeb"},
+]
+
+[package.dependencies]
+django = ">=4.2"
+
+[[package]]
 name = "django-prometheus"
 version = "2.3.1"
 description = "Django middlewares to monitor your application with Prometheus.io."
@@ -1826,6 +1841,20 @@ files = [
 typing-extensions = ">=4.6.0,<4.7.0 || >4.7.0"
 
 [[package]]
+name = "pydotplus"
+version = "2.0.2"
+description = "Python interface to Graphviz's Dot language"
+optional = false
+python-versions = "*"
+groups = ["main"]
+files = [
+    {file = "pydotplus-2.0.2.tar.gz", hash = "sha256:91e85e9ee9b85d2391ead7d635e3d9c7f5f44fd60a60e59b13e2403fa66505c4"},
+]
+
+[package.dependencies]
+pyparsing = ">=2.0.1"
+
+[[package]]
 name = "pyjwt"
 version = "2.9.0"
 description = "JSON Web Token implementation in Python"
@@ -1842,6 +1871,21 @@ crypto = ["cryptography (>=3.4.0)"]
 dev = ["coverage[toml] (==5.0.4)", "cryptography (>=3.4.0)", "pre-commit", "pytest (>=6.0.0,<7.0.0)", "sphinx", "sphinx-rtd-theme", "zope.interface"]
 docs = ["sphinx", "sphinx-rtd-theme", "zope.interface"]
 tests = ["coverage[toml] (==5.0.4)", "pytest (>=6.0.0,<7.0.0)"]
+
+[[package]]
+name = "pyparsing"
+version = "3.2.3"
+description = "pyparsing module - Classes and methods to define and execute parsing grammars"
+optional = false
+python-versions = ">=3.9"
+groups = ["main"]
+files = [
+    {file = "pyparsing-3.2.3-py3-none-any.whl", hash = "sha256:a749938e02d6fd0b59b356ca504a24982314bb090c383e3cf201c95ef7e2bfcf"},
+    {file = "pyparsing-3.2.3.tar.gz", hash = "sha256:b9c13f1ab8b3b542f72e28f634bad4de758ab3ce4546e4301970ad6fa77c38be"},
+]
+
+[package.extras]
+diagrams = ["jinja2", "railroad-diagrams"]
 
 [[package]]
 name = "python-dateutil"
@@ -2600,3 +2644,4 @@ cffi = ["cffi (>=1.11)"]
 lock-version = "2.1"
 python-versions = ">=3.13,<4.0"
 content-hash = "737e4ab0c0851c5d85b2437ddcd4e0bc25c29a520bb40fa476227c0e1a9aed75"
+
