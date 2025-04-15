@@ -50,6 +50,8 @@ class Template(models.Model):
     name = models.CharField(max_length=255)
     steps = models.JSONField() # 회고 작성 예시
 
+    TemplateOwnerType = TemplateOwnerType
+
     def __str__(self):
         return self.name
 
@@ -77,6 +79,7 @@ class UserChallengeStatus(models.Model):
     status = models.CharField(max_length=10, choices=[('ACHIEVED', 'Achieved'), ('FAILED', 'Failed'), ('PENDING', 'Pending')], default='PENDING')
     updated_at = models.DateTimeField(auto_now=True)
 
+
     class Meta:
         unique_together = ('user', 'challenge')
         indexes = [
@@ -97,6 +100,7 @@ class Retrospect(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    RetrospectOwnerType = RetrospectOwnerType
     def __str__(self):
         return f"Retrospect for {self.challenge} by {self.user}"
 
@@ -110,6 +114,8 @@ class RetrospectWeeklyAnalysis(models.Model):
     end_date = models.DateField() # 주 종료일 (week_end -> end_date)
     owner_type = models.CharField(max_length=10, choices=RetrospectWeeklyAnalysisOwnerType.choices)
     created_at = models.DateTimeField(auto_now_add=True)
+
+    RetrospectWeeklyAnalysisOwnerType = RetrospectWeeklyAnalysisOwnerType
 
     def __str__(self):
         owner = self.user if self.owner_type == RetrospectWeeklyAnalysisOwnerType.USER else self.crew
