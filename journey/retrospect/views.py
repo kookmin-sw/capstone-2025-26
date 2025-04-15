@@ -321,3 +321,7 @@ class RetrospectWeeklyAnalysisViewSet(viewsets.ModelViewSet):
     # def generate_weekly_analysis(self, request):
     #     ...
         
+class PlanViewSet(viewsets.ModelViewSet):
+    queryset = Plan.objects.all()
+    serializer_class = PlanSerializer
+    permission_classes = [permissions.IsAuthenticated]
