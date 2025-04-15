@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from rest_framework.views import APIView
+from rest_framework.generics import GenericAPIView
 from rest_framework import viewsets, status, permissions
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
 from rest_framework.exceptions import NotFound, PermissionDenied
@@ -10,13 +10,13 @@ from django.db.models import Q
 from .models import (Retrospect, Template, Challenge, Plan, ChallengeStatus, 
                  RetrospectWeeklyAnalysis, RetrospectVisibility, TemplateOwnerType, 
                  ChallengeOwnerType, RetrospectOwnerType, RetrospectWeeklyAnalysisOwnerType)
-from .serializers import RetrospectSerializer, TemplateSerializer, ChallengeSerializer, PlanSerializer, RetrospectWeeklyAnalysisSerializer
+from .serializers import RetrospectSerializer, TemplateSerializer, ChallengeSerializer, PlanSerializer, RetrospectWeeklyAnalysisSerializer, GenerateNextPlanSerializer
 from crew.models import Crew, CrewMembership, CrewMembershipStatus # Import CrewMembership models
 from .permissions import (IsRetrospectOwnerOrCrewMemberOrReadOnly, # Use the new permission class
                           IsTemplateOwnerOrCrewMemberOrReadOnly, 
                           IsChallengeOwnerOrCrewMemberOrReadOnly, 
                           IsRetrospectWeeklyAnalysisOwnerOrCrewMemberOrReadOnly)
-from ai_manager.services.plan_generator import generate_plan_from_retrospect  # 이건 너가 만든 함수
+from ai_manager.services.plan_generator import generate_plan_from_retrospect  # 회고 기반 plan generator llm
 
 
 # Create your views here.
@@ -64,24 +64,25 @@ class RetrospectViewSet(viewsets.ModelViewSet):
         ).distinct() # Use distinct to avoid duplicates if a user owns a public retrospect
         
         return queryset
+    
+    # 분리하는게 좋을 것 같아서 일단 주석처리
+    # def perform_create(self, serializer):
+    #     """회고 생성 시 Plan을 자동 생성하고 연결"""
 
-    def perform_create(self, serializer):
-        """회고 생성 시 Plan을 자동 생성하고 연결"""
+    #     user = self.request.user
+    #     retrospect = serializer.save(user=user)
 
-        user = self.request.user
-        retrospect = serializer.save(user=user)
+    #     try:
+    #         #회고 기반 Plan 생성
+    #         plan = generate_plan_from_retrospect(retrospect.challenge, retrospect)
 
-        try:
-            #회고 기반 Plan 생성
-            plan = generate_plan_from_retrospect(retrospect.challenge, retrospect)
-
-            #회고에 Plan 연결 후 저장
-            retrospect.plan = plan
-            retrospect.save(update_fields=['plan'])
+    #         #회고에 Plan 연결 후 저장
+    #         retrospect.plan = plan
+    #         retrospect.save(update_fields=['plan'])
         
-        except Exception as e:
-            # 회고는 저장됐지만 Plan 생성 실패
-            print(f"[ERROR] 회고 기반 Plan 생성 실패: {e}")
+    #     except Exception as e:
+    #         # 회고는 저장됐지만 Plan 생성 실패
+    #         print(f"[ERROR] 회고 기반 Plan 생성 실패: {e}")
 
 
     # Add specific actions if needed, e.g., linking to crew, etc.
@@ -333,22 +334,22 @@ class PlanViewSet(viewsets.ModelViewSet):
     serializer_class = PlanSerializer
     permission_classes = [permissions.IsAuthenticated]
 
-class GenerateNextPlanAPIView(APIView):
+class GenerateNextPlanAPIView(GenericAPIView):
     permission_classes = [IsAuthenticated]
+    serializer_class = GenerateNextPlanSerializer
 
     def post(self, request, challenge_id):
         user = request.user
 
-        # 1. 챌린지 가져오기
         try:
             challenge = Challenge.objects.get(id=challenge_id)
         except Challenge.DoesNotExist:
             raise NotFound("해당 챌린지를 찾을 수 없습니다.")
+        
 
-        # 2. 회고 ID 입력 받기
-        retrospect_id = request.data.get("retrospect_id")
-        if not retrospect_id:
-            return Response({"error": "retrospect_id는 필수입니다."}, status=400)
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        retrospect_id = serializer.validated_data['retrospect_id']
 
         try:
             retrospect = Retrospect.objects.get(id=retrospect_id, challenge=challenge)
@@ -358,12 +359,10 @@ class GenerateNextPlanAPIView(APIView):
         if retrospect.user != user:
             raise PermissionDenied("이 회고에 대한 접근 권한이 없습니다.")
 
-        # 3. Plan 생성 함수 호출
         try:
             plan = generate_plan_from_retrospect(challenge, retrospect)
         except Exception as e:
             return Response({"error": str(e)}, status=500)
 
-        # 4. 응답 반환
-        serializer = PlanSerializer(plan)
-        return Response({"plan": serializer.data}, status=201)
+        plan_serializer = PlanSerializer(plan)
+        return Response({"plan": plan_serializer.data}, status=201)
