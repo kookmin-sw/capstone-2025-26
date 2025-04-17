@@ -5,13 +5,14 @@ import 'package:posthog_flutter/posthog_flutter.dart';
 Future<void> main() async {
   // init WidgetsFlutterBinding if not yet
   WidgetsFlutterBinding.ensureInitialized();
-  final config = PostHogConfig('phc_vcpqApKqc66zUcHBBqPntqdLGrPwww4mcwtJ2M5nQ3l');
+  final config =
+      PostHogConfig('phc_vcpqApKqc66zUcHBBqPntqdLGrPwww4mcwtJ2M5nQ3l');
   config.debug = true;
   config.captureApplicationLifecycleEvents = true;
   // or EU Host: 'https://eu.i.posthog.com'
   config.host = 'https://us.i.posthog.com';
   await Posthog().setup(config);
-  runApp(MyApp());
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -48,4 +49,3 @@ class MyApp extends StatelessWidget {
     );
   }
 }
-
