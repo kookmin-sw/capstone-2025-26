@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:reme/screens/home.dart';
 import 'package:reme/screens/restroPage.dart';
+import 'package:reme/themes/color.dart';
 
 class Initialpage extends StatefulWidget {
   const Initialpage({super.key});
@@ -18,8 +19,8 @@ class _InitialpageState extends State<Initialpage>
 
   final List<Widget> _pageOptions = [
     const Home(),
-    Container(), //dummy Widget - crew
     const RetroPage(), // Retrospect
+    Container(), //dummy Widget - crew
     Container(), //dummy Widget - challenge
     Container() //dummy Widget - profile
   ];
@@ -53,37 +54,53 @@ class _InitialpageState extends State<Initialpage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        backgroundColor: const Color(0xFFF3F4F6),
+        backgroundColor: background,
         bottomNavigationBar: SafeArea(
-          child: SizedBox(
+          child: Container(
             height: 70,
-            child: TabBar(
-                indicatorColor: Colors.transparent,
-                labelColor: const Color(0xFF333C4B),
-                unselectedLabelColor: Colors.grey,
-                controller: tabController,
-                tabs: const [
-                  Tab(
-                    icon: Icon(Icons.home_outlined),
-                    text: "홈",
-                  ),
-                  Tab(
-                    icon: Icon(Icons.keyboard_command_key_outlined),
-                    text: "크루",
-                  ),
-                  Tab(
-                    icon: Icon(Icons.layers_outlined),
-                    text: "회고",
-                  ),
-                  Tab(
-                    icon: Icon(Icons.hotel_class_outlined),
-                    text: "목표",
-                  ),
-                  Tab(
-                    icon: Icon(Icons.person_2_outlined),
-                    text: "프로필",
-                  ),
-                ]),
+            clipBehavior: Clip.antiAlias,
+            decoration: const ShapeDecoration(
+              color: Color(0xFF181818),
+              shape: RoundedRectangleBorder(
+                side: BorderSide(
+                  width: 0.50,
+                  color: Color(0xFF838383),
+                ),
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(36),
+                  topRight: Radius.circular(36),
+                ),
+              ),
+            ),
+            child: ClipRect(
+              child: TabBar(
+                  indicatorColor: Colors.transparent,
+                  labelColor: background2,
+                  unselectedLabelColor: Color(0xFF848484),
+                  controller: tabController,
+                  tabs: const [
+                    Tab(
+                      icon: Icon(Icons.home_outlined,),
+                      text: "홈",
+                    ),
+                    Tab(
+                      icon: Icon(Icons.layers_outlined),
+                      text: "회고",
+                    ),
+                    Tab(
+                      icon: Icon(Icons.keyboard_command_key_outlined,),
+                      text: "크루",
+                    ),
+                    Tab(
+                      icon: Icon(Icons.hotel_class_outlined),
+                      text: "목표",
+                    ),
+                    Tab(
+                      icon: Icon(Icons.person_2_outlined),
+                      text: "프로필",
+                    ),
+                  ]),
+            ),
           ),
         ),
         body: SafeArea(
@@ -95,14 +112,15 @@ class _InitialpageState extends State<Initialpage>
                   "Re:Me",
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
+                    color: c700
                   ),
                 ),
-                backgroundColor: Colors.white,
+                backgroundColor: background,
                 centerTitle: false,
                 actions: [
                   IconButton(
                       onPressed: () {},
-                      icon: const Icon(Icons.notifications_outlined)),
+                      icon: const Icon(Icons.notifications_outlined, color: c700,)),
                 ],
                 toolbarHeight: 55,
                 floating: true, // 최상단으로 올리지 않아도 appbar 표시

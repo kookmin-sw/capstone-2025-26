@@ -18,7 +18,7 @@ class WidgetBox extends StatelessWidget {
         height: this.height,
         margin: marginLTRB,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: boxBackgroundColor,
           borderRadius: BorderRadius.circular(20),
         ),
         child: Column(
@@ -48,16 +48,8 @@ class WidgetBox extends StatelessWidget {
                 child: Container(
                   height: 32,
                   decoration: BoxDecoration(
+                    color: boxBackgroundColor,
                     borderRadius: BorderRadius.circular(20),
-                    gradient: const LinearGradient(
-                      begin: Alignment.centerLeft,
-                      end: Alignment.centerRight,
-                      colors: [
-                        Colors.white,
-                        Color(0xFFF8FAF9),
-                        Colors.white,
-                      ]
-                    )
                   ),
                   child: Column(
                     children: [
@@ -68,9 +60,9 @@ class WidgetBox extends StatelessWidget {
                               begin: Alignment.centerLeft,
                               end: Alignment.centerRight,
                               colors: [
-                                Colors.white,
-                                Color(0xFFE6EAED),
-                                Colors.white
+                                Color(0xFF1C1B20),
+                                Color(0xFF2C2C34),
+                                Color(0xFF1C1B20),
                               ]
                           )
                         ),
@@ -81,7 +73,7 @@ class WidgetBox extends StatelessWidget {
                           child: Text(
                               "더보기",
                             style: TextStyle(
-                              color: moreBtnColor,
+                              color: fontColor,
                               fontSize: 12,
                               fontWeight: FontWeight.w500,
                               height: 1.50,
