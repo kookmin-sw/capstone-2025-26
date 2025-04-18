@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:reme/screens/home.dart';
 import 'package:reme/screens/restroPage.dart';
 import 'package:reme/themes/color.dart';
+import 'package:reme/icon/tab_bar_icon_icons.dart';
 
 class Initialpage extends StatefulWidget {
   const Initialpage({super.key});
@@ -80,23 +81,23 @@ class _InitialpageState extends State<Initialpage>
                   controller: tabController,
                   tabs: const [
                     Tab(
-                      icon: Icon(Icons.home_outlined,),
+                      icon: Icon(TabBarIcon.home,),
                       text: "홈",
                     ),
                     Tab(
-                      icon: Icon(Icons.layers_outlined),
+                      icon: Icon(TabBarIcon.layers),
                       text: "회고",
                     ),
                     Tab(
-                      icon: Icon(Icons.keyboard_command_key_outlined,),
+                      icon: Icon(TabBarIcon.award,),
                       text: "크루",
                     ),
                     Tab(
-                      icon: Icon(Icons.hotel_class_outlined),
+                      icon: Icon(TabBarIcon.command),
                       text: "목표",
                     ),
                     Tab(
-                      icon: Icon(Icons.person_2_outlined),
+                      icon: Icon(TabBarIcon.user),
                       text: "프로필",
                     ),
                   ]),

@@ -101,6 +101,10 @@ flutter:
        - asset: assets/font/Pretendard-Thin.otf
          weight: 100
          style: italic
+   - family: TabBarIcon
+     fonts:
+       - asset: assets/font/TabBarIcon.ttf
+
   #   - family: Trajan Pro
   #     fonts:
   #       - asset: fonts/TrajanPro.ttf
