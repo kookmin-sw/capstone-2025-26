@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:reme/routes.dart';
 import 'package:posthog_flutter/posthog_flutter.dart';
+import 'package:reme/themes/color.dart';
 
 Future<void> main() async {
   // init WidgetsFlutterBinding if not yet
@@ -44,12 +45,13 @@ class MyApp extends StatelessWidget {
         //
         // This works for code too, not just values: Most code changes can be
         // tested with just a hot reload.
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.lightBlue),
+        colorScheme: ColorScheme.fromSeed(seedColor: c500),
         useMaterial3: true,
         fontFamily: 'Pretendard',
       ),
       initialRoute: isLogin,
       routes: namedRoute,
+      themeMode: ThemeMode.dark,
     );
   }
 }
