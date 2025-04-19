@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg_provider/flutter_svg_provider.dart';
 import 'package:reme/icon/tab_bar_icon_icons.dart';
 import 'package:reme/themes/color.dart';
+import 'package:reme/widgets/boxUserInfo.dart';
 import 'package:reme/widgets/customListItem.dart';
 import 'package:reme/widgets/widgetBox.dart';
 
@@ -29,7 +31,9 @@ class _FeedState extends State<Feed> {
                 WidgetBox(
                     children: [
                       // 사용자 프로필사진, 이름, 팔로우 버튼 여기에
-                      
+                      BoxUserInfo(
+                        name: "웅성웅성",
+                      ),
                       CustomListitem(
                           height: 46,
                           content: "모두를 위한 머신러닝 읽기"

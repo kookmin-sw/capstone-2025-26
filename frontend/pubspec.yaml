@@ -38,6 +38,7 @@ dependencies:
   cupertino_icons: ^1.0.8
   webview_flutter: ^4.10.0
   flutter_secure_storage: ^9.2.4
+  flutter_svg_provider: ^1.0.7
 
 dev_dependencies:
   flutter_test:
@@ -66,6 +67,7 @@ flutter:
    - assets/img/kakao_login_large_narrow.png
    - assets/img/naver_login.png
    - assets/img/plusIcon.png
+   - assets/img/account_circle.svg
 
 
   # An image asset can refer to one or more resolution-specific "variants", see
