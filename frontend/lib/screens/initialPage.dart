@@ -28,14 +28,12 @@ class _InitialpageState extends State<Initialpage>
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     tabController = TabController(length: 5, vsync: this);
     tabController!.addListener(() => setState(() {
-          scrollController.jumpTo(0);
-          _selectIndex = tabController!.index;
-          print(_selectIndex);
-        }));
+      scrollController.jumpTo(0);
+      _selectIndex = tabController!.index;
+    }));
     scrollController.addListener(() {
       setState(() {
         // 스크롤 위치에 따라 opacity 조정
@@ -46,7 +44,6 @@ class _InitialpageState extends State<Initialpage>
 
   @override
   void dispose() {
-    // TODO: implement dispose
     tabController!.dispose();
     scrollController.dispose();
     super.dispose();
@@ -55,85 +52,116 @@ class _InitialpageState extends State<Initialpage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        backgroundColor: background,
-        bottomNavigationBar: SafeArea(
-          child: Container(
-            height: 70,
-            clipBehavior: Clip.antiAlias,
-            decoration: const ShapeDecoration(
-              color: Color(0xFF181818),
-              shape: RoundedRectangleBorder(
-                side: BorderSide(
-                  width: 0.50,
-                  color: Color(0xFF838383),
+      backgroundColor: background,
+      body: Stack(
+        children: [
+          // 메인 콘텐츠(스크롤)
+          SafeArea(
+            child: CustomScrollView(
+              physics: const BouncingScrollPhysics(),
+              slivers: [
+                SliverAppBar(
+                  title: const Text(
+                    "Re:Me",
+                    style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: c700
+                    ),
+                  ),
+                  backgroundColor: background,
+                  centerTitle: false,
+                  actions: [
+                    IconButton(
+                        onPressed: () {},
+                        icon: const Icon(Icons.notifications_outlined, color: c700,)
+                    ),
+                  ],
+                  toolbarHeight: 55,
+                  floating: true, // 최상단으로 올리지 않아도 appbar 표시
+                  scrolledUnderElevation: 0, // 스크롤시 appbar 색상 변경 안되게
+                  snap: true,
                 ),
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(36),
-                  topRight: Radius.circular(36),
-                ),
-              ),
-            ),
-            child: ClipRect(
-              child: TabBar(
-                  indicatorColor: Colors.transparent,
-                  labelColor: background2,
-                  unselectedLabelColor: Color(0xFF848484),
-                  controller: tabController,
-                  tabs: const [
-                    Tab(
-                      icon: Icon(TabBarIcon.home,),
-                      text: "홈",
-                    ),
-                    Tab(
-                      icon: Icon(TabBarIcon.layers),
-                      text: "회고",
-                    ),
-                    Tab(
-                      icon: Icon(TabBarIcon.award,),
-                      text: "크루",
-                    ),
-                    Tab(
-                      icon: Icon(TabBarIcon.command),
-                      text: "목표",
-                    ),
-                    Tab(
-                      icon: Icon(TabBarIcon.user),
-                      text: "프로필",
-                    ),
-                  ]),
+                SliverList(
+                  delegate: SliverChildListDelegate(
+                      [
+                        Container(
+                          child: _pageOptions.elementAt(_selectIndex),
+                          padding: EdgeInsets.only(bottom: 80),
+                        )
+
+                      ]
+                  )
+                )
+              ],
+              controller: scrollController,
             ),
           ),
-        ),
-        body: SafeArea(
-          child: CustomScrollView(
-            physics: const BouncingScrollPhysics(),
-            slivers: [
-              SliverAppBar(
-                title: const Text(
-                  "Re:Me",
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: c700
+          // 곡선이 적용된 TabBar (Stack의 맨 위)
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: SafeArea(
+              top: false,
+              child: ClipRRect(
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(36),
+                ),
+                child: Container(
+                  height: 70,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFF181818),
+                    border: Border(
+                      left: BorderSide(
+                        color: Color(0xFF838383),
+                        width: 0.3,
+                      ),
+                      top: BorderSide(
+                        color: Color(0xFF838383),
+                        width: 0.3,
+                      ),
+                      right: BorderSide(
+                        color: Color(0xFF838383),
+                        width: 0.3,
+                      ),
+                    ),
+                    borderRadius: BorderRadius.vertical(
+                      top: Radius.circular(36),
+                    ),
+                  ),
+                  child: TabBar(
+                    dividerColor: Colors.transparent,
+                    indicatorColor: Colors.transparent,
+                    labelColor: background2,
+                    unselectedLabelColor: const Color(0xFF848484),
+                    controller: tabController,
+                    tabs: const [
+                      Tab(
+                        icon: Icon(TabBarIcon.home,),
+                        text: "홈",
+                      ),
+                      Tab(
+                        icon: Icon(TabBarIcon.layers),
+                        text: "회고",
+                      ),
+                      Tab(
+                        icon: Icon(TabBarIcon.award,),
+                        text: "크루",
+                      ),
+                      Tab(
+                        icon: Icon(TabBarIcon.command),
+                        text: "목표",
+                      ),
+                      Tab(
+                        icon: Icon(TabBarIcon.user),
+                        text: "프로필",
+                      ),
+                    ],
                   ),
                 ),
-                backgroundColor: background,
-                centerTitle: false,
-                actions: [
-                  IconButton(
-                      onPressed: () {},
-                      icon: const Icon(Icons.notifications_outlined, color: c700,)),
-                ],
-                toolbarHeight: 55,
-                floating: true, // 최상단으로 올리지 않아도 appbar 표시
-                scrolledUnderElevation: 0, // 스크롤시 appbar 색상 변경 안되게
-                snap: true,
               ),
-              SliverList(
-                  delegate: SliverChildListDelegate(
-                      [_pageOptions.elementAt(_selectIndex)]))
-            ],
-            controller: scrollController,
+            ),
           ),
-        ));
+        ],
+      ),
+    );
   }
 }
