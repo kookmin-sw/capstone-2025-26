@@ -12,6 +12,10 @@
 ///       - asset: fonts/TabBarIcon.ttf
 ///
 /// 
+/// * Font Awesome 4, Copyright (C) 2016 by Dave Gandy
+///         Author:    Dave Gandy
+///         License:   SIL ()
+///         Homepage:  http://fortawesome.github.com/Font-Awesome/
 ///
 import 'package:flutter/widgets.dart';
 
@@ -28,4 +32,5 @@ class TabBarIcon {
   static const IconData user = IconData(0xe804, fontFamily: _kFontFam, fontPackage: _kFontPkg);
   static const IconData command = IconData(0xe805, fontFamily: _kFontFam, fontPackage: _kFontPkg);
   static const IconData heart = IconData(0xe806, fontFamily: _kFontFam, fontPackage: _kFontPkg);
+  static const IconData search = IconData(0xe809, fontFamily: _kFontFam, fontPackage: _kFontPkg);
 }
