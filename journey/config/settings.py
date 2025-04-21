@@ -19,9 +19,10 @@ from langfuse import Langfuse
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+PARENT_DIR = BASE_DIR.parent  # 상위 디렉토리 (capstone-2025-26)
 
-# Load .env file
-load_dotenv(os.path.join(BASE_DIR, '.env'))
+# 상위 디렉토리의 .env 파일 로드
+load_dotenv(os.path.join(PARENT_DIR, '.env'))
 
 
 # Quick-start development settings - unsuitable for production
@@ -103,13 +104,24 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
-DATABASES = {
+
+# DATABASES = {
+# 'default': {
+#     'ENGINE': 'django.db.backends.sqlite3',
+#     'NAME': BASE_DIR / 'db.sqlite3',
+#     }
+# }
+
+DATABASES = { # remote에 올릴 땐 이걸로
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': os.getenv('DB_NAME'),
+        'USER': os.getenv('DB_USER'),
+        'PASSWORD': os.getenv('DB_PASSWORD'),
+        'HOST': os.getenv('DB_HOST'),  # Cloud SQL Proxy 사용 시 localhost
+        'PORT': os.getenv('DB_PORT'),
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
