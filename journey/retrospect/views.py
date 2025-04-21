@@ -1,18 +1,24 @@
 from django.shortcuts import render
+from rest_framework.generics import GenericAPIView
 from rest_framework import viewsets, status, permissions
-from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
+from rest_framework.exceptions import NotFound, PermissionDenied
+
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from django.db.models import Q
 from .models import (Retrospect, Template, Challenge, Plan, ChallengeStatus, 
                  RetrospectWeeklyAnalysis, RetrospectVisibility, TemplateOwnerType, 
                  ChallengeOwnerType, RetrospectOwnerType, RetrospectWeeklyAnalysisOwnerType)
-from .serializers import RetrospectSerializer, TemplateSerializer, ChallengeSerializer, PlanSerializer, RetrospectWeeklyAnalysisSerializer
+from .serializers import RetrospectSerializer, TemplateSerializer, ChallengeSerializer, PlanSerializer, RetrospectWeeklyAnalysisSerializer, GenerateNextPlanSerializer
 from crew.models import Crew, CrewMembership, CrewMembershipStatus # Import CrewMembership models
 from .permissions import (IsRetrospectOwnerOrCrewMemberOrReadOnly, # Use the new permission class
                           IsTemplateOwnerOrCrewMemberOrReadOnly, 
                           IsChallengeOwnerOrCrewMemberOrReadOnly, 
                           IsRetrospectWeeklyAnalysisOwnerOrCrewMemberOrReadOnly)
+from ai_manager.services.plan_generator import generate_plan_from_retrospect  # 회고 기반 plan generator llm
+
+
 # Create your views here.
 
 
@@ -58,14 +64,30 @@ class RetrospectViewSet(viewsets.ModelViewSet):
         ).distinct() # Use distinct to avoid duplicates if a user owns a public retrospect
         
         return queryset
-
+    
+    # 실제 회고 생성 시 발생하는 NOT NULL constraint 실패(예: user_id가 NULL인 경우) 때문에 추가
     def perform_create(self, serializer):
-        """Set the user field automatically when creating a retrospect.
-           The owner_type and crew (if applicable) should be validated by the serializer.
-           The creator is always the request.user.
-        """
-        # Ensure the user is always set as the creator
         serializer.save(user=self.request.user)
+    
+    # 분리하는게 좋을 것 같아서 일단 주석처리
+    # def perform_create(self, serializer):
+    #     """회고 생성 시 Plan을 자동 생성하고 연결"""
+
+    #     user = self.request.user
+    #     retrospect = serializer.save(user=user)
+
+    #     try:
+    #         #회고 기반 Plan 생성
+    #         plan = generate_plan_from_retrospect(retrospect.challenge, retrospect)
+
+    #         #회고에 Plan 연결 후 저장
+    #         retrospect.plan = plan
+    #         retrospect.save(update_fields=['plan'])
+        
+    #     except Exception as e:
+    #         # 회고는 저장됐지만 Plan 생성 실패
+    #         print(f"[ERROR] 회고 기반 Plan 생성 실패: {e}")
+
 
     # Add specific actions if needed, e.g., linking to crew, etc.
     # Example: List retrospects for a specific challenge or user might be useful
@@ -147,7 +169,7 @@ class ChallengeViewSet(viewsets.ModelViewSet):
         if not user.is_authenticated:
             return Challenge.objects.none()
 
-        queryset = Challenge.objects.select_related('user', 'crew', 'plan').all()
+        queryset = Challenge.objects.select_related('user', 'crew').all()
 
         # Corrected: Get crew IDs via CrewMembership
         user_crew_ids = CrewMembership.objects.filter(
@@ -174,7 +196,6 @@ class ChallengeViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         """Handle Challenge creation:
         - Set user or crew based on owner_type.
-        - Generate Plan via LLM if initial_plan_description is provided.
         - Generate KPI via LLM.
         - Assign Plan and KPI results to the challenge instance.
         """
@@ -182,8 +203,7 @@ class ChallengeViewSet(viewsets.ModelViewSet):
         user = self.request.user
         crew = serializer.validated_data.get('crew')
         challenge_name = serializer.validated_data.get('challenge_name')
-        initial_plan_description = serializer.validated_data.pop('initial_plan_description', None)
-        plan_instance = serializer.validated_data.get('plan')
+        
 
         challenge_owner_user = None
         challenge_owner_crew = None
@@ -203,19 +223,11 @@ class ChallengeViewSet(viewsets.ModelViewSet):
             ).exists():
                  raise permissions.PermissionDenied("You are not a member of this crew.")
 
-        if initial_plan_description:
-            plan_data = generate_plan_from_description(initial_plan_description)
-            plan_instance = Plan.objects.create(**plan_data)
-            serializer.validated_data.pop('plan', None)
-
-        kpi_metrics = generate_kpi_from_challenge(
-            challenge_name, plan_instance.plan_list if plan_instance else [] # Handle case where plan might not exist yet
-        )
+        kpi_metrics = generate_kpi_from_challenge(challenge_name)
 
         serializer.save(
             user=challenge_owner_user,
             crew=challenge_owner_crew,
-            plan=plan_instance,
             kpi_metrics=kpi_metrics,
             status=ChallengeStatus.LIVE
         )
@@ -244,8 +256,8 @@ def generate_plan_from_description(description: str) -> dict:
     plan_steps = [f"Step 1 based on '{description}'", f"Step 2 based on '{description}'", "Step 3 generic"]
     return {"plan_list": plan_steps}
 
-def generate_kpi_from_challenge(challenge_name: str, plan_list: list) -> tuple[str, dict]:
-    print(f"[LLM Placeholder] Generating KPI for: {challenge_name} with plan: {plan_list}")
+def generate_kpi_from_challenge(challenge_name: str) -> tuple[str, dict]:
+    print(f"[LLM Placeholder] Generating KPI for: {challenge_name}")
     kpi_desc = f"KPI description generated for {challenge_name}."
     kpi_metrics = {"completion_rate": 0, "step_1_focus": 0, "consistency": 0}
     return kpi_desc, kpi_metrics
@@ -321,3 +333,48 @@ class RetrospectWeeklyAnalysisViewSet(viewsets.ModelViewSet):
     # def generate_weekly_analysis(self, request):
     #     ...
         
+class PlanViewSet(viewsets.ModelViewSet):
+    queryset = Plan.objects.all()
+    serializer_class = PlanSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+
+# 회고 쓰면 자동으로 생성되기 보다는
+# 회고 쓰면 사용자한테 플랜 자동생성 할거냐 물어보고 하는게 나은것같아서 분리함
+# GenericAPIView 쓴 이유는 swagger 문서 자동 생성을 위함 
+
+class GenerateNextPlanAPIView(GenericAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = GenerateNextPlanSerializer
+
+    def post(self, request, challenge_id):
+        user = request.user
+
+        try:
+            challenge = Challenge.objects.get(id=challenge_id)
+        except Challenge.DoesNotExist:
+            raise NotFound("해당 챌린지를 찾을 수 없습니다.")
+        
+
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        retrospect_id = serializer.validated_data['retrospect_id']
+
+        try:
+            retrospect = Retrospect.objects.get(id=retrospect_id, challenge=challenge)
+        except Retrospect.DoesNotExist:
+            raise NotFound("회고가 존재하지 않거나 이 챌린지에 속하지 않습니다.")
+
+        if retrospect.user != user:
+            raise PermissionDenied("이 회고에 대한 접근 권한이 없습니다.")
+
+        try:
+            plan = generate_plan_from_retrospect(challenge, retrospect)
+            # 회고의 외래키에 생성한 Plan을 할당하고 저장
+            retrospect.plan = plan
+            retrospect.save(update_fields=['plan'])
+        except Exception as e:
+            return Response({"error": str(e)}, status=500)
+
+        plan_serializer = PlanSerializer(plan)
+        return Response({"plan": plan_serializer.data}, status=201)
