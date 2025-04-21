@@ -4,6 +4,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django.contrib.auth import get_user_model
 from django.db.models import Q
+from django.db import transaction
 from token_manager.serializer import CustomTokenObtainPairSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.authentication import JWTAuthentication
@@ -91,16 +92,23 @@ class UserViewSet(viewsets.ModelViewSet):
 
 class NotificationViewSet(viewsets.ModelViewSet):
     """
-    사용자의 알림을 조회, 생성, 읽음 처리하는 API (관리자 권한 필요)
+    사용자의 알림을 조회, 생성, 읽음 처리하는 API (사용자 인증 필요)
     """
     serializer_class = NotificationSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        # 현재 로그인한 사용자의 알림만 반환 (GET 요청 시)
-        # 생성(POST)은 permission_classes에서 제어
         return Notification.objects.filter(user=self.request.user).order_by('-created_at')
 
+    def create(self, request, *args, **kwargs):
+        # 들어온 데이터를 그대로 serializer에 넘깁니다.
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        # validated_data 안의 'user' 값을 그대로 사용
+        notification = serializer.save()
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+    
     @action(detail=True, methods=['patch'], url_path='mark-as-read')
     def mark_as_read(self, request, pk=None):
         """ 특정 알림을 읽음 상태로 변경합니다. """
