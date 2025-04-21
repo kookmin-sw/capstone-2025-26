@@ -31,7 +31,12 @@ class CrewViewSet(viewsets.ModelViewSet):
         serializer = CrewSerializer(crews, many=True, context={'request': request}) # Pass request context for potential hyperlinked fields
         return Response(serializer.data)
 
-    @action(detail=True, methods=['post'], url_path='join')
+    @action(
+        detail=True,
+        methods=['post'],
+        url_path='join',
+        permission_classes=[permissions.IsAuthenticated]   # <- 여기에 추가
+    )
     def join_crew(self, request, pk=None):
         """Allows an authenticated user to join a specific crew.
         If the user has a PENDING request, it accepts it.
