@@ -42,6 +42,17 @@ class FeedViewSet(viewsets.ModelViewSet):
             # Optionally return the created like data or just success
             # serializer = LikeSerializer(like_instance) # If you need to return data
             return Response({'status': 'liked'}, status=status.HTTP_201_CREATED)
+    @action(detail=True, methods=['post'], url_path='comments', permission_classes=[permissions.IsAuthenticated])
+    def comments(self, request, pk=None):
+        feed = self.get_object()
+        # feed ID를 요청 데이터에 추가하여 serializer에서 필요 필드를 충족
+        data = request.data.copy()
+        data['feed'] = feed.id
+
+        serializer = CommentSerializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(user=request.user, feed=feed)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 class CommentViewSet(viewsets.ModelViewSet):
     serializer_class = CommentSerializer
