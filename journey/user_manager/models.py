@@ -3,6 +3,7 @@ from django.utils.translation import gettext_lazy as _
 from django.db import models
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
+import random, string
 
 class NotificationType(models.TextChoices):
     INVITE_CREW = 'INVITE_CREW', 'Crew Invitation'
@@ -17,21 +18,40 @@ class NotificationType(models.TextChoices):
 class Provider(models.Model):
     domain = models.CharField(max_length=100, unique=True)
     name = models.CharField(max_length=50)
-
+def generate_unique_uid():
+    """4자리 고유 UID 생성"""
+    while True:
+        # 4자리 숫자 생성
+        uid = ''.join(random.choices(string.digits, k=4))
+        # 중복 체크
+        if not User.objects.filter(uid=uid).exists():
+            return uid
+   
 class User(AbstractUser):
+    username = models.CharField(
+        max_length=150,
+        unique=False,  
+        null=True,     
+        blank=True,    
+        default=None   
+    )
     email = models.EmailField(_('email address'), max_length=255, unique=True)
-    nickname = models.CharField(max_length=15, unique=False)
-    username = None
     provider = models.ForeignKey(Provider, on_delete=models.SET_NULL, null=True, blank=True)
-
+    uid = models.CharField(max_length=255, unique=True, null=True, blank=True) # Firebase UID
     # Add Extra user fields here
     profile_image = models.URLField(max_length=2048, null=True, blank=True)
 
     def __str__(self):
         return self.nickname or self.email
 
+    def save(self, *args, **kwargs):
+    # 신규 사용자이고 UID가 없는 경우에만 생성
+        if not self.pk and not self.uid:
+            self.uid = generate_unique_uid()
+        super().save(*args, **kwargs)
+
     USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['nickname']
+    REQUIRED_FIELDS = ['username']
 
 
 class Notification(models.Model):

@@ -1,5 +1,9 @@
 from rest_framework import serializers
-from .models import Retrospect, Challenge, Template, Plan, RetrospectWeeklyAnalysis
+from .models import (
+    Retrospect, Challenge, Template, Plan, RetrospectWeeklyAnalysis,
+    ChallengeOwnerType, RetrospectOwnerType, RetrospectVisibility, TemplateOwnerType,
+    RetrospectWeeklyAnalysisOwnerType
+)
 from user_manager.models import User
 from crew.models import Crew
 
@@ -30,29 +34,25 @@ class RetrospectSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'created_at', 'updated_at', 'user'] # user is set in the view
 
     def validate(self, data):
-        """
-        Validate owner_type based on whether crew is provided.
-        Validate visibility based on owner_type.
-        """
         is_crew_retrospect = data.get('crew') is not None
         owner_type = data.get('owner_type')
 
         # Validate owner_type consistency
-        if is_crew_retrospect and owner_type != Retrospect.RetrospectOwnerType.CREW:
+        if is_crew_retrospect and owner_type != RetrospectOwnerType.CREW:
             raise serializers.ValidationError("If 'crew' is provided, 'owner_type' must be 'CREW'.")
-        if not is_crew_retrospect and owner_type != Retrospect.RetrospectOwnerType.USER:
+        if not is_crew_retrospect and owner_type != RetrospectOwnerType.USER:
             raise serializers.ValidationError("If 'crew' is not provided, 'owner_type' must be 'USER'.")
 
+        # Validate visibility
+        visibility = data.get('visibility')
+        if owner_type == RetrospectOwnerType.CREW and visibility == RetrospectVisibility.PRIVATE:
+            raise serializers.ValidationError("Crew retrospects cannot have 'PRIVATE' visibility.")
 
         # Add more validation if needed, e.g., user belongs to the crew if crew is specified
 
         return data 
 
 class TemplateSerializer(serializers.ModelSerializer):
-    """Serializer for the Template model."""
-    # Decide if user/crew should be read_only or set based on context
-    # If a template is created in a user context, user is set.
-    # If created in a crew context, crew is set.
     user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all(), allow_null=True, required=False)
     crew = serializers.PrimaryKeyRelatedField(queryset=Crew.objects.all(), allow_null=True, required=False)
 
@@ -69,42 +69,34 @@ class TemplateSerializer(serializers.ModelSerializer):
         read_only_fields = ['id']
 
     def validate(self, data):
-        """
-        Ensure either user or crew is set based on owner_type,
-        but not both (unless owner_type is COMMON, adjust if needed).
-        """
         owner_type = data.get('owner_type')
         user = data.get('user')
         crew = data.get('crew')
 
-        if owner_type == Template.TemplateOwnerType.USER:
+        if owner_type == TemplateOwnerType.USER:
             if not user:
                 raise serializers.ValidationError("User must be provided for USER owner_type.")
             if crew:
                 raise serializers.ValidationError("Crew must not be provided for USER owner_type.")
-        elif owner_type == Template.TemplateOwnerType.CREW:
+        elif owner_type == TemplateOwnerType.CREW:
             if not crew:
                 raise serializers.ValidationError("Crew must be provided for CREW owner_type.")
             if user:
                 raise serializers.ValidationError("User must not be provided for CREW owner_type.")
-        elif owner_type == Template.TemplateOwnerType.COMMON:
-            # Common templates might not have a user or crew owner.
+        elif owner_type == TemplateOwnerType.COMMON:
             if user or crew:
                 raise serializers.ValidationError("User or Crew must not be provided for COMMON owner_type.")
         else:
-            # Handle potential future owner types or raise an error
             raise serializers.ValidationError(f"Invalid owner_type: {owner_type}")
 
         # Add more specific step validation if needed
 
         return data 
 
-# Serializer for Plan (if needed independently, otherwise might be nested)
 class PlanSerializer(serializers.ModelSerializer):
     class Meta:
         model = Plan
         fields = ['id', 'plan_list']
-        # Consider making plan_list writable here if Plan is created/updated separately
 
 class ChallengeSerializer(serializers.ModelSerializer):
     """Serializer for the Challenge model."""
@@ -143,19 +135,16 @@ class ChallengeSerializer(serializers.ModelSerializer):
         ]
 
     def validate(self, data):
-        """
-        Validate owner_type and associated user/crew fields.
-        Ensure plan is handled correctly (either ID provided or generated).
-        """
         owner_type = data.get('owner_type')
-        # User is set in perform_create, not taken from input for USER type
         crew = data.get('crew')
+        initial_description = data.get('initial_plan_description')
+        plan = data.get('plan')
 
         # Validate owner type consistency
-        if owner_type == Challenge.ChallengeOwnerType.USER:
+        if owner_type == ChallengeOwnerType.USER:
             if crew:
                 raise serializers.ValidationError("Crew must not be provided for USER owner_type challenge.")
-        elif owner_type == Challenge.ChallengeOwnerType.CREW:
+        elif owner_type == ChallengeOwnerType.CREW:
             if not crew:
                 raise serializers.ValidationError("Crew must be provided for CREW owner_type challenge.")
         else:
@@ -174,12 +163,7 @@ class ChallengeSerializer(serializers.ModelSerializer):
 
         return data 
 
-
 class RetrospectWeeklyAnalysisSerializer(serializers.ModelSerializer):
-    """Serializer for the RetrospectWeeklyAnalysis model."""
-    # Decide if user/crew should be read_only or set based on context
-    # If a template is created in a user context, user is set.
-    # If created in a crew context, crew is set.
     user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all(), allow_null=True, required=False)
     crew = serializers.PrimaryKeyRelatedField(queryset=Crew.objects.all(), allow_null=True, required=False)
 
@@ -199,26 +183,21 @@ class RetrospectWeeklyAnalysisSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'created_at']
 
     def validate(self, data):
-        """
-        Ensure either user or crew is set based on owner_type,
-        but not both (unless owner_type is COMMON, adjust if needed).
-        """
         owner_type = data.get('owner_type')
         user = data.get('user')
         crew = data.get('crew')
 
-        if owner_type == RetrospectWeeklyAnalysis.RetrospectWeeklyAnalysisOwnerType.USER:
+        if owner_type == RetrospectWeeklyAnalysisOwnerType.USER:
             if not user:
                 raise serializers.ValidationError("User must be provided for USER owner_type.")
             if crew:
                 raise serializers.ValidationError("Crew must not be provided for USER owner_type.")
-        elif owner_type == RetrospectWeeklyAnalysis.RetrospectWeeklyAnalysisOwnerType.CREW:
+        elif owner_type == RetrospectWeeklyAnalysisOwnerType.CREW:
             if not crew:
                 raise serializers.ValidationError("Crew must be provided for CREW owner_type.")
             if user:
                 raise serializers.ValidationError("User must not be provided for CREW owner_type.")
         else:
-            # Handle potential future owner types or raise an error
             raise serializers.ValidationError(f"Invalid owner_type: {owner_type}")
 
         # Add more specific step validation if needed
