@@ -43,7 +43,7 @@ class KakaoUserSerializer(serializers.ModelSerializer):
     )
     class Meta:
         model = User
-        fields = ['id', 'email', 'nickname', 'password']
+        fields = ['id', 'email', 'username', 'password']
         read_only_fields = ['id']
 
     def create(self, validated_data):
