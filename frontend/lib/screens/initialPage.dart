@@ -54,35 +54,53 @@ class _InitialpageState extends State<Initialpage>
   Widget build(BuildContext context) {
     return Scaffold(
         backgroundColor: const Color(0xFFF3F4F6),
-        bottomNavigationBar: SizedBox(
-          height: 70,
-          child: TabBar(
-              indicatorColor: Colors.transparent,
-              labelColor: const Color(0xFF333C4B),
-              unselectedLabelColor: Colors.grey,
-              controller: tabController,
-              tabs: const [
-                Tab(
-                  icon: Icon(Icons.home_outlined),
-                  text: "홈",
+        bottomNavigationBar: ClipRRect(
+          borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(36),
+            topRight: Radius.circular(36),
+          ),
+          child: Container(
+            decoration: const BoxDecoration(
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black12,
+                  blurRadius: 10,
+                  offset: Offset(0, -5),
                 ),
-                Tab(
-                  icon: Icon(Icons.keyboard_command_key_outlined),
-                  text: "크루",
-                ),
-                Tab(
-                  icon: Icon(Icons.layers_outlined),
-                  text: "회고",
-                ),
-                Tab(
-                  icon: Icon(Icons.hotel_class_outlined),
-                  text: "목표",
-                ),
-                Tab(
-                  icon: Icon(Icons.person_2_outlined),
-                  text: "프로필",
-                ),
-              ]),
+              ],
+            ),
+            child: SizedBox(
+              height: 70,
+              child: TabBar(
+                indicatorColor: Colors.transparent,
+                labelColor: const Color(0xFF333C4B),
+                unselectedLabelColor: Colors.grey,
+                controller: tabController,
+                tabs: const [
+                  Tab(
+                    icon: Icon(Icons.home_outlined),
+                    text: "홈",
+                  ),
+                  Tab(
+                    icon: Icon(Icons.keyboard_command_key_outlined),
+                    text: "크루",
+                  ),
+                  Tab(
+                    icon: Icon(Icons.layers_outlined),
+                    text: "회고",
+                  ),
+                  Tab(
+                    icon: Icon(Icons.hotel_class_outlined),
+                    text: "목표",
+                  ),
+                  Tab(
+                    icon: Icon(Icons.person_2_outlined),
+                    text: "프로필",
+                  ),
+                ],
+              ),
+            ),
+          ),
         ),
         body: CustomScrollView(
           physics: const BouncingScrollPhysics(),

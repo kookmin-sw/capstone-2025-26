@@ -1,6 +1,6 @@
 import 'package:reme/screens/initialPage.dart';
 import 'package:reme/screens/login.dart';
-import 'package:reme/screens/signup_page.dart';
+import 'package:reme/screens/signupPage.dart';
 
 class Routes {
   static const splash = "/";
