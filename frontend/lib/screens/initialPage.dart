@@ -78,7 +78,7 @@ class _InitialpageState extends State<Initialpage>
                     ),
                     Container(
                       padding: EdgeInsets.only(right: 10),
-                        child: InkWell(
+                        child: GestureDetector(
                           onTap: (){},
                             child: CircleAvatar(
 
