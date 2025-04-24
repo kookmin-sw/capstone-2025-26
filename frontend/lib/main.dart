@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:reme/routes.dart';
 import 'package:posthog_flutter/posthog_flutter.dart';
@@ -26,6 +27,15 @@ class MyApp extends StatelessWidget {
     const storage = FlutterSecureStorage();
     if(storage.read(key: "AccessToken") != null) isLogin = Routes.splash;
     else isLogin = Routes.login;
+
+    // 안드로이드 하단바 꾸미기
+    SystemChrome.setSystemUIOverlayStyle(
+      SystemUiOverlayStyle(
+        systemNavigationBarDividerColor: Colors.transparent, //하단바 디바이더 색상
+        systemNavigationBarColor: boxBackgroundColor,  //하단바 색상
+      ),
+    );
+
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Flutter Demo',
