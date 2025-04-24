@@ -23,7 +23,7 @@ class _FeedState extends State<Feed> {
           Row(
             spacing: 10,
             children: [
-              InkWell(
+              GestureDetector(
                 onTap: (){
                   setState(() {
                     isTotal = true;
@@ -47,7 +47,7 @@ class _FeedState extends State<Feed> {
                   ),
                 ),
               ),
-              InkWell(
+              GestureDetector(
                 onTap: (){
                   setState(() {
                     isTotal = false;
