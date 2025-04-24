@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:reme/screens/feed.dart';
 import 'package:reme/screens/home.dart';
 import 'package:reme/screens/restroPage.dart';
 import 'package:reme/themes/color.dart';
@@ -23,7 +24,7 @@ class _InitialpageState extends State<Initialpage>
     const RetroPage(), // Retrospect
     Container(), //dummy Widget - crew
     Container(), //dummy Widget - challenge
-    Container() //dummy Widget - profile
+    const Feed(), // Feed
   ];
 
   @override
@@ -75,8 +76,17 @@ class _InitialpageState extends State<Initialpage>
                         onPressed: () {},
                         icon: const Icon(Icons.notifications_outlined, color: c700,)
                     ),
+                    Container(
+                      padding: EdgeInsets.only(right: 10),
+                        child: InkWell(
+                          onTap: (){},
+                            child: CircleAvatar(
+
+                            )
+                        )
+                    )
                   ],
-                  toolbarHeight: 55,
+                  toolbarHeight: (_selectIndex != 2)?55 : 0,
                   floating: true, // 최상단으로 올리지 않아도 appbar 표시
                   scrolledUnderElevation: 0, // 스크롤시 appbar 색상 변경 안되게
                   snap: true,
@@ -86,9 +96,9 @@ class _InitialpageState extends State<Initialpage>
                       [
                         Container(
                           child: _pageOptions.elementAt(_selectIndex),
-                          padding: EdgeInsets.only(bottom: 80),
+                          padding: EdgeInsets.only(bottom: 80), // 하단바 height만큼 padding
                         )
-
+            
                       ]
                   )
                 )
@@ -106,7 +116,7 @@ class _InitialpageState extends State<Initialpage>
                   top: Radius.circular(36),
                 ),
                 child: Container(
-                  height: 70,
+                  height: 80,
                   decoration: const BoxDecoration(
                     color: Color(0xFF181818),
                     border: Border(
@@ -151,8 +161,8 @@ class _InitialpageState extends State<Initialpage>
                         text: "목표",
                       ),
                       Tab(
-                        icon: Icon(TabBarIcon.user),
-                        text: "프로필",
+                        icon: Icon(TabBarIcon.files),
+                        text: "피드",
                       ),
                     ],
                   ),
