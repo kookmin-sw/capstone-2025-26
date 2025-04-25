@@ -33,10 +33,21 @@ class LoginPage extends StatelessWidget {
                           builder: (context) => SocialLoginWebView(social: "kakao")
                       )
                   ).then((data){
-                    const storage = FlutterSecureStorage(); // accessToken과 refreshToken을 저장하는 SecrueStorage
-                    storage.write(key: 'AccessToken', value: data.accessToken);
-                    storage.write(key: 'RefreshToken', value: data.refreshToken);
-                    Navigator.pushNamedAndRemoveUntil(context, "/", (route)=>false);
+                    // 데이터가 넘어오지 않을 때 1초간 SnackBar 띄움.
+                    if(data != null) {
+                      const storage = FlutterSecureStorage(); // accessToken과 refreshToken을 저장하는 SecrueStorage
+                      storage.write(key: 'AccessToken', value: data.accessToken);
+                      storage.write(key: 'RefreshToken', value: data.refreshToken);
+                      Navigator.pushNamedAndRemoveUntil(context, "/", (route) => false);
+                    }else{
+                      // Toast Message
+                      ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                              content: Text("Login Failed"),
+                            duration: Duration(seconds: 1),
+                          )
+                      );
+                    }
                   });
                 },
               ),
