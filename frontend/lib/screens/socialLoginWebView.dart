@@ -49,11 +49,15 @@ class _WebViewState extends State<SocialLoginWebView> {
               loading = 100;
             });
             if(url.contains("/callback/")){
-              access_token = await parseToken(27); // 파싱한 accessToken 위치
-              refresh_token = await parseToken(25); // 파싱한 refreshToken 위치
-              refresh_token = refresh_token!.replaceAll('\\', "").replaceAll("\"", ""); // parsing한 토큰 역슬레시와 따옴표 지우기
-              access_token = access_token!.replaceAll('\\', "").replaceAll("\"", ""); // parsing한 토큰 역슬레시와 따옴표 지우기
-              Navigator.pop(context, Tokens(access_token, refresh_token));
+              try {
+                access_token = await parseToken(27); // 파싱한 accessToken 위치
+                refresh_token = await parseToken(25); // 파싱한 refreshToken 위치
+                refresh_token = refresh_token!.replaceAll('\\', "").replaceAll("\"", ""); // parsing한 토큰 역슬레시와 따옴표 지우기
+                access_token = access_token!.replaceAll('\\', "").replaceAll("\"", ""); // parsing한 토큰 역슬레시와 따옴표 지우기
+                Navigator.pop(context, Tokens(access_token, refresh_token));
+              } catch(e){
+                print(e);
+              }
             }
           }
       ))
