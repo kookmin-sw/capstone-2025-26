@@ -27,7 +27,7 @@ class OAuthUserManager:
                     kakao = kakao[0]
                 else:
                     kakao = Provider.objects.create(domain='kakao.com', name='kakao')
-                serializer = UserSerializer(data={'email': email, 'nickname': nickname, 'password': password, 'provider': kakao.id})
+                serializer = UserSerializer(data={'email': email, 'username': nickname, 'password': password, 'provider': kakao.id})
                 if serializer.is_valid():
                     user = serializer.save()
                     user.is_active = True
@@ -59,7 +59,7 @@ class OAuthUserManager:
                     naver = Provider.objects.create(domain='naver.com', name='naver')
                 print(naver)
                 print(email, nickname, password)
-                serializer = UserSerializer(data={'email': email, 'nickname': nickname, 'password': password, 'provider': naver.id})
+                serializer = UserSerializer(data={'email': email, 'username': nickname, 'password': password, 'provider': naver.id})
                 if serializer.is_valid():
                     user = serializer.save()
                     user.is_active = True
