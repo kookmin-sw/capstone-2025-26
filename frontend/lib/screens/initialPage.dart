@@ -86,7 +86,7 @@ class _InitialpageState extends State<Initialpage>
                         )
                     )
                   ],
-                  toolbarHeight: (_selectIndex != 2)?55 : 0,
+                  toolbarHeight: 55,
                   floating: true, // 최상단으로 올리지 않아도 appbar 표시
                   scrolledUnderElevation: 0, // 스크롤시 appbar 색상 변경 안되게
                   snap: true,
