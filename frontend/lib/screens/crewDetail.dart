@@ -45,6 +45,7 @@ class _CrewDetailState extends State<CrewDetail> with SingleTickerProviderStateM
               pinned: true,
               floating: false,
               backgroundColor: _isCollapsed ? background : Colors.transparent,
+              scrolledUnderElevation: 0, // 스크롤시 appbar 색상 변경 안되게
               iconTheme: const IconThemeData(color: Colors.white),
               title: null,
               flexibleSpace: LayoutBuilder(
