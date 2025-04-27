@@ -25,15 +25,28 @@ class GeneratePlanRequestSerializer(serializers.Serializer):
 
 class GenerateKpiRequestSerializer(serializers.Serializer):
     challenge_id = serializers.IntegerField(required=True, help_text="The ID of the challenge to generate KPIs for.")
-    plan_id = serializers.IntegerField(required=True, help_text="The ID of the plan associated with the challenge.")
+    plan_ids = serializers.ListField(
+        child=serializers.IntegerField(),
+        required=True,
+        help_text="List of plan IDs associated with the challenge."
+    )
     context = serializers.CharField(required=False, allow_blank=True, help_text="Optional additional context provided by the user.")
     item_count = serializers.IntegerField(required=False, default=3, min_value=1, max_value=5, 
                                         help_text="Number of KPIs to generate (default: 3, range: 1-5)")
 
-    def validate_plan_id(self, value):
-        """Check if the plan exists."""
-        if not Plan.objects.filter(id=value).exists():
-            raise serializers.ValidationError(f"Plan with ID {value} does not exist.")
+    def validate_plan_ids(self, value):
+        """Check if all plans exist."""
+        if not value:
+            raise serializers.ValidationError("At least one plan ID is required.")
+            
+        invalid_ids = []
+        for plan_id in value:
+            if not Plan.objects.filter(id=plan_id).exists():
+                invalid_ids.append(plan_id)
+        
+        if invalid_ids:
+            raise serializers.ValidationError(f"Plans with IDs {invalid_ids} do not exist.")
+        
         return value
 
     def validate_challenge_id(self, value):

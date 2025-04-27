@@ -75,15 +75,38 @@ def validate_kpi_data(kpi_data: Dict[str, Any]) -> bool:
     return True
 
 
-def generate_kpis_for_challenge(challenge: Challenge, plan: dict, user_context: str, user, item_count: int = 3):
+def get_plans_data(plan_ids: List[int]) -> List[Dict[str, Any]]:
     """
-    Generates KPIs for a given challenge, plan, and context using an LLM,
+    여러 계획 ID를 받아 해당하는 계획 데이터 목록을 반환하는 함수
+    
+    :param plan_ids: 계획 ID 목록
+    :return: 계획 데이터 목록 (각 계획 번호와 내용을 포함)
+    """
+    plans_data = []
+    for i, plan_id in enumerate(plan_ids, 1):
+        try:
+            plan = Plan.objects.get(id=plan_id)
+            plans_data.append({
+                "number": i,
+                "id": plan_id,
+                "text": plan.plan_text
+            })
+        except Plan.DoesNotExist:
+            logger.warning(f"Plan ID {plan_id}에 해당하는 계획을 찾을 수 없습니다.")
+    
+    return plans_data
+
+
+def generate_kpis_for_challenge(challenge: Challenge, plan_ids: List[int], user_context: str, user, item_count: int = 3):
+    """
+    Generates KPIs for a given challenge, plans, and context using an LLM,
     parses the response, and saves them to the database.
 
     :param challenge: The Challenge object.
-    :param plan: The plan dictionary.
+    :param plan_ids: List of Plan IDs associated with the challenge.
     :param user_context: Optional additional context from the user.
     :param user: The user requesting the KPI generation.
+    :param item_count: Number of KPIs to generate.
     :return: A list of created Kpi objects.
     """
     # Langfuse 트레이스 생성
@@ -98,24 +121,29 @@ def generate_kpis_for_challenge(challenge: Challenge, plan: dict, user_context: 
         )
         callbacks = [langfuse_handler]
     
+    # 계획 데이터 조회
+    plans_data = get_plans_data(plan_ids)
+    if not plans_data:
+        raise ValueError("유효한 계획 데이터가 없습니다. 적어도 하나의 계획이 필요합니다.")
+    
     prompt_template = PromptTemplate(
-        input_variables=["challenge_name", "challenge_description", "plan", "user_context", "item_count"],
+        input_variables=["challenge_name", "challenge_description", "plans", "user_context", "item_count"],
         template="""
         당신은 사용자의 챌린지에 대한 핵심성과지표(KPI)를 정의하는 AI 어시스턴트입니다.
-        제공된 챌린지 세부정보, 계획, 사용자 컨텍스트를 바탕으로, 정확히 {item_count}개의 관련 KPI를 생성하세요.
+        제공된 챌린지 세부정보, 계획 목록, 사용자 컨텍스트를 바탕으로, 정확히 {item_count}개의 관련 KPI를 생성하세요.
 
         **챌린지 정보:**
         이름: {challenge_name}
         설명: {challenge_description}
 
-        **사용자의 계획:**
-        {plan}
+        **사용자의 계획 목록:**
+        {plans}
 
         **추가 사용자 컨텍스트:**
         {user_context}
 
        **지시사항:**
-        1. 챌린지 목표, 계획, 컨텍스트를 분석하세요.
+        1. 챌린지 목표, 계획 목록, 컨텍스트를 분석하세요.
         2. 정확히 {item_count}개의 구체적이고, 측정 가능하며, 달성 가능하고, 관련성 있으며, 시간 제한이 있는(SMART) KPI를 정의하세요.
         3. 각 KPI에 대해 다음 정보를 제공하세요:
             * `name`: KPI의 간결한 이름 (예: "일일 학습 시간", "문제 풀이 정확도").
@@ -152,12 +180,16 @@ def generate_kpis_for_challenge(challenge: Challenge, plan: dict, user_context: 
     )
 
     # 입력 데이터 준비
-    plan_str = json.dumps(plan, ensure_ascii=False, indent=2)
+    plans_formatted = []
+    for plan in plans_data:
+        plans_formatted.append(f"계획 {plan['number']}: {plan['text']}")
+    
+    plans_str = "\n".join(plans_formatted)
     data_type_options = ", ".join([dt[0] for dt in KpiDataType.choices])
     input_data = {
         "challenge_name": challenge.challenge_name,
         "challenge_description": challenge.description,
-        "plan": plan_str,
+        "plans": plans_str,
         "user_context": user_context or "None provided.",
         "data_type_options": data_type_options,
         "item_count": item_count,

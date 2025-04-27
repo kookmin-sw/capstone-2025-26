@@ -15,7 +15,8 @@ from drf_yasg.utils import swagger_auto_schema
 from .services.kpi_generator import generate_kpis_for_challenge # Import KPI generator service
 from .services.plan_generator import generate_plan_from_challenge, generate_plan_from_retrospect # Import Plan generator service
 from retrospect.models import Challenge, Plan, Retrospect # Import Challenge, Plan, Retrospect models
-from retrospect.serializers import PlanSerializer, GenerateNextPlanSerializer # Import Plan serializer
+from retrospect.serializers import PlanSerializer, PlanResponseSerializer  # Import the new serializer
+from django.shortcuts import get_object_or_404
 import logging
 
 logger = logging.getLogger(__name__)
@@ -70,7 +71,7 @@ class LLMViewSet(viewsets.ViewSet):
     @action(detail=False, methods=['post'], url_path='dummy', permission_classes=[permissions.AllowAny])
     def dummy(self, request):
         serializer = AIQuerySerializer(data=request.data)
-        if serializer.is_valid():
+        if (serializer.is_valid()):
             query_text = serializer.validated_data['query_text']
 
             # prompt 템플릿 생성: BasePromptTemplate 인스턴스를 사용
@@ -97,14 +98,14 @@ class LLMViewSet(viewsets.ViewSet):
 
 class GenerateKpiFromChallengeAPIView(generics.GenericAPIView):
     """
-    Challenge, Plan, 및 선택적 사용자 컨텍스트를 사용하여 KPI를 자동 생성합니다.
+    Challenge, 여러 Plan, 및 선택적 사용자 컨텍스트를 사용하여 KPI를 자동 생성합니다.
     """
     permission_classes = [IsAuthenticated]
     serializer_class = GenerateKpiRequestSerializer
 
     @swagger_auto_schema(
-        operation_summary="Generate KPIs based on a challenge and plan",
-        operation_description="Generate KPIs for a challenge using plan and optional context",
+        operation_summary="Generate KPIs based on a challenge and multiple plans",
+        operation_description="Generate KPIs for a challenge using multiple plans and optional context",
         request_body=GenerateKpiRequestSerializer,
         responses={
             201: KpiListResponseSerializer,
@@ -118,7 +119,7 @@ class GenerateKpiFromChallengeAPIView(generics.GenericAPIView):
         serializer.is_valid(raise_exception=True)
         
         challenge_id = serializer.validated_data['challenge_id']
-        plan_id = serializer.validated_data['plan_id']
+        plan_ids = serializer.validated_data['plan_ids']
         user_context = serializer.validated_data.get('context', '')
         item_count = serializer.validated_data.get('item_count', 3)
         
@@ -146,8 +147,18 @@ class GenerateKpiFromChallengeAPIView(generics.GenericAPIView):
                         status=status.HTTP_403_FORBIDDEN
                     )
             
-            # KPI 생성
-            kpis = generate_kpis_for_challenge(challenge, plan_id, user_context, request.user, item_count)
+            # 각 계획이 해당 챌린지와 사용자에 속하는지 확인
+            for plan_id in plan_ids:
+                try:
+                    Plan.objects.get(id=plan_id, challenge=challenge)
+                except Plan.DoesNotExist:
+                    return Response(
+                        {"error": f"Plan with ID {plan_id} does not belong to this challenge or does not exist."},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+            
+            # KPI 생성 (여러 계획 ID를 직접 전달)
+            kpis = generate_kpis_for_challenge(challenge, plan_ids, user_context, request.user, item_count)
             
             # 응답 생성 - KpiListResponseSerializer 사용
             response_serializer = KpiListResponseSerializer({"kpis": kpis})
@@ -182,7 +193,7 @@ class GeneratePlanFromChallengeAPIView(generics.GenericAPIView):
         responses={
             201: openapi.Response(
                 description="Plan successfully created",
-                schema=PlanSerializer
+                schema=PlanResponseSerializer
             ),
             400: "Bad request, invalid input parameters",
             404: "Challenge not found",
@@ -195,6 +206,7 @@ class GeneratePlanFromChallengeAPIView(generics.GenericAPIView):
         
         challenge_id = serializer.validated_data['challenge_id']
         user_context = serializer.validated_data.get('user_context', '')
+        item_count = serializer.validated_data.get('item_count', 3)
         
         try:
             challenge = Challenge.objects.get(id=challenge_id)
@@ -221,14 +233,11 @@ class GeneratePlanFromChallengeAPIView(generics.GenericAPIView):
                     )
             
             # Plan 생성
-            plan = generate_plan_from_challenge(challenge, user_context)
-            
-            # 응답 생성
-            plan_serializer = PlanSerializer(plan)
-            return Response(
-                {"plan": plan_serializer.data},
-                status=status.HTTP_201_CREATED
-            )
+            generated_plans = generate_plan_from_challenge(challenge, user_context, item_count)
+        
+            # 새로운 직렬화 클래스로 응답 생성
+            response_serializer = PlanResponseSerializer(generated_plans)
+            return Response(response_serializer.data, status=status.HTTP_201_CREATED)
             
         except Challenge.DoesNotExist:
             return Response(
@@ -236,6 +245,7 @@ class GeneratePlanFromChallengeAPIView(generics.GenericAPIView):
                 status=status.HTTP_404_NOT_FOUND
             )
         except Exception as e:
+            logger.error(f"계획 생성 오류: {str(e)}")
             return Response(
                 {"error": str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
@@ -259,7 +269,7 @@ class GenerateNextPlanAPIView(generics.GenericAPIView):
         responses={
             201: openapi.Response(
                 description="계획 생성 성공",
-                schema=PlanSerializer
+                schema=PlanResponseSerializer
             ),
             400: "잘못된 요청 파라미터",
             403: "권한 없음",
@@ -277,25 +287,28 @@ class GenerateNextPlanAPIView(generics.GenericAPIView):
         retrospect_id = serializer.validated_data['retrospect_id']
 
         try:
-            challenge = Challenge.objects.get(id=challenge_id)
-        except Challenge.DoesNotExist:
-            raise NotFound("해당 챌린지를 찾을 수 없습니다.")
+            challenge = get_object_or_404(Challenge, id=challenge_id)
+            retrospect = get_object_or_404(Retrospect, id=retrospect_id, challenge=challenge)
 
-        try:
-            retrospect = Retrospect.objects.get(id=retrospect_id, challenge=challenge)
-        except Retrospect.DoesNotExist:
-            raise NotFound("회고가 존재하지 않거나 이 챌린지에 속하지 않습니다.")
+            # 회고 및 챌린지 소유자 권한 체크
+            if retrospect.user != request.user:
+                raise PermissionDenied("이 회고를 기반으로 계획을 생성할 권한이 없습니다.")
 
-        if retrospect.user != user:
-            raise PermissionDenied("이 회고에 대한 접근 권한이 없습니다.")
-
-        try:
-            plan = generate_plan_from_retrospect(challenge, retrospect)
+            # 회고 기반 계획 생성
+            generated_plans = generate_plan_from_retrospect(challenge, retrospect)
+            
             # 회고의 외래키에 생성한 Plan을 할당하고 저장
-            retrospect.plan = plan
+            retrospect.plan = generated_plans
             retrospect.save(update_fields=['plan'])
+            
+            # 새로운 직렬화 클래스로 응답 생성
+            response_serializer = PlanResponseSerializer(generated_plans)
+            return Response(response_serializer.data, status=status.HTTP_201_CREATED)
+            
+        except NotFound as e:
+            return Response({"error": str(e)}, status=status.HTTP_404_NOT_FOUND)
+        except PermissionDenied as e:
+            return Response({"error": str(e)}, status=status.HTTP_403_FORBIDDEN)
         except Exception as e:
-            return Response({"error": str(e)}, status=500)
-
-        plan_serializer = PlanSerializer(plan)
-        return Response({"plan": plan_serializer.data}, status=201)
+            logger.error(f"회고 기반 계획 생성 오류: {str(e)}")
+            return Response({"error": f"계획 생성 중 오류가 발생했습니n다: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
