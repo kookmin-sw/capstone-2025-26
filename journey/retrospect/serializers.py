@@ -2,6 +2,7 @@ from rest_framework import serializers
 from .models import Retrospect, Challenge, Template, Plan, RetrospectWeeklyAnalysis
 from user_manager.models import User
 from crew.models import Crew
+import json
 
 class RetrospectSerializer(serializers.ModelSerializer):
     """Serializer for the Retrospect model."""
@@ -117,15 +118,33 @@ class TemplateSerializer(serializers.ModelSerializer):
         return data 
 
 class PlanSerializer(serializers.ModelSerializer):
-    user = serializers.PrimaryKeyRelatedField(read_only=True)
-    challenge = serializers.PrimaryKeyRelatedField(queryset=Challenge.objects.all(), allow_null=True, required=False)
     """계획 시리얼라이저"""
     
     class Meta:
         model = Plan
-        fields = ['id', 'user', 'challenge', 'plan_text']
         fields = ['id', 'user', 'challenge', 'plan_text', 'created_at', 'updated_at']
         read_only_fields = ['created_at', 'updated_at']
+
+class PlanResponseSerializer(serializers.Serializer):
+    """계획 응답을 위한 시리얼라이저 - 여러 계획을 번호가 매겨진 딕셔너리로 반환"""
+    plans = serializers.SerializerMethodField()
+    
+    def get_plans(self, obj):
+        """계획들을 번호가 매겨진 딕셔너리로 변환"""
+        result = {}
+        if isinstance(obj, list):
+            plans = obj
+        else:
+            # 단일 계획일 경우 리스트로 변환
+            plans = [obj]
+            
+        for i, plan in enumerate(plans, 1):
+            result[str(i)] = {
+                "user": plan.user.id if plan.user else None,
+                "challenge": plan.challenge.id if plan.challenge else None,
+                "plan_text": plan.plan_text
+            }
+        return result
 
 class ChallengeSerializer(serializers.ModelSerializer):
     """Serializer for the Challenge model."""

@@ -9,7 +9,8 @@ from django.db.models import Q
 from .models import (Retrospect, Template, Challenge, Plan, ChallengeStatus, 
                  RetrospectWeeklyAnalysis, RetrospectVisibility, TemplateOwnerType, 
                  ChallengeOwnerType, RetrospectOwnerType, RetrospectWeeklyAnalysisOwnerType)
-from .serializers import RetrospectSerializer, TemplateSerializer, ChallengeSerializer, PlanSerializer, RetrospectWeeklyAnalysisSerializer
+from .serializers import (RetrospectSerializer, TemplateSerializer, ChallengeSerializer, 
+                      PlanSerializer, PlanResponseSerializer, RetrospectWeeklyAnalysisSerializer)
 from crew.models import Crew, CrewMembership, CrewMembershipStatus # Import CrewMembership models
 from .permissions import (IsRetrospectOwnerOrCrewMemberOrReadOnly, # Use the new permission class
                           IsTemplateOwnerOrCrewMemberOrReadOnly, 
@@ -313,3 +314,38 @@ class PlanViewSet(viewsets.ModelViewSet):
     queryset = Plan.objects.all()
     serializer_class = PlanSerializer
     permission_classes = [permissions.IsAuthenticated]
+    
+    def get_serializer_class(self):
+        """
+        Return different serializers for different actions:
+        - Use PlanResponseSerializer for list and retrieve actions
+        - Use PlanSerializer for all other actions
+        """
+        if self.action in ['list', 'retrieve']:
+            return PlanResponseSerializer
+        return PlanSerializer
+    
+    def list(self, request, *args, **kwargs):
+        """
+        Override list method to return plans in the requested format
+        """
+        queryset = self.filter_queryset(self.get_queryset())
+        
+        # 챌린지로 필터링 (선택적)
+        challenge_id = request.query_params.get('challenge_id')
+        if challenge_id:
+            queryset = queryset.filter(challenge_id=challenge_id)
+            
+        # 사용자로 필터링 (기본적으로 자신의 계획만 볼 수 있음)
+        queryset = queryset.filter(user=request.user)
+        
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+    
+    def retrieve(self, request, *args, **kwargs):
+        """
+        Override retrieve method to return a single plan in the requested format
+        """
+        instance = self.get_object()
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)
