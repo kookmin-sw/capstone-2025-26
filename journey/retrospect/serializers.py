@@ -119,10 +119,13 @@ class TemplateSerializer(serializers.ModelSerializer):
 class PlanSerializer(serializers.ModelSerializer):
     user = serializers.PrimaryKeyRelatedField(read_only=True)
     challenge = serializers.PrimaryKeyRelatedField(queryset=Challenge.objects.all(), allow_null=True, required=False)
+    """계획 시리얼라이저"""
     
     class Meta:
         model = Plan
         fields = ['id', 'user', 'challenge', 'plan_text']
+        fields = ['id', 'user', 'challenge', 'plan_text', 'created_at', 'updated_at']
+        read_only_fields = ['created_at', 'updated_at']
 
 class ChallengeSerializer(serializers.ModelSerializer):
     """Serializer for the Challenge model."""

@@ -46,7 +46,9 @@ class Plan(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='plans', null=True, blank=True)
     challenge = models.ForeignKey('Challenge', on_delete=models.CASCADE, related_name='plans', null=True, blank=True)
     plan_text = models.TextField(null=True, blank=True)  # 계획 내용을 텍스트 형태로 저장
-
+    created_at = models.DateTimeField(auto_now=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
     def __str__(self):
         return f"Plan {self.id}" if not self.challenge else f"Plan for {self.challenge.challenge_name}"
 
