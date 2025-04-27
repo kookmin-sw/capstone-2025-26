@@ -43,11 +43,12 @@ class KpiDataType(models.TextChoices):
 
 class Plan(models.Model):
     """챌린지 계획 모델"""
-    plan_list = models.JSONField() # 계획 내용을 JSON 형태로 저장
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='plans', null=True, blank=True)
+    challenge = models.ForeignKey('Challenge', on_delete=models.CASCADE, related_name='plans', null=True, blank=True)
+    plan_text = models.TextField(null=True, blank=True)  # 계획 내용을 텍스트 형태로 저장
 
     def __str__(self):
-        # plan_list 내용 중 일부를 보여주거나 특정 필드를 사용
-        return f"Plan {self.id}"
+        return f"Plan {self.id}" if not self.challenge else f"Plan for {self.challenge.challenge_name}"
 
 class Template(models.Model):
     """회고 템플릿 모델"""
