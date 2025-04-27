@@ -83,4 +83,61 @@ class LLMViewSet(viewsets.ViewSet):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+# 회고 쓰면 자동으로 생성되기 보다는
+# 회고 쓰면 사용자한테 플랜 자동생성 할거냐 물어보고 하는게 나은것같아서 분리함
+# GenericAPIView 쓴 이유는 swagger 문서 자동 생성을 위함 
 
+class GenerateNextPlanAPIView(generics.GenericAPIView):
+    """
+    회고 내용을 기반으로 다음 계획(Plan)을 자동으로 생성하는 API View.
+    """
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = GenerateNextPlanSerializer
+
+    @swagger_auto_schema(
+        operation_summary="회고를 기반으로 내일 계획 생성",
+        operation_description="회고 내용을 분석하여 AI로 다음 날 계획을 자동 생성합니다",
+        request_body=GenerateNextPlanSerializer,
+        responses={
+            201: openapi.Response(
+                description="계획 생성 성공",
+                schema=PlanSerializer
+            ),
+            400: "잘못된 요청 파라미터",
+            403: "권한 없음",
+            404: "챌린지 또는 회고 찾을 수 없음",
+            500: "계획 생성 중 서버 오류"
+        }
+    )
+    def post(self, request):
+        user = request.user
+        
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        
+        challenge_id = serializer.validated_data['challenge_id']
+        retrospect_id = serializer.validated_data['retrospect_id']
+
+        try:
+            challenge = Challenge.objects.get(id=challenge_id)
+        except Challenge.DoesNotExist:
+            raise NotFound("해당 챌린지를 찾을 수 없습니다.")
+
+        try:
+            retrospect = Retrospect.objects.get(id=retrospect_id, challenge=challenge)
+        except Retrospect.DoesNotExist:
+            raise NotFound("회고가 존재하지 않거나 이 챌린지에 속하지 않습니다.")
+
+        if retrospect.user != user:
+            raise PermissionDenied("이 회고에 대한 접근 권한이 없습니다.")
+
+        try:
+            plan = generate_plan_from_retrospect(challenge, retrospect)
+            # 회고의 외래키에 생성한 Plan을 할당하고 저장
+            retrospect.plan = plan
+            retrospect.save(update_fields=['plan'])
+        except Exception as e:
+            return Response({"error": str(e)}, status=500)
+
+        plan_serializer = PlanSerializer(plan)
+        return Response({"plan": plan_serializer.data}, status=201)

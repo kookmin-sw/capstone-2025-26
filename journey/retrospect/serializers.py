@@ -217,7 +217,4 @@ class RetrospectWeeklyAnalysisSerializer(serializers.ModelSerializer):
 
         # Add more specific step validation if needed
 
-        return data 
-    
-class GenerateNextPlanSerializer(serializers.Serializer):
-    retrospect_id = serializers.IntegerField(required=True)
+        return data
