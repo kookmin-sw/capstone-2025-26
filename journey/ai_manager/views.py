@@ -1,12 +1,24 @@
 import os
-from rest_framework import viewsets, status, permissions
+from rest_framework import viewsets, status, permissions, generics
 from rest_framework.response import Response
 from rest_framework.decorators import action
-from .serializers import AIQuerySerializer, LLMResponseSerializer
+from rest_framework.exceptions import NotFound, PermissionDenied
+from .serializers import (
+    LLMRequestSerializer, LLMResponseSerializer, AIQuerySerializer,
+    GenerateKpiRequestSerializer, KpiOutputSerializer, GeneratePlanRequestSerializer, KpiListResponseSerializer,
+    GenerateNextPlanSerializer
+)
 from .permissions import IsAuthenticated
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
+# from .services.query_processor import process_ai_query
+from .services.kpi_generator import generate_kpis_for_challenge # Import KPI generator service
+from .services.plan_generator import generate_plan_from_challenge, generate_plan_from_retrospect # Import Plan generator service
+from retrospect.models import Challenge, Plan, Retrospect # Import Challenge, Plan, Retrospect models
+from retrospect.serializers import PlanSerializer, GenerateNextPlanSerializer # Import Plan serializer
+import logging
 
+logger = logging.getLogger(__name__)
 
 # Langchain 관련 임포트 
 from langchain.chains import LLMChain
@@ -82,6 +94,152 @@ class LLMViewSet(viewsets.ViewSet):
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
+class GenerateKpiFromChallengeAPIView(generics.GenericAPIView):
+    """
+    Challenge, Plan, 및 선택적 사용자 컨텍스트를 사용하여 KPI를 자동 생성합니다.
+    """
+    permission_classes = [IsAuthenticated]
+    serializer_class = GenerateKpiRequestSerializer
+
+    @swagger_auto_schema(
+        operation_summary="Generate KPIs based on a challenge and plan",
+        operation_description="Generate KPIs for a challenge using plan and optional context",
+        request_body=GenerateKpiRequestSerializer,
+        responses={
+            201: KpiListResponseSerializer,
+            400: "Bad request, invalid input parameters",
+            404: "Challenge not found",
+            500: "Server error during KPI generation"
+        }
+    )
+    def post(self, request):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        
+        challenge_id = serializer.validated_data['challenge_id']
+        plan_id = serializer.validated_data['plan_id']
+        user_context = serializer.validated_data.get('context', '')
+        item_count = serializer.validated_data.get('item_count', 3)
+        
+        try:
+            challenge = Challenge.objects.get(id=challenge_id)
+            
+            # 사용자 권한 확인: 챌린지 소유자나 크루 멤버여야 함
+            if challenge.owner_type == 'USER' and challenge.user != request.user:
+                return Response(
+                    {"error": "You don't have permission to generate KPIs for this challenge."},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+            elif challenge.owner_type == 'CREW':
+                # 크루 챌린지의 경우 사용자가 해당 크루의 멤버인지 확인
+                from crew.models import CrewMembership, CrewMembershipStatus
+                is_member = CrewMembership.objects.filter(
+                    user=request.user,
+                    crew=challenge.crew,
+                    status=CrewMembershipStatus.ACCEPTED
+                ).exists()
+                
+                if not is_member:
+                    return Response(
+                        {"error": "You don't have permission to generate KPIs for this crew challenge."},
+                        status=status.HTTP_403_FORBIDDEN
+                    )
+            
+            # KPI 생성
+            kpis = generate_kpis_for_challenge(challenge, plan_id, user_context, request.user, item_count)
+            
+            # 응답 생성 - KpiListResponseSerializer 사용
+            response_serializer = KpiListResponseSerializer({"kpis": kpis})
+            return Response(
+                response_serializer.data,
+                status=status.HTTP_201_CREATED
+            )
+            
+        except Challenge.DoesNotExist:
+            return Response(
+                {"error": f"Challenge with ID {challenge_id} not found."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
+class GeneratePlanFromChallengeAPIView(generics.GenericAPIView):
+    """
+    Challenge와 선택적 사용자 컨텍스트를 사용하여 Plan을 자동 생성합니다.
+    """
+    permission_classes = [IsAuthenticated]
+    serializer_class = GeneratePlanRequestSerializer
+
+    @swagger_auto_schema(
+        operation_summary="Generate a plan based on a challenge",
+        operation_description="Generate a plan based on a challenge and optional user context using LLM",
+        request_body=GeneratePlanRequestSerializer,
+        responses={
+            201: openapi.Response(
+                description="Plan successfully created",
+                schema=PlanSerializer
+            ),
+            400: "Bad request, invalid input parameters",
+            404: "Challenge not found",
+            500: "Server error during plan generation"
+        }
+    )
+    def post(self, request):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        
+        challenge_id = serializer.validated_data['challenge_id']
+        user_context = serializer.validated_data.get('user_context', '')
+        
+        try:
+            challenge = Challenge.objects.get(id=challenge_id)
+            
+            # 사용자 권한 확인: 챌린지 소유자나 크루 멤버여야 함
+            if challenge.owner_type == 'USER' and challenge.user != request.user:
+                return Response(
+                    {"error": "You don't have permission to generate a plan for this challenge."},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+            elif challenge.owner_type == 'CREW':
+                # 크루 챌린지의 경우 사용자가 해당 크루의 멤버인지 확인
+                from crew.models import CrewMembership, CrewMembershipStatus
+                is_member = CrewMembership.objects.filter(
+                    user=request.user,
+                    crew=challenge.crew,
+                    status=CrewMembershipStatus.ACCEPTED
+                ).exists()
+                
+                if not is_member:
+                    return Response(
+                        {"error": "You don't have permission to generate a plan for this crew challenge."},
+                        status=status.HTTP_403_FORBIDDEN
+                    )
+            
+            # Plan 생성
+            plan = generate_plan_from_challenge(challenge, user_context)
+            
+            # 응답 생성
+            plan_serializer = PlanSerializer(plan)
+            return Response(
+                {"plan": plan_serializer.data},
+                status=status.HTTP_201_CREATED
+            )
+            
+        except Challenge.DoesNotExist:
+            return Response(
+                {"error": f"Challenge with ID {challenge_id} not found."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 # 회고 쓰면 자동으로 생성되기 보다는
 # 회고 쓰면 사용자한테 플랜 자동생성 할거냐 물어보고 하는게 나은것같아서 분리함

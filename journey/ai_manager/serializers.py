@@ -1,4 +1,6 @@
 from rest_framework import serializers
+from retrospect.models import Challenge, Kpi, Plan, Retrospect # Import Plan and Retrospect models
+import json
 
 class LLMRequestSerializer(serializers.Serializer):
     query = serializers.CharField(required=True)
@@ -8,6 +10,49 @@ class LLMResponseSerializer(serializers.Serializer):
     
 class AIQuerySerializer(serializers.Serializer):
     query_text = serializers.CharField(max_length=1000)
+
+class GeneratePlanRequestSerializer(serializers.Serializer):
+    challenge_id = serializers.IntegerField(required=True, help_text="The ID of the challenge to generate plan for.")
+    user_context = serializers.CharField(required=False, allow_blank=True, help_text="Optional additional context provided by the user.")
+    item_count = serializers.IntegerField(required=False, default=3, min_value=1, max_value=5, 
+                                         help_text="Number of plan items to generate (default: 3, range: 1-5)")
+
+    def validate_challenge_id(self, value):
+        """Check if the challenge exists."""
+        if not Challenge.objects.filter(id=value).exists():
+            raise serializers.ValidationError(f"Challenge with ID {value} does not exist.")
+        return value
+
+class GenerateKpiRequestSerializer(serializers.Serializer):
+    challenge_id = serializers.IntegerField(required=True, help_text="The ID of the challenge to generate KPIs for.")
+    plan_id = serializers.IntegerField(required=True, help_text="The ID of the plan associated with the challenge.")
+    context = serializers.CharField(required=False, allow_blank=True, help_text="Optional additional context provided by the user.")
+    item_count = serializers.IntegerField(required=False, default=3, min_value=1, max_value=5, 
+                                        help_text="Number of KPIs to generate (default: 3, range: 1-5)")
+
+    def validate_plan_id(self, value):
+        """Check if the plan exists."""
+        if not Plan.objects.filter(id=value).exists():
+            raise serializers.ValidationError(f"Plan with ID {value} does not exist.")
+        return value
+
+    def validate_challenge_id(self, value):
+        """Check if the challenge exists."""
+        if not Challenge.objects.filter(id=value).exists():
+            raise serializers.ValidationError(f"Challenge with ID {value} does not exist.")
+        return value
+
+# Serializer to represent the output structure of a generated KPI (used internally or in response)
+class KpiOutputSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Kpi
+        fields = ['id', 'name', 'definition', 'measurement_unit', 'data_type', 'challenge', 'user']
+        read_only_fields = ['id', 'challenge', 'user'] # challenge and user are set contextually
+
+# Separate serializer for the API response that contains a list of KPIs
+class KpiListResponseSerializer(serializers.Serializer):
+    kpis = KpiOutputSerializer(many=True)
+
 # 회고를 기반으로 다음 계획 생성을 위한 serializer (retrospect에서 이동)
 class GenerateNextPlanSerializer(serializers.Serializer):
     retrospect_id = serializers.IntegerField(required=True, help_text="회고 ID")
