@@ -10,7 +10,8 @@ class CrewDetail extends StatefulWidget {
   State<CrewDetail> createState() => _CrewDetailState();
 }
 
-class _CrewDetailState extends State<CrewDetail> with SingleTickerProviderStateMixin {
+class _CrewDetailState extends State<CrewDetail>
+    with SingleTickerProviderStateMixin {
   TabController? _tabController;
   final double _expandedHeight = 240.0 + 150;
   int _selectIndex = 0;
@@ -21,8 +22,8 @@ class _CrewDetailState extends State<CrewDetail> with SingleTickerProviderStateM
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
     _tabController!.addListener(() => setState(() {
-      _selectIndex = _tabController!.index;
-    }));
+          _selectIndex = _tabController!.index;
+        }));
   }
 
   @override
@@ -52,7 +53,8 @@ class _CrewDetailState extends State<CrewDetail> with SingleTickerProviderStateM
                 builder: (context, constraints) {
                   final double currentHeight = constraints.biggest.height;
                   final double statusBar = MediaQuery.of(context).padding.top;
-                  final bool isCollapsed = currentHeight <= kToolbarHeight + statusBar + 5;
+                  final bool isCollapsed =
+                      currentHeight <= kToolbarHeight + statusBar + 5;
 
                   if (_isCollapsed != isCollapsed) {
                     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -60,24 +62,29 @@ class _CrewDetailState extends State<CrewDetail> with SingleTickerProviderStateM
                     });
                   }
 
-                  double t = 1.0 - ((currentHeight - kToolbarHeight - statusBar)
-                      / (_expandedHeight - kToolbarHeight - statusBar));
+                  double t = 1.0 -
+                      ((currentHeight - kToolbarHeight - statusBar) /
+                          (_expandedHeight - kToolbarHeight - statusBar));
                   t = t.clamp(0.0, 1.0);
 
-                  final double avatarStartSize = 56;
-                  final double avatarEndSize = 32;
-                  final double avatarSize = avatarStartSize - (avatarStartSize - avatarEndSize) * t;
+                  const double avatarStartSize = 56;
+                  const double avatarEndSize = 32;
+                  final double avatarSize =
+                      avatarStartSize - (avatarStartSize - avatarEndSize) * t;
 
-                  final double nameStartFont = 18;
-                  final double nameEndFont = 16;
-                  final double nameFont = nameStartFont - (nameStartFont - nameEndFont) * t;
+                  const double nameStartFont = 18;
+                  const double nameEndFont = 16;
+                  final double nameFont =
+                      nameStartFont - (nameStartFont - nameEndFont) * t;
 
-                  final double leftPaddingStart = 20;
-                  final double leftPaddingEnd = 56;
-                  final double leftPadding = leftPaddingStart + (leftPaddingEnd - leftPaddingStart) * t;
+                  const double leftPaddingStart = 20;
+                  const double leftPaddingEnd = 56;
+                  final double leftPadding = leftPaddingStart +
+                      (leftPaddingEnd - leftPaddingStart) * t;
 
                   final double topStart = _expandedHeight - 56 - 40;
-                  final double topEnd = statusBar + (kToolbarHeight - avatarEndSize) / 2;
+                  final double topEnd =
+                      statusBar + (kToolbarHeight - avatarEndSize) / 2;
                   final double top = topStart - (topStart - topEnd) * t;
 
                   return Stack(
@@ -98,13 +105,100 @@ class _CrewDetailState extends State<CrewDetail> with SingleTickerProviderStateM
                         bottom: 0,
                         child: Opacity(
                           opacity: 1 - t,
-                          child: Container(
-                            color: boxBackgroundColor,
-                            padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                ClipRRect(
+                          child: Stack(
+                            clipBehavior: Clip.none,
+                            children: [
+                              Container(
+                                margin: const EdgeInsets.only(top: 28),
+                                color: boxBackgroundColor,
+                                padding:
+                                    const EdgeInsets.fromLTRB(20, 0, 20, 0),
+                                child: Padding(
+                                  padding:
+                                      const EdgeInsets.only(top: 28, bottom: 0),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Padding(
+                                        padding: const EdgeInsets.only(top: 2),
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            const Row(
+                                              children: [
+                                                Text(
+                                                  '저속 노화 따라가기',
+                                                  style: TextStyle(
+                                                      fontSize: 18,
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      color: Colors.white),
+                                                ),
+                                                SizedBox(width: 4),
+                                                Text(
+                                                  '👥 12명',
+                                                  style: TextStyle(
+                                                      fontSize: 12,
+                                                      color: Colors.white70),
+                                                ),
+                                                Spacer(),
+                                                Icon(Icons.more_vert,
+                                                    color: Colors.white)
+                                              ],
+                                            ),
+                                            const SizedBox(height: 4),
+                                            const Text(
+                                              '저속 노화 위주의 식사와 규칙적인 생활을 통해 삶을 재정비하고 이다현보다 오래 살기 위해 노력합니다',
+                                              style: TextStyle(
+                                                  fontSize: 14,
+                                                  fontWeight: FontWeight.w500,
+                                                  color: fontColor),
+                                              maxLines: 2,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                            const SizedBox(height: 4),
+                                            Container(
+                                              margin: const EdgeInsets.only(
+                                                  bottom: 16),
+                                              width: double.maxFinite,
+                                              child: ElevatedButton(
+                                                style: ElevatedButton.styleFrom(
+                                                  backgroundColor: c800,
+                                                  shape:
+                                                      const RoundedRectangleBorder(
+                                                          borderRadius:
+                                                              BorderRadius.all(
+                                                                  Radius
+                                                                      .circular(
+                                                                          8))),
+                                                  padding: const EdgeInsets
+                                                      .symmetric(
+                                                      horizontal: 18,
+                                                      vertical: 12),
+                                                ),
+                                                onPressed: () {},
+                                                child: const Text('크루 가입하기',
+                                                    style: TextStyle(
+                                                        color: fontColor,
+                                                        fontWeight:
+                                                            FontWeight.w800)),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              // 아이콘만 따로 위로 올림
+                              Positioned(
+                                top: -10,
+                                left: 20,
+                                child: ClipRRect(
                                   borderRadius: BorderRadius.circular(12),
                                   child: Container(
                                     width: 56,
@@ -113,68 +207,15 @@ class _CrewDetailState extends State<CrewDetail> with SingleTickerProviderStateM
                                     child: Image.network(
                                       'https://your-crew-icon-url.com/icon.png',
                                       fit: BoxFit.cover,
-                                      errorBuilder: (context, error, stackTrace) =>
-                                      const Icon(Icons.group, size: 40, color: Colors.grey),
+                                      errorBuilder:
+                                          (context, error, stackTrace) =>
+                                              const Icon(Icons.group,
+                                                  size: 40, color: Colors.grey),
                                     ),
                                   ),
                                 ),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Row(
-                                      children: [
-                                        const Text(
-                                          '저속 노화 따라가기',
-                                          style: TextStyle(
-                                              fontSize: 18,
-                                              fontWeight: FontWeight.bold,
-                                              color: Colors.white),
-                                        ),
-                                        const SizedBox(width: 4),
-                                        const Text(
-                                          '👥 12명',
-                                          style: TextStyle(
-                                              fontSize: 12, color: Colors.white70),
-                                        ),
-                                        const Spacer(),
-                                        const Icon(Icons.more_vert, color: Colors.white)
-                                      ],
-                                    ),
-                                    const SizedBox(height: 4),
-                                    const Text(
-                                      '저속 노화 위주의 식사와 규칙적인 생활을 통해 삶을 재정비하고 이다현보다 오래 살기 위해 노력합니다',
-                                      style: TextStyle(
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w500,
-                                          color: fontColor),
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Container(
-                                      margin: const EdgeInsets.only(bottom: 16),
-                                      width: double.maxFinite,
-                                      child: ElevatedButton(
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor: c800,
-                                          shape: const RoundedRectangleBorder(
-                                              borderRadius: BorderRadius.all(
-                                                  Radius.circular(8))),
-                                          padding: const EdgeInsets.symmetric(
-                                              horizontal: 18, vertical: 12),
-                                        ),
-                                        onPressed: () {},
-                                        child: const Text('크루 가입하기',
-                                            style: TextStyle(
-                                                color: fontColor,
-                                                fontWeight: FontWeight.w800)),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
                         ),
                       ),
@@ -196,8 +237,10 @@ class _CrewDetailState extends State<CrewDetail> with SingleTickerProviderStateM
                                   child: Image.network(
                                     'https://your-crew-icon-url.com/icon.png',
                                     fit: BoxFit.cover,
-                                    errorBuilder: (context, error, stackTrace) =>
-                                    const Icon(Icons.group, size: 24, color: Colors.grey),
+                                    errorBuilder:
+                                        (context, error, stackTrace) =>
+                                            const Icon(Icons.group,
+                                                size: 24, color: Colors.grey),
                                   ),
                                 ),
                               ),
@@ -268,9 +311,7 @@ class _CrewDetailState extends State<CrewDetail> with SingleTickerProviderStateM
         child: Text(
           label,
           style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w500,
-              color: fontColor),
+              fontSize: 18, fontWeight: FontWeight.w500, color: fontColor),
         ),
       ),
     );
@@ -279,7 +320,7 @@ class _CrewDetailState extends State<CrewDetail> with SingleTickerProviderStateM
   Widget _buildPostList() {
     return ListView(
       padding: EdgeInsets.zero,
-      children: [
+      children: const [
         PostCard(
           nickname: '다욤둥',
           date: '25.04.12 15:32',
@@ -316,7 +357,8 @@ class _SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
   double get maxExtent => _tabBar.preferredSize.height;
 
   @override
-  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+  Widget build(
+      BuildContext context, double shrinkOffset, bool overlapsContent) {
     return Container(
       color: background,
       child: _tabBar,
@@ -336,6 +378,7 @@ class PostCard extends StatelessWidget {
   final String title;
   final String content;
   const PostCard({
+    super.key,
     required this.nickname,
     required this.date,
     required this.title,
@@ -355,9 +398,10 @@ class PostCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                CircleAvatar(
+                const CircleAvatar(
                   radius: 18,
-                  foregroundImage: Svg('assets/img/account_circle.svg', color: Colors.white),
+                  foregroundImage:
+                      Svg('assets/img/account_circle.svg', color: Colors.white),
                 ),
                 const SizedBox(width: 8),
                 Column(
@@ -365,11 +409,15 @@ class PostCard extends StatelessWidget {
                   children: [
                     Text(
                       nickname,
-                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
+                      style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15),
                     ),
                     Text(
                       date,
-                      style: const TextStyle(color: Colors.white54, fontSize: 12),
+                      style:
+                          const TextStyle(color: Colors.white54, fontSize: 12),
                     ),
                   ],
                 ),
@@ -380,12 +428,18 @@ class PostCard extends StatelessWidget {
             const SizedBox(height: 10),
             Text(
               title,
-              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 20),
+              style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 20),
             ),
             const SizedBox(height: 3),
             Text(
               content,
-              style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.w400, fontSize: 15),
+              style: const TextStyle(
+                  color: Colors.white70,
+                  fontWeight: FontWeight.w400,
+                  fontSize: 15),
             ),
             const SizedBox(height: 14),
             const Row(
