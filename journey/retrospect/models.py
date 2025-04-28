@@ -1,4 +1,5 @@
 from django.db import models
+from django.conf import settings # Import settings to reference AUTH_USER_MODEL
 
 # Create your models here.
 
@@ -30,17 +31,26 @@ class RetrospectWeeklyAnalysisOwnerType(models.TextChoices):
     USER = 'USER', 'User'
     CREW = 'CREW', 'Crew'
 
+class KpiDataType(models.TextChoices):
+    FLOAT = 'FLOAT', 'Float'
+    INTEGER = 'INTEGER', 'Integer'
+    TEXT = 'TEXT', 'Text'
+    BOOLEAN = 'BOOLEAN', 'Boolean'
+
 
 # --- Models ---
 
 
 class Plan(models.Model):
     """챌린지 계획 모델"""
-    plan_list = models.JSONField() # 계획 내용을 JSON 형태로 저장
-
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='plans', null=True, blank=True)
+    challenge = models.ForeignKey('Challenge', on_delete=models.CASCADE, related_name='plans', null=True, blank=True)
+    plan_text = models.TextField(null=True, blank=True)  # 계획 내용을 텍스트 형태로 저장
+    created_at = models.DateTimeField(auto_now=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
     def __str__(self):
-        # plan_list 내용 중 일부를 보여주거나 특정 필드를 사용
-        return f"Plan {self.id}"
+        return f"Plan {self.id}" if not self.challenge else f"Plan for {self.challenge.challenge_name}"
 
 class Template(models.Model):
     """회고 템플릿 모델"""
@@ -57,11 +67,11 @@ class Template(models.Model):
 
 class Challenge(models.Model):
     """챌린지 모델"""
-    user = models.ForeignKey('user_manager.User', on_delete=models.CASCADE, related_name='challenges', null=True, blank=True) # 개인 챌린지일 경우
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='challenges', null=True, blank=True) # 개인 챌린지일 경우
     crew = models.ForeignKey('crew.Crew', on_delete=models.CASCADE, related_name='challenges', null=True, blank=True) # 크루 챌린지일 경우
     challenge_name = models.CharField(max_length=255)
+    description = models.TextField(null=True, blank=True, default='') # 목표 설명 추가
     deadline = models.DateTimeField()
-    kpi_metrics = models.JSONField(null=True, blank=True) # 구조화된 KPI 저장 (예: {"metric1": "...", "metric2": "..."})
     owner_type = models.CharField(max_length=10, choices=ChallengeOwnerType.choices)
     status = models.CharField(max_length=10, choices=ChallengeStatus.choices, default=ChallengeStatus.LIVE)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -91,10 +101,9 @@ class Retrospect(models.Model):
     plan = models.ForeignKey(Plan, on_delete=models.SET_NULL, null=True, blank=True, related_name='retrospects') # 계획 없이 작성 가능 , 따로 계획 안세우고 싶을수도 있으니까
     challenge = models.ForeignKey(Challenge, on_delete=models.CASCADE, related_name='retrospects')
     template = models.ForeignKey(Template, on_delete=models.SET_NULL, null=True, blank=True, related_name='retrospects') # 템플릿 없이 작성 가능
-    user = models.ForeignKey('user_manager.User', on_delete=models.CASCADE, related_name='retrospects') # 작성자
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='retrospects') # 작성자
     crew = models.ForeignKey('crew.Crew', on_delete=models.CASCADE, related_name='retrospects', null=True, blank=True) # 크루 회고일 경우
     content = models.TextField()
-    kpi_result = models.FloatField(null=True, blank=True) # 챌린지 KPI 결과
     visibility = models.CharField(max_length=10, choices=RetrospectVisibility.choices, default=RetrospectVisibility.PRIVATE)
     owner_type = models.CharField(max_length=10, choices=RetrospectOwnerType.choices)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -120,3 +129,83 @@ class RetrospectWeeklyAnalysis(models.Model):
     def __str__(self):
         owner = self.user if self.owner_type == RetrospectWeeklyAnalysisOwnerType.USER else self.crew
         return f"Weekly Analysis for {owner} ({self.start_date} - {self.end_date})"
+
+# --- New Models ---
+
+class Kpi(models.Model):
+    """KPI 정의 모델 (사용자별, 챌린지별)"""
+    challenge = models.ForeignKey(Challenge, on_delete=models.CASCADE, related_name='kpis')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='kpis')
+    name = models.CharField(max_length=255) # KPI 이름
+    definition = models.TextField(blank=True, default='') # KPI 설명
+    measurement_unit = models.CharField(max_length=50, blank=True, default='') # 측정 단위
+    data_type = models.CharField(max_length=10, choices=KpiDataType.choices) # 데이터 유형
+    measurement_method = models.TextField(blank=True, default='') # 측정 방법 (선택적)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ('challenge', 'user', 'name') # 사용자, 챌린지별 KPI 이름은 고유해야 함
+        indexes = [
+            models.Index(fields=['challenge', 'user']),
+        ]
+
+    def __str__(self):
+        return f"KPI '{self.name}' for {self.user} in {self.challenge}"
+
+class KpiDataEntry(models.Model):
+    """KPI 데이터 기록 모델"""
+    kpi = models.ForeignKey(Kpi, on_delete=models.CASCADE, related_name='data_entries')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='kpi_data_entries') # 데이터를 기록한 사용자
+    record_date = models.DateField() # 기록 날짜
+
+    # 값 타입별 필드
+    value_type = models.CharField(max_length=10, choices=KpiDataType.choices)
+    value_float = models.FloatField(null=True, blank=True)
+    value_integer = models.IntegerField(null=True, blank=True) # Renamed from value_int
+    value_text = models.TextField(null=True, blank=True)
+    value_boolean = models.BooleanField(null=True, blank=True) # Renamed from value_bool
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-record_date', '-created_at']
+        indexes = [
+            models.Index(fields=['kpi', 'user', 'record_date']),
+        ]
+
+    def clean(self):
+        # 저장 시 value_type에 맞는 필드 외에는 None으로 설정 (선택적이지만 권장)
+        super().clean()
+        if self.value_type == KpiDataType.FLOAT:
+            self.value_integer = None
+            self.value_text = None
+            self.value_boolean = None
+        elif self.value_type == KpiDataType.INTEGER:
+            self.value_float = None
+            self.value_text = None
+            self.value_boolean = None
+        elif self.value_type == KpiDataType.TEXT:
+            self.value_float = None
+            self.value_integer = None
+            self.value_boolean = None
+        elif self.value_type == KpiDataType.BOOLEAN:
+            self.value_float = None
+            self.value_integer = None
+            self.value_text = None
+
+    def get_value(self):
+        """실제 저장된 값을 반환하는 헬퍼 메서드"""
+        if self.value_type == KpiDataType.FLOAT:
+            return self.value_float
+        elif self.value_type == KpiDataType.INTEGER:
+            return self.value_integer
+        elif self.value_type == KpiDataType.TEXT:
+            return self.value_text
+        elif self.value_type == KpiDataType.BOOLEAN:
+            return self.value_boolean
+        return None
+
+    def __str__(self):
+        return f"Data for {self.kpi.name} on {self.record_date}: {self.get_value()}"

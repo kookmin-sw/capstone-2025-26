@@ -1,5 +1,4 @@
 from django.shortcuts import render
-from rest_framework.generics import GenericAPIView
 from rest_framework import viewsets, status, permissions
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
 from rest_framework.exceptions import NotFound, PermissionDenied
@@ -10,14 +9,13 @@ from django.db.models import Q
 from .models import (Retrospect, Template, Challenge, Plan, ChallengeStatus, 
                  RetrospectWeeklyAnalysis, RetrospectVisibility, TemplateOwnerType, 
                  ChallengeOwnerType, RetrospectOwnerType, RetrospectWeeklyAnalysisOwnerType)
-from .serializers import RetrospectSerializer, TemplateSerializer, ChallengeSerializer, PlanSerializer, RetrospectWeeklyAnalysisSerializer, GenerateNextPlanSerializer
+from .serializers import (RetrospectSerializer, TemplateSerializer, ChallengeSerializer, 
+                      PlanSerializer, PlanResponseSerializer, RetrospectWeeklyAnalysisSerializer)
 from crew.models import Crew, CrewMembership, CrewMembershipStatus # Import CrewMembership models
 from .permissions import (IsRetrospectOwnerOrCrewMemberOrReadOnly, # Use the new permission class
                           IsTemplateOwnerOrCrewMemberOrReadOnly, 
                           IsChallengeOwnerOrCrewMemberOrReadOnly, 
                           IsRetrospectWeeklyAnalysisOwnerOrCrewMemberOrReadOnly)
-from ai_manager.services.plan_generator import generate_plan_from_retrospect  # 회고 기반 plan generator llm
-
 
 # Create your views here.
 
@@ -68,7 +66,7 @@ class RetrospectViewSet(viewsets.ModelViewSet):
     # 실제 회고 생성 시 발생하는 NOT NULL constraint 실패(예: user_id가 NULL인 경우) 때문에 추가
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
-    
+
     # 분리하는게 좋을 것 같아서 일단 주석처리
     # def perform_create(self, serializer):
     #     """회고 생성 시 Plan을 자동 생성하고 연결"""
@@ -223,12 +221,9 @@ class ChallengeViewSet(viewsets.ModelViewSet):
             ).exists():
                  raise permissions.PermissionDenied("You are not a member of this crew.")
 
-        kpi_metrics = generate_kpi_from_challenge(challenge_name)
-
         serializer.save(
             user=challenge_owner_user,
             crew=challenge_owner_crew,
-            kpi_metrics=kpi_metrics,
             status=ChallengeStatus.LIVE
         )
 
@@ -249,19 +244,6 @@ class ChallengeViewSet(viewsets.ModelViewSet):
 
         serializer = self.get_serializer(challenge)
         return Response(serializer.data)
-
-# --- Placeholder LLM functions --- #
-def generate_plan_from_description(description: str) -> dict:
-    print(f"[LLM Placeholder] Generating plan for: {description}")
-    plan_steps = [f"Step 1 based on '{description}'", f"Step 2 based on '{description}'", "Step 3 generic"]
-    return {"plan_list": plan_steps}
-
-def generate_kpi_from_challenge(challenge_name: str) -> tuple[str, dict]:
-    print(f"[LLM Placeholder] Generating KPI for: {challenge_name}")
-    kpi_desc = f"KPI description generated for {challenge_name}."
-    kpi_metrics = {"completion_rate": 0, "step_1_focus": 0, "consistency": 0}
-    return kpi_desc, kpi_metrics
-# --- End Placeholder --- #
 
 
 class RetrospectWeeklyAnalysisViewSet(viewsets.ModelViewSet):
@@ -327,54 +309,43 @@ class RetrospectWeeklyAnalysisViewSet(viewsets.ModelViewSet):
         else:
             # Should be caught by serializer validation, but as a safeguard:
             super().perform_create(serializer)
-
-    # Add other necessary actions, e.g., for generating the analysis summary/KPI via LLM or calculation
-    # @action(detail=False, methods=['post'], url_path='generate-weekly')
-    # def generate_weekly_analysis(self, request):
-    #     ...
         
 class PlanViewSet(viewsets.ModelViewSet):
     queryset = Plan.objects.all()
     serializer_class = PlanSerializer
     permission_classes = [permissions.IsAuthenticated]
-
-
-# 회고 쓰면 자동으로 생성되기 보다는
-# 회고 쓰면 사용자한테 플랜 자동생성 할거냐 물어보고 하는게 나은것같아서 분리함
-# GenericAPIView 쓴 이유는 swagger 문서 자동 생성을 위함 
-
-class GenerateNextPlanAPIView(GenericAPIView):
-    permission_classes = [IsAuthenticated]
-    serializer_class = GenerateNextPlanSerializer
-
-    def post(self, request, challenge_id):
-        user = request.user
-
-        try:
-            challenge = Challenge.objects.get(id=challenge_id)
-        except Challenge.DoesNotExist:
-            raise NotFound("해당 챌린지를 찾을 수 없습니다.")
+    
+    def get_serializer_class(self):
+        """
+        Return different serializers for different actions:
+        - Use PlanResponseSerializer for list and retrieve actions
+        - Use PlanSerializer for all other actions
+        """
+        if self.action in ['list', 'retrieve']:
+            return PlanResponseSerializer
+        return PlanSerializer
+    
+    def list(self, request, *args, **kwargs):
+        """
+        Override list method to return plans in the requested format
+        """
+        queryset = self.filter_queryset(self.get_queryset())
         
-
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        retrospect_id = serializer.validated_data['retrospect_id']
-
-        try:
-            retrospect = Retrospect.objects.get(id=retrospect_id, challenge=challenge)
-        except Retrospect.DoesNotExist:
-            raise NotFound("회고가 존재하지 않거나 이 챌린지에 속하지 않습니다.")
-
-        if retrospect.user != user:
-            raise PermissionDenied("이 회고에 대한 접근 권한이 없습니다.")
-
-        try:
-            plan = generate_plan_from_retrospect(challenge, retrospect)
-            # 회고의 외래키에 생성한 Plan을 할당하고 저장
-            retrospect.plan = plan
-            retrospect.save(update_fields=['plan'])
-        except Exception as e:
-            return Response({"error": str(e)}, status=500)
-
-        plan_serializer = PlanSerializer(plan)
-        return Response({"plan": plan_serializer.data}, status=201)
+        # 챌린지로 필터링 (선택적)
+        challenge_id = request.query_params.get('challenge_id')
+        if challenge_id:
+            queryset = queryset.filter(challenge_id=challenge_id)
+            
+        # 사용자로 필터링 (기본적으로 자신의 계획만 볼 수 있음)
+        queryset = queryset.filter(user=request.user)
+        
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+    
+    def retrieve(self, request, *args, **kwargs):
+        """
+        Override retrieve method to return a single plan in the requested format
+        """
+        instance = self.get_object()
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)
