@@ -1,5 +1,6 @@
 from django.db import models
 from django.conf import settings # Import settings to reference AUTH_USER_MODEL
+from django.core.exceptions import ValidationError
 
 # Create your models here.
 
@@ -209,3 +210,66 @@ class KpiDataEntry(models.Model):
 
     def __str__(self):
         return f"Data for {self.kpi.name} on {self.record_date}: {self.get_value()}"
+
+class KpiResult(models.Model):
+    """
+    회고(Retrospect)를 기반으로 KPI별 평가(스코어)를 기록하는 모델
+    """
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='kpi_results')
+    challenge = models.ForeignKey(Challenge, on_delete=models.CASCADE, related_name='kpi_results')
+    kpi = models.ForeignKey(Kpi, on_delete=models.CASCADE, related_name='kpi_results')
+    retrospect = models.ForeignKey(Retrospect, on_delete=models.CASCADE, related_name='kpi_results')
+
+    score = models.FloatField()  # 0 ~ 1 범위 권장
+    comment = models.TextField(blank=True, null=True)  # 추가 설명
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "KPI Result"
+        verbose_name_plural = "KPI Results"
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['user', 'challenge', 'kpi', 'retrospect']),
+        ]
+        # 같은 (user, challenge, kpi, retrospect) 조합으로는 두 번 저장 불가
+        # 즉, 같은 회고에 대해 같은 KPI에 대해 한 번만 기록 가능
+        unique_together = ('user', 'challenge', 'kpi', 'retrospect')  
+
+
+
+    def __str__(self):
+        return f"Result for KPI '{self.kpi.name}' on retrospect {self.retrospect.id} (Score: {self.score:.2f})"
+
+    def clean(self):
+        # score 값이 0~1 범위인지 확인
+        if not (0.0 <= self.score <= 1.0):
+            raise ValidationError("Score must be between 0 and 1.")
+        if self.score is None:
+            raise ValidationError("Score cannot be None.")
+
+class KpiWeeklyResult(models.Model):
+    """
+    주간 단위 KPI 분석 결과 저장
+    """
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='kpi_weekly_results')
+    challenge = models.ForeignKey(Challenge, on_delete=models.CASCADE, related_name='kpi_weekly_results')
+    kpi = models.ForeignKey(Kpi, on_delete=models.CASCADE, related_name='kpi_weekly_results')
+    week_start_date = models.DateField()
+    week_end_date = models.DateField()
+
+    average_score = models.FloatField(null=True, blank=True)  # 평균 스코어 (0~1)
+    total_score = models.FloatField(null=True, blank=True)    # 총합 스코어 (선택적)
+    retrospect_count = models.IntegerField(default=0)          # 주간 회고 수
+    comment = models.TextField(blank=True, null=True)          # 요약 설명 (ex: "이번 주 평균 집중도 80%")
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'challenge', 'kpi', 'week_start_date')
+        indexes = [
+            models.Index(fields=['user', 'challenge', 'kpi', 'week_start_date']),
+        ]
+        ordering = ['-week_start_date']
+
+    def __str__(self):
+        return f"Weekly KPI '{self.kpi.name}' ({self.week_start_date} - {self.week_end_date}) for {self.user}"

@@ -98,6 +98,9 @@ def get_plans_data(plan_ids: List[int]) -> List[Dict[str, Any]]:
 
 
 def generate_kpis_for_challenge(challenge: Challenge, plan_ids: List[int], user_context: str, user, item_count: int = 3):
+    '''
+    (1) Plan 조회 → (2) PromptTemplate 채우기 → (3) LLMChain 실행 → (4) KPI JSON 파싱 → (5) validate 후 DB 저장
+    '''
     """
     Generates KPIs for a given challenge, plans, and context using an LLM,
     parses the response, and saves them to the database.
