@@ -5,7 +5,10 @@ from django.utils import timezone
 from datetime import timedelta
 from user_manager.models import User 
 from retrospect.models import Challenge, Retrospect, Plan, RetrospectOwnerType, RetrospectVisibility
-
+from django.test import TestCase
+from retrospect.models import Retrospect, KpiResult, KpiWeeklyResult
+from kpi_score_generator import score_kpis_from_retrospect, generate_weekly_kpi_summary
+from datetime import datetime, timedelta
 
 class ChallengeAPITest(APITestCase):
     def setUp(self):
@@ -232,3 +235,33 @@ class RetrospectAPITest(APITestCase):
         self.assertIn(retrospect, plan.retrospects.all())
         self.assertEqual(retrospect.challenge, self.challenge)
         print("✅ 회고 기반 Plan 생성 테스트 통과")
+
+
+
+class KpiScoringTestCase(TestCase):
+    def test_score_retrospect_and_weekly_summary(self):
+        # 회고 ID 24 가져오기
+        retrospect = Retrospect.objects.get(id=24)
+
+        # ✅ 1. 단일 회고 KPI 스코어링
+        results = score_kpis_from_retrospect(retrospect)
+        for r in results:
+            print(f"KPI: {r.kpi.name}, Score: {r.score}, Comment: {r.comment}")
+        self.assertTrue(len(results) > 0)
+
+        # ✅ 2. 주간 KPI 요약 생성
+        weekly_results = generate_weekly_kpi_summary()
+        for w in weekly_results:
+            print(f"[{w.kpi.name}] 주간 평균: {w.average_score:.2f}, 회고 수: {w.retrospect_count}")
+        self.assertTrue(len(weekly_results) > 0)
+
+        # ✅ 3. 최근 결과 조회 검증 (쿼리만 실행)
+        recent_results = KpiResult.objects.all().order_by('-created_at')[:5]
+        print("최근 KpiResult:", recent_results)
+
+        # ✅ 4. 이번 주 요약 결과 조회
+        today = datetime.now().date()
+        week_start = today - timedelta(days=today.weekday())  # 월요일
+        summaries = KpiWeeklyResult.objects.filter(week_start_date=week_start)
+        print("이번 주 요약:", summaries)
+
