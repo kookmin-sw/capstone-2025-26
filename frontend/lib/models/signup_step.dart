@@ -23,8 +23,8 @@ class SignupStep {
 class SignupFlow {
   static const List<SignupStep> steps = [
     SignupStep(
-      title: "Re:ME에서 사용할\n닉네임을 입력해주세요",
-      subtitle: "(앱에서 크루별 닉네임을 설정할 수 있어요!)",
+      title: "Re:ME에서 사용할\n닉네임을 알려주세요!",
+      subtitle: "앱에서 크루별 닉네임을 설정할 수 있어요!",
       hintText: "닉네임",
       shortTitle: "닉네임",
     ),

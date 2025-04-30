@@ -31,6 +31,11 @@ class _HomeState extends State<Home> {
                           Navigator.pushNamed(context, '/signup');
                         },
                         child: const Text("회원가입")),
+                    ElevatedButton(
+                        onPressed: () {
+                          Navigator.pushNamed(context, '/crew');
+                        },
+                        child: const Text("크루 상세")),
                   ],
                 )
               ]),

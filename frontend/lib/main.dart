@@ -26,14 +26,13 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     String isLogin; // 로그인 여부에 따라 시작 지점 저장
     const storage = FlutterSecureStorage();
-    if(storage.read(key: "AccessToken") != null) isLogin = Routes.splash;
-    else isLogin = Routes.login;
+    isLogin = Routes.splash;
 
     // 안드로이드 하단바 꾸미기
     SystemChrome.setSystemUIOverlayStyle(
-      SystemUiOverlayStyle(
+      const SystemUiOverlayStyle(
         systemNavigationBarDividerColor: Colors.transparent, //하단바 디바이더 색상
-        systemNavigationBarColor: boxBackgroundColor,  //하단바 색상
+        systemNavigationBarColor: boxBackgroundColor, //하단바 색상
       ),
     );
 

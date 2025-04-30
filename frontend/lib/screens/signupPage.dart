@@ -117,24 +117,35 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            SignupFlow.steps[_currentStep].title,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 16),
-          if (SignupFlow.steps[_currentStep].subtitle != null)
-            Text(
-              SignupFlow.steps[_currentStep].subtitle!,
+          SizedBox(
+            width: 372,
+            child: Text(
+              SignupFlow.steps[_currentStep].title,
               style: const TextStyle(
-                color: Colors.grey,
-                fontSize: 14,
+                color: Colors.white,
+                fontSize: 24,
+                fontFamily: 'Pretendard',
+                fontWeight: FontWeight.w600,
+                height: 1.50,
               ),
             ),
-          const SizedBox(height: 16),
+          ),
+          const SizedBox(height: 24),
+          if (SignupFlow.steps[_currentStep].subtitle != null)
+            SizedBox(
+              width: 372,
+              child: Text(
+                SignupFlow.steps[_currentStep].subtitle!,
+                style: const TextStyle(
+                  color: Color(0xFFC3C3C3),
+                  fontSize: 16,
+                  fontFamily: 'Pretendard',
+                  fontWeight: FontWeight.w400,
+                  height: 1.50,
+                ),
+              ),
+            ),
+          const SizedBox(height: 24),
           _buildInputField(_currentStep),
           if (_currentStep == 1 && _controllers[1].text.isNotEmpty)
             PasswordChecklist(validator: _passwordValidator),
@@ -201,6 +212,8 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
             style: TextStyle(
               color: _isPasswordMatch ? Colors.green[400] : Colors.red,
               fontSize: 14,
+              fontFamily: 'Pretendard',
+              fontWeight: FontWeight.w400,
             ),
           ),
         ],
@@ -211,7 +224,7 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
   Widget _buildPreviousStep(int index) {
     final step = SignupFlow.steps[index];
     return Padding(
-      padding: const EdgeInsets.only(bottom: 20),
+      padding: const EdgeInsets.only(bottom: 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
@@ -219,11 +232,13 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
           Text(
             step.shortTitle,
             style: const TextStyle(
-              color: Colors.grey,
-              fontSize: 14,
+              color: Color(0xFFC3C3C3),
+              fontSize: 16,
+              fontFamily: 'Pretendard',
+              fontWeight: FontWeight.w400,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
           _buildInputField(index),
           if (index == 1 && _controllers[1].text.isNotEmpty)
             PasswordChecklist(validator: _passwordValidator),
@@ -237,7 +252,7 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: const Color(0xFF111111),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -249,13 +264,14 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
       ),
       body: SingleChildScrollView(
         child: Padding(
-          padding: const EdgeInsets.all(20),
+          padding:
+              const EdgeInsets.only(left: 21, right: 21, top: 20, bottom: 20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildCurrentStep(),
               if (_currentStep > 0) ...[
-                const SizedBox(height: 40),
+                const SizedBox(height: 48),
                 ...List.generate(
                   _currentStep,
                   (index) => _buildPreviousStep(index),

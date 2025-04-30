@@ -23,23 +23,40 @@ class SignupInputField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFF1A1A1A),
-        borderRadius: BorderRadius.circular(8),
+      width: 387,
+      height: 50,
+      clipBehavior: Clip.antiAlias,
+      decoration: ShapeDecoration(
+        color: const Color(0xFF181818),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ),
       child: TextField(
         controller: controller,
         focusNode: focusNode,
         obscureText: isPassword,
-        style: const TextStyle(color: Colors.white),
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 16,
+          fontFamily: 'Inter',
+          fontWeight: FontWeight.w400,
+          height: 1,
+        ),
         decoration: InputDecoration(
           hintText: hintText,
-          hintStyle: const TextStyle(color: Colors.grey),
+          hintStyle: const TextStyle(
+            color: Colors.white,
+            fontSize: 16,
+            fontFamily: 'Inter',
+            fontWeight: FontWeight.w400,
+            height: 1,
+          ),
           contentPadding:
-              const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
+          isDense: true,
           border: InputBorder.none,
           enabledBorder: InputBorder.none,
           focusedBorder: InputBorder.none,
+          isCollapsed: false,
         ),
         onChanged: onChanged,
         onSubmitted: onSubmitted,
