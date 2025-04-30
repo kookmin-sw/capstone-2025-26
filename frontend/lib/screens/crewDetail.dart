@@ -136,10 +136,10 @@ class _CrewDetailState extends State<CrewDetail>
                                 child: Stack(
                                   children: [
                                     Positioned(
+                                      right: -10.w,
+                                      top: 18.h,
                                       child: Icon(Icons.more_vert,
                                           color: Colors.white),
-                                      right: -9.w,
-                                      top: 20.h,
                                     ),
                                     Container(
                                     padding: EdgeInsets.only(top: 26.h),
@@ -432,7 +432,7 @@ class PostCard extends StatelessWidget {
       color: boxBackgroundColor,
       margin: EdgeInsets.only(bottom: 10.h),
       child: Padding(
-        padding: EdgeInsets.fromLTRB(21.w, 16.h, 15.w, 11.h),
+        padding: EdgeInsets.fromLTRB(21.w, 16.h, 13.w, 11.h),
         // padding: EdgeInsets.symmetric(horizontal: 21.w, vertical: 14.h),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
