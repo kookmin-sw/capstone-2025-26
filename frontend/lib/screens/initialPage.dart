@@ -32,9 +32,9 @@ class _InitialpageState extends State<Initialpage>
     super.initState();
     tabController = TabController(length: 5, vsync: this);
     tabController!.addListener(() => setState(() {
-      scrollController.jumpTo(0);
-      _selectIndex = tabController!.index;
-    }));
+          scrollController.jumpTo(0);
+          _selectIndex = tabController!.index;
+        }));
     scrollController.addListener(() {
       setState(() {
         // 스크롤 위치에 따라 opacity 조정
@@ -64,27 +64,21 @@ class _InitialpageState extends State<Initialpage>
                 SliverAppBar(
                   title: const Text(
                     "Re:Me",
-                    style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: c700
-                    ),
+                    style: TextStyle(fontWeight: FontWeight.bold, color: c700),
                   ),
                   backgroundColor: background,
                   centerTitle: false,
                   actions: [
                     IconButton(
                         onPressed: () {},
-                        icon: const Icon(Icons.notifications_outlined, color: c700,)
-                    ),
+                        icon: const Icon(
+                          Icons.notifications_outlined,
+                          color: c700,
+                        )),
                     Container(
-                      padding: EdgeInsets.only(right: 10),
+                        padding: const EdgeInsets.only(right: 10),
                         child: GestureDetector(
-                          onTap: (){},
-                            child: CircleAvatar(
-
-                            )
-                        )
-                    )
+                            onTap: () {}, child: const CircleAvatar()))
                   ],
                   toolbarHeight: 55,
                   floating: true, // 최상단으로 올리지 않아도 appbar 표시
@@ -92,16 +86,13 @@ class _InitialpageState extends State<Initialpage>
                   snap: true,
                 ),
                 SliverList(
-                  delegate: SliverChildListDelegate(
-                      [
-                        Container(
-                          child: _pageOptions.elementAt(_selectIndex),
-                          padding: EdgeInsets.only(bottom: 80), // 하단바 height만큼 padding
-                        )
-            
-                      ]
+                    delegate: SliverChildListDelegate([
+                  Container(
+                    padding: const EdgeInsets.only(bottom: 80),
+                    child: _pageOptions
+                        .elementAt(_selectIndex), // 하단바 height만큼 padding
                   )
-                )
+                ]))
               ],
               controller: scrollController,
             ),
@@ -145,7 +136,9 @@ class _InitialpageState extends State<Initialpage>
                     controller: tabController,
                     tabs: const [
                       Tab(
-                        icon: Icon(TabBarIcon.home,),
+                        icon: Icon(
+                          TabBarIcon.home,
+                        ),
                         text: "홈",
                       ),
                       Tab(
@@ -153,7 +146,9 @@ class _InitialpageState extends State<Initialpage>
                         text: "회고",
                       ),
                       Tab(
-                        icon: Icon(TabBarIcon.award,),
+                        icon: Icon(
+                          TabBarIcon.award,
+                        ),
                         text: "크루",
                       ),
                       Tab(

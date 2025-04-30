@@ -8,14 +8,22 @@ class WidgetBox extends StatelessWidget {
   bool isMore;
   EdgeInsets marginLTRB;
   Function()? onTap;
-  WidgetBox({super.key, this.width=double.maxFinite, this.height, required this.children, this.title='', required this.isMore, required this.marginLTRB, this.onTap});
+  WidgetBox(
+      {super.key,
+      this.width = double.maxFinite,
+      this.height,
+      required this.children,
+      this.title = '',
+      required this.isMore,
+      required this.marginLTRB,
+      this.onTap});
 
   @override
   Widget build(BuildContext context) {
     return IntrinsicHeight(
       child: Container(
-        width: this.width,
-        height: this.height,
+        width: width,
+        height: height,
         margin: marginLTRB,
         decoration: BoxDecoration(
           color: boxBackgroundColor,
@@ -24,25 +32,24 @@ class WidgetBox extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if(title != '')
+            if (title != '')
               Container(
-                padding: EdgeInsets.fromLTRB(28, 24, 0, 0),
+                padding: const EdgeInsets.fromLTRB(28, 24, 0, 0),
                 child: Text(
                   title,
                   style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w800,
-                    color: fontColor
-                  ),
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
+                      color: fontColor),
                 ),
               ),
             Container(
-              margin: EdgeInsets.fromLTRB(20, 10, 20, 20),
+              margin: const EdgeInsets.fromLTRB(20, 10, 20, 20),
               child: Column(
                 children: children,
               ),
             ),
-            if(isMore)
+            if (isMore)
               InkWell(
                 onTap: onTap,
                 child: Container(
@@ -56,22 +63,20 @@ class WidgetBox extends StatelessWidget {
                       Container(
                         height: 1,
                         decoration: const BoxDecoration(
-                          gradient: LinearGradient(
-                              begin: Alignment.centerLeft,
-                              end: Alignment.centerRight,
-                              colors: [
-                                Color(0xFF1C1B20),
-                                Color(0xFF2C2C34),
-                                Color(0xFF1C1B20),
-                              ]
-                          )
-                        ),
+                            gradient: LinearGradient(
+                                begin: Alignment.centerLeft,
+                                end: Alignment.centerRight,
+                                colors: [
+                              Color(0xFF1C1B20),
+                              Color(0xFF2C2C34),
+                              Color(0xFF1C1B20),
+                            ])),
                       ),
                       Container(
-                        margin: EdgeInsets.fromLTRB(0, 7, 0, 0),
+                        margin: const EdgeInsets.fromLTRB(0, 7, 0, 0),
                         child: const Center(
                           child: Text(
-                              "더보기",
+                            "더보기",
                             style: TextStyle(
                               color: fontColor,
                               fontSize: 12,
