@@ -396,7 +396,7 @@ class _SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
   Widget build(
       BuildContext context, double shrinkOffset, bool overlapsContent) {
     return Container(
-      margin: const EdgeInsets.only(left: 15),
+      margin: const EdgeInsets.only(left: 16),
       padding: const EdgeInsets.fromLTRB(0, 5, 0, 4), // 여기서 공간 확보
       color: background,
       child: SizedBox(
