@@ -11,11 +11,12 @@ from .serializers import (
 from .permissions import IsAuthenticated
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
-# from .services.query_processor import process_ai_query
-from .services.kpi_generator import generate_kpis_for_challenge # Import KPI generator service
-from .services.plan_generator import generate_plan_from_challenge, generate_plan_from_retrospect # Import Plan generator service
-from retrospect.models import Challenge, Plan, Retrospect # Import Challenge, Plan, Retrospect models
-from retrospect.serializers import PlanSerializer, PlanResponseSerializer  # Import the new serializer
+from .services.kpi_generator import generate_kpis_for_challenge
+from .services.plan_generator import generate_plan_from_challenge, generate_plan_from_retrospect
+from retrospect.models import Challenge, Plan, Retrospect
+from retrospect.serializers import PlanSerializer, PlanResponseSerializer
+from django.utils import timezone
+from datetime import timedelta
 from django.shortcuts import get_object_or_404
 import logging
 
@@ -312,3 +313,5 @@ class GenerateNextPlanAPIView(generics.GenericAPIView):
         except Exception as e:
             logger.error(f"회고 기반 계획 생성 오류: {str(e)}")
             return Response({"error": f"계획 생성 중 오류가 발생했습니n다: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+

@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from retrospect.models import Challenge, Kpi, Plan, Retrospect # Import Plan and Retrospect models
+from retrospect.models import Challenge, Kpi, Plan, Retrospect
 import json
 
 class LLMRequestSerializer(serializers.Serializer):
@@ -94,3 +94,4 @@ class GenerateNextPlanSerializer(serializers.Serializer):
                 raise serializers.ValidationError("해당 회고는 제공된 챌린지에 속하지 않습니다.")
                 
         return data
+

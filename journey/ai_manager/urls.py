@@ -1,7 +1,10 @@
 # urls.py
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import LLMViewSet, GenerateKpiFromChallengeAPIView, GeneratePlanFromChallengeAPIView, GenerateNextPlanAPIView
+from .views import (
+    LLMViewSet, GenerateKpiFromChallengeAPIView, GeneratePlanFromChallengeAPIView,
+    GenerateNextPlanAPIView
+)
 
 # DefaultRouter 사용 (추가 기능 활용)
 router = DefaultRouter()

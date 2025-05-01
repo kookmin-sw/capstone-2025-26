@@ -8,14 +8,16 @@ from rest_framework.decorators import action
 from django.db.models import Q
 from .models import (Retrospect, Template, Challenge, Plan, ChallengeStatus, 
                  RetrospectWeeklyAnalysis, RetrospectVisibility, TemplateOwnerType, 
-                 ChallengeOwnerType, RetrospectOwnerType, RetrospectWeeklyAnalysisOwnerType)
+                 ChallengeOwnerType, RetrospectOwnerType, RetrospectWeeklyAnalysisOwnerType, Kpi, KpiDataEntry, KpiResult)
 from .serializers import (RetrospectSerializer, TemplateSerializer, ChallengeSerializer, 
-                      PlanSerializer, PlanResponseSerializer, RetrospectWeeklyAnalysisSerializer)
+                      PlanSerializer, PlanResponseSerializer, RetrospectWeeklyAnalysisSerializer, KpiSerializer, KpiDataEntrySerializer, KpiResultSerializer)
 from crew.models import Crew, CrewMembership, CrewMembershipStatus # Import CrewMembership models
 from .permissions import (IsRetrospectOwnerOrCrewMemberOrReadOnly, # Use the new permission class
                           IsTemplateOwnerOrCrewMemberOrReadOnly, 
                           IsChallengeOwnerOrCrewMemberOrReadOnly, 
                           IsRetrospectWeeklyAnalysisOwnerOrCrewMemberOrReadOnly)
+from django.utils import timezone
+from datetime import timedelta
 
 # Create your views here.
 
@@ -348,4 +350,85 @@ class PlanViewSet(viewsets.ModelViewSet):
         """
         instance = self.get_object()
         serializer = self.get_serializer(instance)
+        return Response(serializer.data)
+
+class KpiViewSet(viewsets.ModelViewSet):
+    """
+    KPI를 관리하는 ViewSet
+    """
+    serializer_class = KpiSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return Kpi.objects.filter(user=self.request.user)
+
+    @action(detail=False, methods=['get'])
+    def by_challenge(self, request, pk=None):
+        """
+        특정 챌린지의 KPI를 조회
+        """
+        challenge_id = request.query_params.get('challenge_id')
+        if not challenge_id:
+            return Response({"error": "challenge_id is required"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        kpis = Kpi.objects.filter(
+            user=request.user,
+            challenge_id=challenge_id
+        ).order_by('-created_at')
+        
+        serializer = self.get_serializer(kpis, many=True)
+        return Response(serializer.data)
+
+class KpiDataEntryViewSet(viewsets.ModelViewSet):
+    """
+    KPI 데이터 엔트리를 관리하는 ViewSet
+    """
+    serializer_class = KpiDataEntrySerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return KpiDataEntry.objects.filter(kpi__user=self.request.user)
+
+    @action(detail=False, methods=['get'])
+    def by_kpi(self, request, pk=None):
+        """
+        특정 KPI의 데이터 엔트리를 조회
+        """
+        kpi_id = request.query_params.get('kpi_id')
+        if not kpi_id:
+            return Response({"error": "kpi_id is required"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        entries = KpiDataEntry.objects.filter(
+            kpi_id=kpi_id,
+            kpi__user=request.user
+        ).order_by('date')
+        
+        serializer = self.get_serializer(entries, many=True)
+        return Response(serializer.data)
+
+class KpiResultViewSet(viewsets.ModelViewSet):
+    """
+    KPI 결과를 관리하는 ViewSet
+    """
+    serializer_class = KpiResultSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return KpiResult.objects.filter(user=self.request.user)
+
+    @action(detail=False, methods=['get'])
+    def by_challenge(self, request, pk=None):
+        """
+        특정 챌린지의 KPI 결과를 조회
+        """
+        challenge_id = request.query_params.get('challenge_id')
+        if not challenge_id:
+            return Response({"error": "challenge_id is required"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        results = KpiResult.objects.filter(
+            user=request.user,
+            challenge_id=challenge_id
+        ).order_by('-created_at')
+        
+        serializer = self.get_serializer(results, many=True)
         return Response(serializer.data)
