@@ -27,6 +27,7 @@ class TabBarIcon {
 
   static const IconData comment = IconData(0xe800, fontFamily: _kFontFam, fontPackage: _kFontPkg);
   static const IconData award = IconData(0xe801, fontFamily: _kFontFam, fontPackage: _kFontPkg);
+  static const IconData leftArrow = IconData(0xe802, fontFamily: _kFontFam, fontPackage: _kFontPkg);
   static const IconData heart = IconData(0xe806, fontFamily: _kFontFam, fontPackage: _kFontPkg);
   static const IconData files = IconData(0xe807, fontFamily: _kFontFam, fontPackage: _kFontPkg);
   static const IconData home = IconData(0xe808, fontFamily: _kFontFam, fontPackage: _kFontPkg);

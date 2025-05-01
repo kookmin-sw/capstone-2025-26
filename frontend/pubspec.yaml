@@ -41,6 +41,8 @@ dependencies:
   flutter_svg_provider: ^1.0.7
   flutter_screenutil: ^5.9.0
 
+  flutter_screenutil: ^5.9.3
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

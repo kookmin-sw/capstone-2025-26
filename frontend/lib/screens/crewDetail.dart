@@ -19,13 +19,35 @@ class _CrewDetailState extends State<CrewDetail>
   int _selectIndex = 0;
   bool _isCollapsed = false;
 
+  // 초기 위치 설정 변수들
+  final double _iconInitialTop = 230.h; // 아이콘 초기 세로 위치 (하단에서부터)
+  final double _iconInitialLeft = 21.0; // 아이콘 초기 가로 위치
+  final double _nameInitialTop = 160.h; // 크루명 초기 세로 위치 (하단에서부터)
+  final double _nameInitialLeft = 21.0; // 크루명 초기 가로 위치
+
+  // 최종 위치 설정 변수들
+  final double _iconFinalTop = 50.0; // 아이콘 최종 세로 위치 (앱바)
+  final double _iconFinalLeft = 52.0; // 아이콘 최종 가로 위치 (앱바)
+  final double _nameFinalTop = 53.0; // 크루명 최종 세로 위치 (앱바)
+  final double _nameFinalLeft = 94.0; // 크루명 최종 가로 위치 (앱바)
+
+  // 아이콘 및 텍스트 크기 설정
+  final double _iconInitialSize = 70.0;
+  final double _iconFinalSize = 32.0;
+  final double _nameInitialSize = 19.0;
+  final double _nameFinalSize = 16.0;
+
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
-    _tabController!.addListener(() => setState(() {
+    _tabController!.addListener(() {
+      if (!_tabController!.indexIsChanging) {
+        setState(() {
           _selectIndex = _tabController!.index;
-        }));
+        });
+      }
+    });
 
     _scrollController = ScrollController();
   }
@@ -56,10 +78,11 @@ class _CrewDetailState extends State<CrewDetail>
                   Navigator.pop(context);
                 },
                 child: Container(
-                    margin: const EdgeInsets.only(top: 45),
+                    margin: const EdgeInsets.only(top: 43, left: 16),
                     child: const Icon(
-                      Icons.arrow_back,
-                      size: 18,
+                      TabBarIcon.leftArrow,
+                      size: 20,
+                      color: Colors.white,
                     )),
               ),
               expandedHeight: _expandedHeight,
@@ -82,49 +105,56 @@ class _CrewDetailState extends State<CrewDetail>
                     });
                   }
 
-                  double t = 1.0 -
+                  // 애니메이션 진행 상태 계산 (0: 펼쳐짐, 1: 접힘)
+                  double progress = 1.0 -
                       ((currentHeight - kToolbarHeight - statusBar) /
                           (_expandedHeight - kToolbarHeight - statusBar));
-                  t = t.clamp(0.0, 1.0);
+                  progress = progress.clamp(0.0, 1.0);
 
-                  const double avatarStartSize = 70;
-                  const double avatarEndSize = 32;
-                  final double avatarSize =
-                      avatarStartSize - (avatarStartSize - avatarEndSize) * t;
+                  // 크루 아이콘 크기 계산
+                  final double iconSize = _iconInitialSize -
+                      (_iconInitialSize - _iconFinalSize) * progress;
 
-                  const double nameStartFont = 18;
-                  const double nameEndFont = 16;
-                  final double nameFont =
-                      nameStartFont - (nameStartFont - nameEndFont) * t;
+                  // 크루 아이콘 위치 계산
+                  final double startTop = _expandedHeight - _iconInitialTop;
+                  final double endTop = _iconFinalTop;
+                  final double iconTop =
+                      startTop - (startTop - endTop) * progress;
 
-                  const double leftPaddingStart = 20;
-                  const double leftPaddingEnd = 70;
-                  final double leftPadding = leftPaddingStart +
-                      (leftPaddingEnd - leftPaddingStart) * t;
+                  final double iconLeft = _iconInitialLeft +
+                      (_iconFinalLeft - _iconInitialLeft) * progress;
 
-                  final double topStart = _expandedHeight - (70 * 4);
-                  final double topEnd =
-                      statusBar + (kToolbarHeight - avatarEndSize) / 2;
-                  final double top = topStart - (topStart - topEnd) * t;
+                  // 크루명 위치 계산
+                  final double nameStartTop = _expandedHeight - _nameInitialTop;
+                  final double nameEndTop = _nameFinalTop;
+                  final double nameTop =
+                      nameStartTop - (nameStartTop - nameEndTop) * progress;
+
+                  final double nameLeft = _nameInitialLeft +
+                      (_nameFinalLeft - _nameInitialLeft) * progress;
+
+                  // 크루명 크기 계산
+                  final double nameSize = _nameInitialSize -
+                      (_nameInitialSize - _nameFinalSize) * progress;
 
                   return Stack(
                     fit: StackFit.expand,
                     children: [
-                      // 1. 배경 이미지에 opacity 적용
+                      // 1. 배경 이미지
                       Opacity(
-                        opacity: 1 - t,
+                        opacity: 1 - progress,
                         child: Image.network(
                           'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=800&q=80',
                           fit: BoxFit.cover,
                         ),
                       ),
-                      // 2. flexibleSpace의 크루 정보와 버튼 (함께 사라짐)
+                      // 2. 하단 배경 컨테이너와 컨텐츠
                       Positioned(
                         left: 0,
                         right: 0,
                         bottom: 0,
                         child: Opacity(
-                          opacity: 1 - t,
+                          opacity: 1 - progress,
                           child: Stack(
                             clipBehavior: Clip.none,
                             children: [
@@ -134,166 +164,158 @@ class _CrewDetailState extends State<CrewDetail>
                                 margin: EdgeInsets.only(top: 31.h),
                                 color: boxBackgroundColor,
                                 padding: EdgeInsets.fromLTRB(21.w, 0, 21.w, 0),
-                                child: Stack(children: [
-                                  Positioned(
-                                    right: -10.w,
-                                    top: 18.h,
-                                    child: const Icon(Icons.more_vert,
-                                        color: Colors.white),
-                                  ),
-                                  Container(
-                                    padding: EdgeInsets.only(top: 26.h),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            Container(
-                                              child: Row(
-                                                children: [
-                                                  Text(
-                                                    '저속 노화 따라가기',
-                                                    style: TextStyle(
-                                                        fontSize: 19.sp,
-                                                        fontWeight:
-                                                            FontWeight.w800,
-                                                        color: Colors.white,
-                                                        height: 1.5),
-                                                  ),
-                                                  SizedBox(width: 13.w),
-                                                  const Icon(
-                                                    Icons
-                                                        .person_outline_outlined,
-                                                    color: Color(0xFF898989),
-                                                    size: 15,
-                                                  ),
-                                                  SizedBox(width: 1.w),
-                                                  Text(
-                                                    '12명',
-                                                    style: TextStyle(
+                                child: Stack(
+                                  children: [
+                                    Positioned(
+                                      right: -10.w,
+                                      top: 18.h,
+                                      child: const Icon(Icons.more_vert,
+                                          color: Colors.white),
+                                    ),
+                                    Container(
+                                      padding: EdgeInsets.only(top: 26.h),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Container(
+                                                child: Row(
+                                                  children: [
+                                                    SizedBox(
+                                                        width:
+                                                            158.w), // 크루명 공간 확보
+                                                    SizedBox(width: 13.w),
+                                                    const Icon(
+                                                      Icons
+                                                          .person_outline_outlined,
+                                                      color: Color(0xFF898989),
+                                                      size: 15,
+                                                    ),
+                                                    SizedBox(width: 1.w),
+                                                    Text(
+                                                      '12명',
+                                                      style: TextStyle(
                                                         fontSize: 12.sp,
-                                                        color: Colors.white70),
-                                                  ),
-                                                  const Spacer(),
-                                                ],
+                                                        color: Colors.white70,
+                                                      ),
+                                                    ),
+                                                    const Spacer(),
+                                                  ],
+                                                ),
                                               ),
-                                            ),
-                                            Container(
-                                              padding:
-                                                  EdgeInsets.only(top: 6.h),
-                                              child: Text(
-                                                '저속 노화 위주의 식사와 규칙적인 생활을 통해 삶을 재정비하고 이다현보다 오래 살기 위해 노력합니다',
-                                                style: TextStyle(
+                                              Container(
+                                                padding:
+                                                    EdgeInsets.only(top: 6.h),
+                                                child: Text(
+                                                  '저속 노화 위주의 식사와 규칙적인 생활을 통해 삶을 재정비하고 이다현보다 오래 살기 위해 노력합니다',
+                                                  style: TextStyle(
                                                     fontSize: 14.sp,
                                                     fontWeight: FontWeight.w500,
                                                     color: fontColor,
-                                                    height: 1.70.h),
-                                                maxLines: 2,
-                                                overflow: TextOverflow.clip,
-                                              ),
-                                            ),
-                                            Container(
-                                              margin:
-                                                  EdgeInsets.only(top: 16.h),
-                                              height: 41.h,
-                                              width: double.maxFinite,
-                                              child: ElevatedButton(
-                                                style: ElevatedButton.styleFrom(
-                                                  backgroundColor: c800,
-                                                  shape: RoundedRectangleBorder(
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            10),
+                                                    height: 1.70.h,
                                                   ),
-                                                  padding:
-                                                      const EdgeInsets.only(
-                                                          top: 8, bottom: 8),
+                                                  maxLines: 2,
+                                                  overflow: TextOverflow.clip,
                                                 ),
-                                                onPressed: () {},
-                                                child: Text('크루 가입하기',
-                                                    style: TextStyle(
-                                                        fontSize: 16.sp,
-                                                        color: fontColor,
-                                                        fontWeight:
-                                                            FontWeight.w700,
-                                                        height: 1.5.h)),
                                               ),
-                                            ),
-                                          ],
-                                        ),
-                                      ],
+                                              Container(
+                                                margin:
+                                                    EdgeInsets.only(top: 16.h),
+                                                height: 41.h,
+                                                width: double.maxFinite,
+                                                child: ElevatedButton(
+                                                  style:
+                                                      ElevatedButton.styleFrom(
+                                                    backgroundColor: c800,
+                                                    shape:
+                                                        RoundedRectangleBorder(
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              10),
+                                                    ),
+                                                    padding:
+                                                        const EdgeInsets.only(
+                                                            top: 8, bottom: 8),
+                                                  ),
+                                                  onPressed: () {},
+                                                  child: Text(
+                                                    '크루 가입하기',
+                                                    style: TextStyle(
+                                                      fontSize: 16.sp,
+                                                      color: fontColor,
+                                                      fontWeight:
+                                                          FontWeight.w700,
+                                                      height: 1.5.h,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
                                     ),
-                                  ),
-                                ]),
+                                  ],
+                                ),
                               ),
                               // 아이콘만 따로 위로 올림
                               Positioned(
                                 top: -18.h,
                                 left: 21.w,
                                 child: Opacity(
-                                  opacity: 1 - t,
-                                  child: ClipRRect(
-                                    borderRadius: BorderRadius.circular(10),
-                                    child: Container(
-                                      width: 70.w,
-                                      height: 70.h,
-                                      color: Colors.white,
-                                      child: Image.network(
-                                        'https://your-crew-icon-url.com/icon.png',
-                                        fit: BoxFit.cover,
-                                        errorBuilder:
-                                            (context, error, stackTrace) =>
-                                                const Icon(Icons.group,
-                                                    size: 40,
-                                                    color: Colors.grey),
-                                      ),
-                                    ),
-                                  ),
+                                  opacity: 1 - progress,
+                                  child: const SizedBox(), // 아이콘 자리 빈공간으로 대체
                                 ),
                               ),
                             ],
                           ),
                         ),
                       ),
-                      // 3. AppBar로 이동하는 크루 아이콘+이름
+                      // 7. 애니메이션되는 크루 아이콘 (앱바에 고정)
                       Positioned(
-                        left: leftPadding,
-                        top: top,
-                        child: Opacity(
-                          opacity: t,
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(10),
-                                child: Container(
-                                  width: avatarSize,
-                                  height: avatarSize,
-                                  color: Colors.white,
-                                  child: Image.network(
-                                    'https://your-crew-icon-url.com/icon.png',
-                                    fit: BoxFit.cover,
-                                    errorBuilder:
-                                        (context, error, stackTrace) =>
-                                            const Icon(Icons.group,
-                                                size: 24, color: Colors.grey),
-                                  ),
-                                ),
+                        top: progress < 0.01
+                            ? _expandedHeight - _iconInitialTop
+                            : iconTop,
+                        left: progress < 0.01 ? _iconInitialLeft : iconLeft,
+                        child: Container(
+                          width: iconSize,
+                          height: iconSize,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: Image.network(
+                              'https://your-crew-icon-url.com/icon.png',
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) =>
+                                  Icon(
+                                Icons.group,
+                                size: iconSize * 0.7,
+                                color: Colors.grey,
                               ),
-                              SizedBox(width: 8.w),
-                              Text(
-                                '저속 노화 따라가기',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: nameFont.sp,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
+                            ),
+                          ),
+                        ),
+                      ),
+                      // 8. 애니메이션되는 크루명
+                      Positioned(
+                        left: progress < 0.01 ? _nameInitialLeft : nameLeft,
+                        top: progress < 0.01
+                            ? _expandedHeight - _nameInitialTop
+                            : nameTop,
+                        child: Text(
+                          '저속 노화 따라가기',
+                          style: TextStyle(
+                            fontSize: nameSize.sp,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
                           ),
                         ),
                       ),
@@ -304,6 +326,7 @@ class _CrewDetailState extends State<CrewDetail>
             ),
             // 탭 메뉴
             SliverPersistentHeader(
+              key: ValueKey<int>(_selectIndex),
               delegate: _SliverAppBarDelegate(
                 TabBar(
                   tabAlignment: TabAlignment.start,
@@ -313,7 +336,13 @@ class _CrewDetailState extends State<CrewDetail>
                   indicatorColor: Colors.transparent,
                   dividerColor: Colors.transparent,
                   isScrollable: true,
+                  padding: EdgeInsets.zero,
                   labelPadding: const EdgeInsets.only(left: 5, right: 5),
+                  onTap: (index) {
+                    setState(() {
+                      _selectIndex = index;
+                    });
+                  },
                   tabs: [
                     _buildTab('전체', _selectIndex == 0),
                     _buildTab('공지', _selectIndex == 1),
@@ -342,7 +371,7 @@ class _CrewDetailState extends State<CrewDetail>
   Widget _buildTab(String label, bool selected) {
     return Tab(
       child: Container(
-        width: 101.w,
+        width: 85.w,
         decoration: ShapeDecoration(
           color: selected ? c900 : boxBackgroundColor,
           shape: RoundedRectangleBorder(
@@ -350,7 +379,7 @@ class _CrewDetailState extends State<CrewDetail>
           ),
         ),
         child: Container(
-          padding: const EdgeInsets.fromLTRB(23, 9, 23, 9),
+          padding: const EdgeInsets.fromLTRB(20, 9, 20, 9),
           child: Text(
             label,
             textAlign: TextAlign.center,
@@ -405,8 +434,9 @@ class _SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
   Widget build(
       BuildContext context, double shrinkOffset, bool overlapsContent) {
     return Container(
-      margin: const EdgeInsets.only(left: 16),
-      padding: const EdgeInsets.fromLTRB(0, 5, 0, 4), // 여기서 공간 확보
+      width: double.infinity,
+      margin: EdgeInsets.zero,
+      padding: const EdgeInsets.fromLTRB(16, 5, 16, 4),
       color: background,
       child: SizedBox(
         height: _tabBar.preferredSize.height,
@@ -417,7 +447,7 @@ class _SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
 
   @override
   bool shouldRebuild(_SliverAppBarDelegate oldDelegate) {
-    return false;
+    return true;
   }
 }
 
