@@ -4,16 +4,14 @@ from rest_framework import status
 from django.utils import timezone
 from datetime import timedelta
 from user_manager.models import User 
-from retrospect.models import Challenge, Retrospect, Plan, RetrospectOwnerType, RetrospectVisibility
+from retrospect.models import Challenge, Retrospect, Plan, RetrospectOwnerType, RetrospectVisibility, Kpi, KpiDataEntry, KpiResult, KpiDataType, ChallengeOwnerType
 from django.test import TestCase
-from retrospect.models import Retrospect, KpiResult, KpiWeeklyResult
-from kpi_score_generator import score_kpis_from_retrospect, generate_weekly_kpi_summary
-from datetime import datetime, timedelta
+from ai_manager.services.kpi_score_generator import score_kpis_from_retrospect, extract_meaning_units, match_meaning_units_to_kpi, score_matched_units
 
 class ChallengeAPITest(APITestCase):
     def setUp(self):
         # 테스트용 사용자 생성 및 로그인
-        self.user = User(email="test999@example.com", nickname="testuser")
+        self.user = User(email="test999@example.com", username="testuser")
         self.user.set_password("1234")
         self.user.save()
         login_successful = self.client.login(email="test999@example.com", password="1234")
@@ -23,10 +21,10 @@ class ChallengeAPITest(APITestCase):
         # 챌린지 생성에 사용할 기본 데이터
         self.challenge_data = {
             "challenge_name": "Test Challenge",
+            "description": "Test Challenge Description",
             "deadline": (timezone.now() + timedelta(days=10)).isoformat(),
             "owner_type": "USER",
-            "status": "LIVE",
-            "kpi_metrics": {"example": "metric"}
+            "status": "LIVE"
         }
     
     def test_create_challenge(self):
@@ -102,7 +100,7 @@ class ChallengeAPITest(APITestCase):
 class RetrospectAPITest(APITestCase):
     def setUp(self):
         # 테스트용 사용자 생성 및 로그인
-        self.user = User(email="test999@example.com", nickname="testuser")
+        self.user = User(email="test999@example.com", username="testuser")
         self.user.set_password("1234")
         self.user.save()
         login_successful = self.client.login(email="test999@example.com", password="1234")
@@ -112,10 +110,10 @@ class RetrospectAPITest(APITestCase):
         # 회고 생성을 위한 챌린지 생성 (회고는 챌린지와 연결되어야 함)
         self.challenge = Challenge.objects.create(
             challenge_name="Retrospect Test Challenge",
-            deadline=(timezone.now() + timedelta(days=10)).isoformat(),
+            description="Test Challenge Description",
+            deadline=timezone.now() + timedelta(days=10),
             owner_type="USER",
             status="LIVE",
-            kpi_metrics={"example": "metric"},
             user=self.user
         )
     
@@ -220,48 +218,348 @@ class RetrospectAPITest(APITestCase):
         )
         
         # Plan 생성 API 호출
-        url = reverse("generate-plan", kwargs={"challenge_id": self.challenge.id})
-        data = {"retrospect_id": retrospect.id}
+        url = reverse("generate-plan")
+        data = {
+            "challenge_id": self.challenge.id,
+            "retrospect_id": retrospect.id
+        }
         response = self.client.post(url, data, format="json")
         print(f"응답 상태 코드: {response.status_code}")
         print(f"응답 데이터: {response.data}")
         
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertIn("plan", response.data)
-        self.assertIn("id", response.data["plan"])
-        
-        # 생성된 Plan 확인
-        plan = Plan.objects.get(id=response.data["plan"]["id"])
-        self.assertIn(retrospect, plan.retrospects.all())
-        self.assertEqual(retrospect.challenge, self.challenge)
+        self.assertIn("plans", response.data)
+        self.assertIsInstance(response.data["plans"], dict)
+        self.assertTrue(len(response.data["plans"]) > 0)
         print("✅ 회고 기반 Plan 생성 테스트 통과")
-
-
 
 class KpiScoringTestCase(TestCase):
     def test_score_retrospect_and_weekly_summary(self):
-        # 회고 ID 24 가져오기
-        retrospect = Retrospect.objects.get(id=24)
-
-        # ✅ 1. 단일 회고 KPI 스코어링
+        # 테스트용 사용자 생성
+        user = User.objects.create_user(
+            username='testuser',
+            email='test@example.com',
+            password='testpass123'
+        )
+        
+        # 테스트용 챌린지 생성
+        challenge = Challenge.objects.create(
+            user=user,
+            challenge_name='테스트 챌린지',
+            description='테스트용 챌린지입니다',
+            deadline=timezone.now() + timedelta(days=7),
+            owner_type=ChallengeOwnerType.USER
+        )
+        
+        # 테스트용 KPI 생성
+        kpi = Kpi.objects.create(
+            challenge=challenge,
+            user=user,
+            name='테스트 KPI',
+            definition='테스트용 KPI입니다',
+            measurement_unit='시간',
+            data_type=KpiDataType.INTEGER
+        )
+        
+        # 테스트용 회고 생성
+        retrospect = Retrospect.objects.create(
+            user=user,
+            challenge=challenge,
+            content='오늘 3시간 공부했고 집중도가 좋았습니다.',
+            visibility=RetrospectVisibility.PRIVATE,
+            owner_type=RetrospectOwnerType.USER
+        )
+        
+        # KPI 스코어링 실행
         results = score_kpis_from_retrospect(retrospect)
-        for r in results:
-            print(f"KPI: {r.kpi.name}, Score: {r.score}, Comment: {r.comment}")
-        self.assertTrue(len(results) > 0)
+        
 
-        # ✅ 2. 주간 KPI 요약 생성
-        weekly_results = generate_weekly_kpi_summary()
-        for w in weekly_results:
-            print(f"[{w.kpi.name}] 주간 평균: {w.average_score:.2f}, 회고 수: {w.retrospect_count}")
-        self.assertTrue(len(weekly_results) > 0)
+        # 결과 검증
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0].kpi, kpi)
+        self.assertTrue(0 <= results[0].score <= 1)
 
-        # ✅ 3. 최근 결과 조회 검증 (쿼리만 실행)
-        recent_results = KpiResult.objects.all().order_by('-created_at')[:5]
-        print("최근 KpiResult:", recent_results)
+class KpiAPITest(APITestCase):
+    def setUp(self):
+        # 테스트용 사용자 생성 및 로그인
+        self.user = User(email="test999@example.com", username="testuser")
+        self.user.set_password("1234")
+        self.user.save()
+        self.client.force_authenticate(user=self.user)
+        
+        # 테스트용 챌린지 생성
+        self.challenge = Challenge.objects.create(
+            user=self.user,
+            challenge_name="Test Challenge",
+            description="Test Challenge Description",
+            deadline=timezone.now() + timedelta(days=10),
+            owner_type=ChallengeOwnerType.USER,
+            status="LIVE"
+        )
+        
+        # 테스트용 KPI 생성
+        self.kpi = Kpi.objects.create(
+            challenge=self.challenge,
+            user=self.user,
+            name="Test KPI",
+            definition="Test KPI definition",
+            measurement_unit="시간",
+            data_type=KpiDataType.FLOAT
+        )
+    
+    def test_create_kpi(self):
+        """
+        KPI 생성 API 테스트
+        """
+        print("\n=== 테스트: KPI 생성 ===")
+        data = {
+            "challenge": self.challenge.id,
+            "user": self.user.id,  # user 필드 추가
+            "name": "New KPI",
+            "definition": "New KPI definition",
+            "measurement_unit": "회",
+            "data_type": KpiDataType.INTEGER
+        }
+        url = reverse("kpi-list")
+        response = self.client.post(url, data, format="json")
+        print(f"응답 상태 코드: {response.status_code}")
+        print(f"응답 데이터: {response.data}")
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data["name"], "New KPI")
+        print("✅ KPI 생성 테스트 통과")
+    
+    def test_create_kpi_data_entry(self):
+        """
+        KPI 데이터 엔트리 생성 API 테스트
+        """
+        print("\n=== 테스트: KPI 데이터 엔트리 생성 ===")
+        data = {
+            "kpi": self.kpi.id,
+            "user": self.user.id,  # user 필드 추가
+            "record_date": timezone.now().date().isoformat(),
+            "value_type": KpiDataType.FLOAT,
+            "value_float": 3.5
+        }
+        url = reverse("kpi-entry-list")
+        response = self.client.post(url, data, format="json")
+        print(f"응답 상태 코드: {response.status_code}")
+        print(f"응답 데이터: {response.data}")
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data["value_float"], 3.5)
+        print("✅ KPI 데이터 엔트리 생성 테스트 통과")
+    
+    def test_get_kpi_data_entries(self):
+        """
+        KPI 데이터 엔트리 조회 API 테스트
+        """
+        print("\n=== 테스트: KPI 데이터 엔트리 조회 ===")
+        # 테스트용 데이터 생성
+        KpiDataEntry.objects.create(
+            kpi=self.kpi,
+            user=self.user,
+            record_date=timezone.now().date(),
+            value_type=KpiDataType.FLOAT,
+            value_float=3.5
+        )
+        
+        url = reverse("kpi-entry-list")
+        response = self.client.get(url, format="json")
+        print(f"응답 상태 코드: {response.status_code}")
+        print(f"응답 데이터: {response.data}")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data["results"]), 1)
+        self.assertEqual(response.data["results"][0]["value_float"], 3.5)
+        print("✅ KPI 데이터 엔트리 조회 테스트 통과")
+    
+    def test_get_kpi_results(self):
+        """
+        KPI 결과 조회 API 테스트
+        """
+        print("\n=== 테스트: KPI 결과 조회 ===")
+        # 테스트용 회고 생성
+        retrospect = Retrospect.objects.create(
+            user=self.user,
+            challenge=self.challenge,
+            content="Test retrospect content",
+            visibility=RetrospectVisibility.PRIVATE,
+            owner_type=RetrospectOwnerType.USER
+        )
+        
+        # KPI 결과 생성
+        KpiResult.objects.create(
+            user=self.user,
+            challenge=self.challenge,
+            kpi=self.kpi,
+            retrospect=retrospect,
+            score=0.8,
+            comment="Test comment"
+        )
+        
+        url = reverse("kpi-result-list")
+        response = self.client.get(url, format="json")
+        print(f"응답 상태 코드: {response.status_code}")
+        print(f"응답 데이터: {response.data}")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data["results"]), 1)
+        self.assertEqual(response.data["results"][0]["score"], 0.8)
+        print("✅ KPI 결과 조회 테스트 통과")
+    
+    def test_get_kpi_results_by_challenge(self):
+        """
+        챌린지별 KPI 결과 조회 API 테스트
+        """
+        print("\n=== 테스트: 챌린지별 KPI 결과 조회 ===")
+        # 테스트용 회고 생성
+        retrospect = Retrospect.objects.create(
+            user=self.user,
+            challenge=self.challenge,
+            content="Test retrospect content",
+            visibility=RetrospectVisibility.PRIVATE,
+            owner_type=RetrospectOwnerType.USER
+        )
+        
+        # KPI 결과 생성
+        KpiResult.objects.create(
+            user=self.user,
+            challenge=self.challenge,
+            kpi=self.kpi,
+            retrospect=retrospect,
+            score=0.8,
+            comment="Test comment"
+        )
+        
+        url = reverse("kpi-result-by-challenge")
+        response = self.client.get(url, {"challenge_id": self.challenge.id}, format="json")
+        print(f"응답 상태 코드: {response.status_code}")
+        print(f"응답 데이터: {response.data}")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]["score"], 0.8)
+        print("✅ 챌린지별 KPI 결과 조회 테스트 통과")
 
-        # ✅ 4. 이번 주 요약 결과 조회
-        today = datetime.now().date()
-        week_start = today - timedelta(days=today.weekday())  # 월요일
-        summaries = KpiWeeklyResult.objects.filter(week_start_date=week_start)
-        print("이번 주 요약:", summaries)
-
+class KpiScoreGeneratorTest(TestCase):
+    def setUp(self):
+        # 테스트용 사용자 생성
+        self.user = User.objects.create_user(
+            email="test999@example.com",
+            password="1234",
+            username="testuser"
+        )
+        
+        # 테스트용 챌린지 생성
+        self.challenge = Challenge.objects.create(
+            user=self.user,
+            challenge_name="Test Challenge",
+            deadline=timezone.now() + timedelta(days=10),
+            owner_type=ChallengeOwnerType.USER,
+            status="LIVE"
+        )
+        
+        # 테스트용 KPI 생성
+        self.kpi = Kpi.objects.create(
+            challenge=self.challenge,
+            user=self.user,
+            name="공부 시간",
+            definition="하루 공부 시간",
+            measurement_unit="시간",
+            data_type=KpiDataType.FLOAT
+        )
+        
+        # 테스트용 회고 생성
+        self.retrospect = Retrospect.objects.create(
+            user=self.user,
+            challenge=self.challenge,
+            content="오늘 3시간 공부했고 집중도가 좋았습니다. 내일은 4시간 목표로 하겠습니다.",
+            visibility=RetrospectVisibility.PRIVATE,
+            owner_type=RetrospectOwnerType.USER
+        )
+    
+    def test_extract_meaning_units(self):
+        """
+        의미 단위 추출 테스트
+        """
+        print("\n=== 테스트: 의미 단위 추출 ===")
+        text = "오늘 3시간 공부했고 집중도가 좋았습니다."
+        units = extract_meaning_units(text)
+        print(f"추출된 의미 단위: {units}")
+        
+        # 결과 검증
+        self.assertIsInstance(units, list)
+        self.assertTrue(any(unit["category"] == "행동" for unit in units))
+        self.assertTrue(any(unit["keyword"] == "공부" for unit in units))
+        self.assertTrue(any(unit["value"] == "3시간" for unit in units))
+        print("✅ 의미 단위 추출 테스트 통과")
+    
+    def test_match_meaning_units_to_kpi(self):
+        """
+        KPI와 의미 단위 매핑 테스트
+        """
+        print("\n=== 테스트: KPI와 의미 단위 매핑 ===")
+        units = [
+            {"category": "행동", "keyword": "공부", "value": "3시간"},
+            {"category": "성과", "keyword": "집중도", "value": "좋음"}
+        ]
+        matched_units = match_meaning_units_to_kpi(self.kpi, units)
+        print(f"매핑된 의미 단위: {matched_units}")
+        
+        # 결과 검증
+        self.assertIsInstance(matched_units, list)
+        self.assertTrue(any(unit["keyword"] == "공부" for unit in matched_units))
+        print("✅ KPI와 의미 단위 매핑 테스트 통과")
+    
+    def test_score_matched_units(self):
+        """
+        매핑된 단위 점수 계산 테스트
+        """
+        print("\n=== 테스트: 매핑된 단위 점수 계산 ===")
+        units = [
+            {"category": "행동", "keyword": "공부", "value": "3시간"},
+            {"category": "성과", "keyword": "집중도", "value": "좋음"}
+        ]
+        score = score_matched_units(units)
+        print(f"계산된 점수: {score}")
+        
+        # 결과 검증
+        self.assertIsInstance(score, float)
+        self.assertTrue(0 <= score <= 1)
+        print("✅ 매핑된 단위 점수 계산 테스트 통과")
+    
+    def test_score_kpis_from_retrospect(self):
+        """
+        회고 기반 KPI 점수 생성 테스트
+        """
+        print("\n=== 테스트: 회고 기반 KPI 점수 생성 ===")
+        results = score_kpis_from_retrospect(self.retrospect)
+        print(f"생성된 KPI 결과: {results}")
+        
+        # 결과 검증
+        self.assertIsInstance(results, list)
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0].kpi, self.kpi)
+        self.assertTrue(0 <= results[0].score <= 1)
+        print("✅ 회고 기반 KPI 점수 생성 테스트 통과")
+    
+    def test_score_kpis_from_retrospect_with_multiple_kpis(self):
+        """
+        여러 KPI에 대한 점수 생성 테스트
+        """
+        print("\n=== 테스트: 여러 KPI 점수 생성 ===")
+        # 추가 KPI 생성
+        kpi2 = Kpi.objects.create(
+            challenge=self.challenge,
+            user=self.user,
+            name="집중도",
+            definition="공부 집중도",
+            measurement_unit="점",
+            data_type=KpiDataType.FLOAT
+        )
+        
+        results = score_kpis_from_retrospect(self.retrospect)
+        print(f"생성된 KPI 결과: {results}")
+        
+        # 결과 검증
+        self.assertIsInstance(results, list)
+        self.assertEqual(len(results), 2)  # 두 개의 KPI 결과가 생성되어야 함
+        self.assertTrue(any(result.kpi == self.kpi for result in results))
+        self.assertTrue(any(result.kpi == kpi2 for result in results))
+        print("✅ 여러 KPI 점수 생성 테스트 통과")

@@ -3,7 +3,7 @@ from langchain.chains import LLMChain
 from langchain.prompts import PromptTemplate
 from langchain_google_vertexai.chat_models import ChatVertexAI
 from langfuse.callback import CallbackHandler
-from retrospect.models import Plan, Challenge, Kpi, KpiDataType, KpiResult, KpiWeeklyResult
+from retrospect.models import Plan, Challenge, Kpi, KpiDataType, KpiResult
 from ai_manager.serializers import KpiOutputSerializer
 import os
 import re
@@ -70,12 +70,14 @@ def match_meaning_units_to_kpi(kpi: Kpi, units: List[Dict[str, Any]]) -> List[Di
     """
     KPI와 의미 단위를 매핑 (직접/간접/의미 기반)
     """
+    # 유사도 계산 .... 
     matched = []
     kpi_keywords = [kpi.name, kpi.definition]
     for unit in units:
         for kw in kpi_keywords:
             if unit["keyword"] in kw or kw in unit["keyword"]:
                 matched.append(unit)
+                
     return matched
 
 
@@ -128,50 +130,3 @@ def score_kpis_from_retrospect(retrospect):
         results.append(result)
 
     return results
-
-
-def generate_weekly_kpi_summary():
-    """
-    매주 일요일 오후 9시에 전체 사용자에 대해 주간 KPI 집계 및 KpiWeeklyResult 생성
-    """
-    now = datetime.now()
-    # 이번 주 시작일 (월요일)
-    week_start = (now - timedelta(days=now.weekday())).date()
-    # 이번 주 종료일 (일요일)
-    week_end = week_start + timedelta(days=6)
-
-    logger.info(f"주간 KPI 요약 생성 시작: {week_start} ~ {week_end}")
-
-    # 이번 주에 회고 작성된 KPI 결과 조회
-    kpi_results = KpiResult.objects.filter(
-        retrospect__created_at__date__range=[week_start, week_end]
-    )
-
-    # (user, challenge, kpi)별 그룹핑
-    grouped = {}
-    for result in kpi_results:
-        key = (result.user.id, result.challenge.id, result.kpi.id)
-        if key not in grouped:
-            grouped[key] = []
-        grouped[key].append(result)
-
-    weekly_results = []
-
-    for (user_id, challenge_id, kpi_id), results in grouped.items():
-        avg_score = sum(r.score for r in results) / len(results)
-        weekly_result, created = KpiWeeklyResult.objects.update_or_create(
-            user_id=user_id,
-            challenge_id=challenge_id,
-            kpi_id=kpi_id,
-            week_start_date=week_start,
-            defaults={
-                'week_end_date': week_end,
-                'average_score': avg_score,
-                'retrospect_count': len(results),
-                'comment': f"이번 주 평균 달성률 {avg_score*100:.1f}%"
-            }
-        )
-        weekly_results.append(weekly_result)
-
-    logger.info(f"주간 KPI 요약 생성 완료: {len(weekly_results)}개 항목")
-    return weekly_results

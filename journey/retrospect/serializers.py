@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Retrospect, Challenge, Template, Plan, RetrospectWeeklyAnalysis
+from .models import Retrospect, Challenge, Template, Plan, RetrospectWeeklyAnalysis, KpiResult, Kpi, KpiDataEntry
 from user_manager.models import User
 from crew.models import Crew
 import json
@@ -240,3 +240,35 @@ class RetrospectWeeklyAnalysisSerializer(serializers.ModelSerializer):
         # Add more specific step validation if needed
 
         return data
+
+class KpiSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Kpi
+        fields = ['id', 'name', 'definition', 'challenge', 'user', 'created_at']
+        read_only_fields = ['id', 'created_at']
+
+class KpiDataEntrySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = KpiDataEntry
+        fields = ['id', 'kpi', 'user', 'record_date', 'value_type', 
+                 'value_float', 'value_integer', 'value_text', 'value_boolean', 
+                 'created_at', 'updated_at']
+        read_only_fields = ['id', 'created_at', 'updated_at']
+
+class KpiResultSerializer(serializers.ModelSerializer):
+    """
+    KPI 결과를 직렬화하는 시리얼라이저
+    """
+    challenge = serializers.PrimaryKeyRelatedField(read_only=True)
+    kpi = serializers.PrimaryKeyRelatedField(read_only=True)
+    retrospect = serializers.PrimaryKeyRelatedField(read_only=True)
+
+    class Meta:
+        model = KpiResult
+        fields = ['id', 'user', 'challenge', 'kpi', 'retrospect', 'score', 'comment', 'created_at']
+        read_only_fields = ['id', 'created_at']
+
+    def validate_score(self, value):
+        if not 0 <= value <= 1:
+            raise serializers.ValidationError("점수는 0과 1 사이여야 합니다.")
+        return value
