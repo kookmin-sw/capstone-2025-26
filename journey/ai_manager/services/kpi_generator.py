@@ -10,7 +10,9 @@ import re
 import json
 import logging
 from typing import List, Dict, Any
+import dotenv
 
+dotenv.load_dotenv()
 logger = logging.getLogger(__name__)
 
 # LangChain LLM 설정
