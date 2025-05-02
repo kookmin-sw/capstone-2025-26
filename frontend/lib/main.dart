@@ -27,7 +27,9 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     String isLogin; // 로그인 여부에 따라 시작 지점 저장
     const storage = FlutterSecureStorage();
-    isLogin = Routes.splash;
+    // FlutterSecureStorage에 AccessToken이 있으면 바로 메인화면으로 이동
+    if(storage.read(key: "AccessToken") != null) isLogin = Routes.splash;
+    else isLogin = Routes.login;
 
     // 안드로이드 하단바 꾸미기
     SystemChrome.setSystemUIOverlayStyle(
