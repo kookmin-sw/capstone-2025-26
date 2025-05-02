@@ -11,7 +11,7 @@ class RetrospectChallengeList extends StatefulWidget {
 }
 
 class _RetrospectChallengeListState extends State<RetrospectChallengeList> {
-  // 선택된 챌린지들을 추적하기 위한 Set
+  // 선택된 챌린지
   final Set<int> _selectedChallenges = {};
 
   // 현재 선택된 카테고리 (0: 전체, 1: 개인, 2: 크루)
@@ -45,7 +45,7 @@ class _RetrospectChallengeListState extends State<RetrospectChallengeList> {
         children: [
           // 타이틀 텍스트
           const Padding(
-            padding: EdgeInsets.fromLTRB(21.0, 27.0, 16.0, 27.0),
+            padding: EdgeInsets.fromLTRB(21.0, 0.0, 16.0, 27.0),
             child: Align(
               alignment: Alignment.centerLeft,
               child: Column(
@@ -79,7 +79,7 @@ class _RetrospectChallengeListState extends State<RetrospectChallengeList> {
             ),
           ),
 
-          // 분리된 버튼들
+          // 카테고리 버튼 모음
           Padding(
             padding: const EdgeInsets.fromLTRB(21.0, 0.0, 30.0, 0.0),
             child: Row(
@@ -109,18 +109,39 @@ class _RetrospectChallengeListState extends State<RetrospectChallengeList> {
         padding: const EdgeInsets.fromLTRB(16.0, 0, 16.0, 16.0),
         child: InkWell(
           onTap: () {
+            // 선택한 챌린지들 가져오기
+            final List<Map<String, dynamic>> selectedChallenges = [];
+            final challenges = _getChallenges();
+
+            for (var id in _selectedChallenges) {
+              final challenge = challenges.firstWhere((c) => c['id'] == id);
+              selectedChallenges.add(challenge);
+            }
+
+            if (selectedChallenges.isEmpty) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('최소 하나 이상의 챌린지를 선택해주세요'),
+                  duration: Duration(seconds: 1),
+                ),
+              );
+              return;
+            }
+
             // Navigate to the retrospective method selection screen
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => const RetrospectMethodSelection(),
+                builder: (context) => RetrospectMethodSelection(
+                  selectedChallenges: selectedChallenges,
+                ),
               ),
             );
           },
           child: Container(
             height: 60,
             decoration: BoxDecoration(
-              color: const Color(0xFF223990),
+              color: const Color(0xFF1C398E),
               borderRadius: BorderRadius.circular(16),
             ),
             child: const Center(
@@ -151,7 +172,7 @@ class _RetrospectChallengeListState extends State<RetrospectChallengeList> {
         },
         style: ElevatedButton.styleFrom(
           backgroundColor:
-              isSelected ? const Color(0xFF223990) : const Color(0xFF171717),
+              isSelected ? const Color(0xFF1C398E) : const Color(0xFF171717),
           foregroundColor: Colors.white,
           elevation: 0,
           padding:
@@ -183,7 +204,7 @@ class _RetrospectChallengeListState extends State<RetrospectChallengeList> {
         : challenges.where((c) => c['type'] == type).toList();
 
     return ListView.builder(
-      padding: const EdgeInsets.only(top: 16.0, bottom: 80.0),
+      padding: const EdgeInsets.only(top: 10.0, bottom: 80.0),
       itemCount: filteredChallenges.length + 1, // +1 for the 모두 선택 button
       itemBuilder: (context, index) {
         // 마지막 아이템인 경우 모두 선택 버튼 표시
@@ -248,12 +269,12 @@ class _RetrospectChallengeListState extends State<RetrospectChallengeList> {
         final isSelected = _selectedChallenges.contains(id);
 
         return Padding(
-          padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),
+          padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 21.0),
           child: Row(
             children: [
               Container(
-                width: 45,
-                height: 45,
+                width: 40,
+                height: 40,
                 decoration: BoxDecoration(
                   color: challenge['iconBgColor'] as Color,
                   borderRadius: BorderRadius.circular(8),
