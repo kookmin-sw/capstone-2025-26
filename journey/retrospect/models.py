@@ -59,7 +59,9 @@ class Template(models.Model):
     owner_type = models.CharField(max_length=10, choices=TemplateOwnerType.choices)
     name = models.CharField(max_length=255)
     steps = models.JSONField() # 회고 작성 예시
-
+    description = models.TextField(null=True, blank=True) # 템플릿 설명 (선택적)
+    hashtag = models.JSONField(null=True, blank=True) # 해시태그 (선택적)
+    
     TemplateOwnerType = TemplateOwnerType
 
     def __str__(self):
@@ -103,15 +105,11 @@ class Retrospect(models.Model):
     template = models.ForeignKey(Template, on_delete=models.SET_NULL, null=True, blank=True, related_name='retrospects') # 템플릿 없이 작성 가능
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='retrospects') # 작성자
     crew = models.ForeignKey('crew.Crew', on_delete=models.CASCADE, related_name='retrospects', null=True, blank=True) # 크루 회고일 경우
-    content = models.TextField()
+    content = models.JSONField()  # { "step1": "내용", "step2": "내용" } 형태로 저장
     visibility = models.CharField(max_length=10, choices=RetrospectVisibility.choices, default=RetrospectVisibility.PRIVATE)
     owner_type = models.CharField(max_length=10, choices=RetrospectOwnerType.choices)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-
-    RetrospectOwnerType = RetrospectOwnerType
-    def __str__(self):
-        return f"Retrospect for {self.challenge} by {self.user}"
 
 class RetrospectWeeklyAnalysis(models.Model):
     """주간 회고 분석"""

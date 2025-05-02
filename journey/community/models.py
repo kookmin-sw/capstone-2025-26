@@ -3,6 +3,8 @@ from django.db import models
 class Feed(models.Model):
     """피드 (게시글) 모델"""
     user = models.ForeignKey('user_manager.User', on_delete=models.CASCADE, related_name='feeds')
+    crew = models.ForeignKey('crew.Crew', on_delete=models.CASCADE, null=True, blank=True, related_name='feeds')
+    title = models.TextField(default='') # 제목
     content = models.TextField()
     view_count = models.IntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
