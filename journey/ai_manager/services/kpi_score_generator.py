@@ -75,7 +75,7 @@ def match_meaning_units_to_kpi(kpi: Kpi, units: List[Dict[str, Any]]) -> List[Di
     kpi_keywords = [kpi.name, kpi.definition]
     for unit in units:
         for kw in kpi_keywords:
-            if unit["keyword"] in kw or kw in unit["keyword"]:
+            if unit["keyword"] in kw:
                 matched.append(unit)
                 
     return matched
