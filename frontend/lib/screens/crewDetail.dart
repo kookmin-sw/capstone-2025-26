@@ -20,10 +20,10 @@ class _CrewDetailState extends State<CrewDetail>
   bool _isCollapsed = false;
 
   // 초기 위치 설정 변수들
-  final double _iconInitialTop = 230.h; // 아이콘 초기 세로 위치 (하단에서부터)
-  final double _iconInitialLeft = 21.0; // 아이콘 초기 가로 위치
-  final double _nameInitialTop = 160.h; // 크루명 초기 세로 위치 (하단에서부터)
-  final double _nameInitialLeft = 21.0; // 크루명 초기 가로 위치
+  final double _iconInitialTop = 227.h; // 아이콘 초기 세로 위치 (하단에서부터)
+  final double _iconInitialLeft = 20.0; // 아이콘 초기 가로 위치
+  final double _nameInitialTop = 150.h; // 크루명 초기 세로 위치 (하단에서부터)
+  final double _nameInitialLeft = 20.0; // 크루명 초기 가로 위치
 
   // 최종 위치 설정 변수들
   final double _iconFinalTop = 50.0; // 아이콘 최종 세로 위치 (앱바)
@@ -32,8 +32,8 @@ class _CrewDetailState extends State<CrewDetail>
   final double _nameFinalLeft = 94.0; // 크루명 최종 가로 위치 (앱바)
 
   // 아이콘 및 텍스트 크기 설정
-  final double _iconInitialSize = 70.0;
-  final double _iconFinalSize = 32.0;
+  final double _iconInitialSize = 70.0.r;
+  final double _iconFinalSize = 32.0.r;
   final double _nameInitialSize = 19.0;
   final double _nameFinalSize = 16.0;
 
@@ -173,22 +173,21 @@ class _CrewDetailState extends State<CrewDetail>
                                           color: Colors.white),
                                     ),
                                     Container(
-                                      padding: EdgeInsets.only(top: 26.h),
+                                      padding: EdgeInsets.only(top: 32.h),
                                       child: Column(
                                         crossAxisAlignment:
-                                            CrossAxisAlignment.start,
+                                        CrossAxisAlignment.start,
                                         children: [
                                           Column(
                                             crossAxisAlignment:
-                                                CrossAxisAlignment.start,
+                                            CrossAxisAlignment.start,
                                             mainAxisSize: MainAxisSize.min,
                                             children: [
                                               Container(
                                                 child: Row(
                                                   children: [
                                                     SizedBox(
-                                                        width:
-                                                            158.w), // 크루명 공간 확보
+                                                        width: 142.w), // 크루명 공간 확보
                                                     SizedBox(width: 13.w),
                                                     const Icon(
                                                       Icons
@@ -200,8 +199,8 @@ class _CrewDetailState extends State<CrewDetail>
                                                     Text(
                                                       '12명',
                                                       style: TextStyle(
-                                                        fontSize: 12.sp,
-                                                        color: Colors.white70,
+                                                        fontSize: 13.sp,
+                                                        color: Color(0xFFA3A3A3),
                                                       ),
                                                     ),
                                                     const Spacer(),
@@ -210,7 +209,7 @@ class _CrewDetailState extends State<CrewDetail>
                                               ),
                                               Container(
                                                 padding:
-                                                    EdgeInsets.only(top: 6.h),
+                                                EdgeInsets.only(top: 10.h),
                                                 child: Text(
                                                   '저속 노화 위주의 식사와 규칙적인 생활을 통해 삶을 재정비하고 이다현보다 오래 살기 위해 노력합니다',
                                                   style: TextStyle(
@@ -218,6 +217,7 @@ class _CrewDetailState extends State<CrewDetail>
                                                     fontWeight: FontWeight.w500,
                                                     color: fontColor,
                                                     height: 1.70.h,
+                                                    letterSpacing: 0.01
                                                   ),
                                                   maxLines: 2,
                                                   overflow: TextOverflow.clip,
@@ -225,22 +225,22 @@ class _CrewDetailState extends State<CrewDetail>
                                               ),
                                               Container(
                                                 margin:
-                                                    EdgeInsets.only(top: 16.h),
+                                                EdgeInsets.only(top: 15.h),
                                                 height: 41.h,
                                                 width: double.maxFinite,
                                                 child: ElevatedButton(
                                                   style:
-                                                      ElevatedButton.styleFrom(
+                                                  ElevatedButton.styleFrom(
                                                     backgroundColor: c800,
                                                     shape:
-                                                        RoundedRectangleBorder(
+                                                    RoundedRectangleBorder(
                                                       borderRadius:
-                                                          BorderRadius.circular(
-                                                              10),
+                                                      BorderRadius.circular(
+                                                          10),
                                                     ),
                                                     padding:
-                                                        const EdgeInsets.only(
-                                                            top: 8, bottom: 8),
+                                                    const EdgeInsets.only(
+                                                        top: 8, bottom: 8),
                                                   ),
                                                   onPressed: () {},
                                                   child: Text(
@@ -249,7 +249,7 @@ class _CrewDetailState extends State<CrewDetail>
                                                       fontSize: 16.sp,
                                                       color: fontColor,
                                                       fontWeight:
-                                                          FontWeight.w700,
+                                                      FontWeight.w700,
                                                       height: 1.5.h,
                                                     ),
                                                   ),
@@ -296,10 +296,10 @@ class _CrewDetailState extends State<CrewDetail>
                               fit: BoxFit.cover,
                               errorBuilder: (context, error, stackTrace) =>
                                   Icon(
-                                Icons.group,
-                                size: iconSize * 0.7,
-                                color: Colors.grey,
-                              ),
+                                    Icons.group,
+                                    size: iconSize * 0.7,
+                                    color: Colors.grey,
+                                  ),
                             ),
                           ),
                         ),
@@ -313,6 +313,7 @@ class _CrewDetailState extends State<CrewDetail>
                         child: Text(
                           '저속 노화 따라가기',
                           style: TextStyle(
+                            letterSpacing: 0.01,
                             fontSize: nameSize.sp,
                             fontWeight: FontWeight.bold,
                             color: Colors.white,
@@ -371,7 +372,7 @@ class _CrewDetailState extends State<CrewDetail>
   Widget _buildTab(String label, bool selected) {
     return Tab(
       child: Container(
-        width: 85.w,
+        width: 101.w,
         decoration: ShapeDecoration(
           color: selected ? c900 : boxBackgroundColor,
           shape: RoundedRectangleBorder(
@@ -436,7 +437,7 @@ class _SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
     return Container(
       width: double.infinity,
       margin: EdgeInsets.zero,
-      padding: const EdgeInsets.fromLTRB(16, 5, 16, 4),
+      padding: const EdgeInsets.fromLTRB(16, 5, 0, 4),
       color: background,
       child: SizedBox(
         height: _tabBar.preferredSize.height,
