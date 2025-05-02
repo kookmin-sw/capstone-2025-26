@@ -239,11 +239,3 @@ class KpiResult(models.Model):
 
     def __str__(self):
         return f"Result for KPI '{self.kpi.name}' on retrospect {self.retrospect.id} (Score: {self.score:.2f})"
-
-    def clean(self):
-        # score 값이 0~1 범위인지 확인
-        if not (0.0 <= self.score <= 1.0):
-            raise ValidationError("Score must be between 0 and 1.")
-        if self.score is None:
-            raise ValidationError("Score cannot be None.")
-
