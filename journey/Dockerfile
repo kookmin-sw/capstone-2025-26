@@ -14,17 +14,24 @@ ENV POETRY_VIRTUALENVS_CREATE=false
 # Set work directory
 WORKDIR /app
 
-# Install Poetry
-RUN pip install --no-cache-dir poetry==${POETRY_VERSION}
+# Install system dependencies for building mysqlclient and other packages
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    python3-dev \
+    default-libmysqlclient-dev \
+    pkg-config \
+  && rm -rf /var/lib/apt/lists/*
 
-# Copy Poetry configuration files
+# Install Poetry
+RUN pip install "poetry==$POETRY_VERSION"
+
+# Copy only dependency definitions
 COPY pyproject.toml poetry.lock* /app/
 
-# Install project dependencies using Poetry
-# Use --no-dev to exclude development dependencies
-RUN poetry install --no-root
+# Install Python dependencies (including mysqlclient)
+RUN poetry install --no-root --no-interaction --no-ansi
 
-# Copy project
+# Copy project code
 COPY . /app/
 
 # Copy environment file
@@ -33,8 +40,8 @@ COPY .env /app/.env
 # Expose port 8000 for the application
 EXPOSE 8000
 
+# Apply database migrations
 RUN poetry run python manage.py migrate
 
-# Specify the command to run the application using Gunicorn
-# Replace 'config' with the actual name of your Django project directory containing wsgi.py
-CMD ["poetry", "run", "gunicorn", "config.wsgi:application", "--bind", "0.0.0.0:8000"] 
+# Start the application using Gunicorn
+CMD ["poetry", "run", "gunicorn", "config.wsgi:application", "--bind", "0.0.0.0:8000"]

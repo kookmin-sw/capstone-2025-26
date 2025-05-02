@@ -2,30 +2,39 @@ from rest_framework import serializers
 from .models import Retrospect, Challenge, Template, Plan, RetrospectWeeklyAnalysis
 from user_manager.models import User
 from crew.models import Crew
+import json
 
 class RetrospectSerializer(serializers.ModelSerializer):
     """Serializer for the Retrospect model."""
     # Use PrimaryKeyRelatedField for related objects initially for simplicity
     # Consider using nested serializers or StringRelatedField later if needed
     user = serializers.PrimaryKeyRelatedField(read_only=True) # Set automatically based on request user
+    plan = serializers.PrimaryKeyRelatedField(queryset=Plan.objects.all(), allow_null=True, required=False)
     challenge = serializers.PrimaryKeyRelatedField(queryset=Challenge.objects.all())
     template = serializers.PrimaryKeyRelatedField(queryset=Template.objects.all(), allow_null=True, required=False)
     crew = serializers.PrimaryKeyRelatedField(queryset=Crew.objects.all(), allow_null=True, required=False)
 
+    # 모델에는 없음 
+    initial_plan_description = serializers.CharField(
+        write_only=True,
+        required=False,  # 필수 필드에서 선택적 필드로 변경
+        help_text="LLM을 사용해 초기 계획을 생성하기 위해 설명을 입력하세요."
+    )
     class Meta:
         model = Retrospect
         fields = [
             'id',
             'challenge',
             'template',
+            'plan',
             'user',
             'crew',
             'content',
-            'kpi_result',
             'visibility',
             'owner_type',
             'created_at',
             'updated_at',
+            'initial_plan_description', # 모델에는 없지만 회고 생성 시 사용
         ]
         read_only_fields = ['id', 'created_at', 'updated_at', 'user'] # user is set in the view
 
@@ -36,6 +45,15 @@ class RetrospectSerializer(serializers.ModelSerializer):
         """
         is_crew_retrospect = data.get('crew') is not None
         owner_type = data.get('owner_type')
+        # Field to receive the initial plan description for LLM generation (not part of the model)
+        initial_description = data.get('initial_plan_description') #llm으로 보낼 요청
+
+        # 회고 생성 시에만 initial_plan_description 필드가 필요함
+        if self.context.get('request') and self.context['request'].method == 'POST' and not initial_description:
+             raise serializers.ValidationError("'initial_plan_description' must be provided for creating a retrospect.")
+
+        # 모델에는 없는 필드이므로, 이후 create() 메서드에 전달되지 않도록 제거        
+        data.pop('initial_plan_description', None)
 
         # Validate owner_type consistency
         if is_crew_retrospect and owner_type != Retrospect.RetrospectOwnerType.CREW:
@@ -43,10 +61,6 @@ class RetrospectSerializer(serializers.ModelSerializer):
         if not is_crew_retrospect and owner_type != Retrospect.RetrospectOwnerType.USER:
             raise serializers.ValidationError("If 'crew' is not provided, 'owner_type' must be 'USER'.")
 
-        # Validate visibility
-        visibility = data.get('visibility')
-        if owner_type == Retrospect.RetrospectOwnerType.CREW and visibility == Retrospect.RetrospectVisibility.PRIVATE:
-             raise serializers.ValidationError("Crew retrospects cannot have 'PRIVATE' visibility.")
 
         # Add more validation if needed, e.g., user belongs to the crew if crew is specified
 
@@ -103,48 +117,57 @@ class TemplateSerializer(serializers.ModelSerializer):
 
         return data 
 
-# Serializer for Plan (if needed independently, otherwise might be nested)
 class PlanSerializer(serializers.ModelSerializer):
+    """계획 시리얼라이저"""
+    
     class Meta:
         model = Plan
-        fields = ['id', 'plan_list']
-        # Consider making plan_list writable here if Plan is created/updated separately
+        fields = ['id', 'user', 'challenge', 'plan_text', 'created_at', 'updated_at']
+        read_only_fields = ['created_at', 'updated_at']
+
+class PlanResponseSerializer(serializers.Serializer):
+    """계획 응답을 위한 시리얼라이저 - 여러 계획을 번호가 매겨진 딕셔너리로 반환"""
+    plans = serializers.SerializerMethodField()
+    
+    def get_plans(self, obj):
+        """계획들을 번호가 매겨진 딕셔너리로 변환"""
+        result = {}
+        if isinstance(obj, list):
+            plans = obj
+        else:
+            # 단일 계획일 경우 리스트로 변환
+            plans = [obj]
+            
+        for i, plan in enumerate(plans, 1):
+            result[str(i)] = {
+                "user": plan.user.id if plan.user else None,
+                "challenge": plan.challenge.id if plan.challenge else None,
+                "plan_text": plan.plan_text
+            }
+        return result
 
 class ChallengeSerializer(serializers.ModelSerializer):
     """Serializer for the Challenge model."""
     # plan = PlanSerializer() # Option 1: Nested serializer (read-only by default)
-    plan = serializers.PrimaryKeyRelatedField(queryset=Plan.objects.all()) # Option 2: Use ID
+    # plan = serializers.PrimaryKeyRelatedField(queryset=Plan.objects.all()) # Option 2: Use ID
     user = serializers.PrimaryKeyRelatedField(read_only=True) # Set in perform_create for USER type
     crew = serializers.PrimaryKeyRelatedField(queryset=Crew.objects.all(), allow_null=True, required=False)
     # kpi_description & kpi_metrics are likely generated by LLM, maybe read_only or set server-side?
-
-    # Field to receive the initial plan description for LLM generation (not part of the model)
-    initial_plan_description = serializers.CharField(write_only=True, required=False,
-                                               help_text="Provide a description to generate the initial plan using LLM.")
 
     class Meta:
         model = Challenge
         fields = [
             'id',
-            'plan', # If using PrimaryKeyRelatedField
             'user',
             'crew',
             'challenge_name',
             'deadline',
-            'kpi_description',
-            'kpi_metrics',
             'owner_type',
             'status',
             'created_at',
-            'initial_plan_description', # Only for creation input
+            'updated_at',
         ]
-        read_only_fields = [
-            'id',
-            'user', # Set based on owner_type in view
-            'kpi_description', # Assuming generated by LLM
-            'kpi_metrics', # Assuming generated by LLM
-            'created_at'
-        ]
+        read_only_fields = ['id', 'user', 'created_at', 'updated_at']
 
     def validate(self, data):
         """
@@ -164,17 +187,6 @@ class ChallengeSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError("Crew must be provided for CREW owner_type challenge.")
         else:
             raise serializers.ValidationError(f"Invalid owner_type: {owner_type}")
-
-        # Plan handling:
-        # If initial_plan_description is provided, 'plan' might be optional initially
-        # If initial_plan_description is NOT provided, 'plan' (ID) should be required
-        initial_description = data.get('initial_plan_description')
-        plan = data.get('plan')
-
-        if not initial_description and not plan:
-             raise serializers.ValidationError("Either 'plan' ID or 'initial_plan_description' must be provided.")
-        if initial_description and plan:
-             raise serializers.ValidationError("Provide either 'plan' ID or 'initial_plan_description', not both.")
 
         return data 
 
@@ -227,4 +239,4 @@ class RetrospectWeeklyAnalysisSerializer(serializers.ModelSerializer):
 
         # Add more specific step validation if needed
 
-        return data 
+        return data
