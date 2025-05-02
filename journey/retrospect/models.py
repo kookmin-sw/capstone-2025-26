@@ -1,5 +1,6 @@
 from django.db import models
 from django.conf import settings # Import settings to reference AUTH_USER_MODEL
+from django.core.exceptions import ValidationError
 
 # Create your models here.
 
@@ -209,3 +210,32 @@ class KpiDataEntry(models.Model):
 
     def __str__(self):
         return f"Data for {self.kpi.name} on {self.record_date}: {self.get_value()}"
+
+class KpiResult(models.Model):
+    """
+    회고(Retrospect)를 기반으로 KPI별 평가(스코어)를 기록하는 모델
+    """
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='kpi_results')
+    challenge = models.ForeignKey(Challenge, on_delete=models.CASCADE, related_name='kpi_results')
+    kpi = models.ForeignKey(Kpi, on_delete=models.CASCADE, related_name='kpi_results')
+    retrospect = models.ForeignKey(Retrospect, on_delete=models.CASCADE, related_name='kpi_results')
+
+    score = models.FloatField()  # 0 ~ 1 범위 권장
+    comment = models.TextField(blank=True, null=True)  # 추가 설명
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "KPI Result"
+        verbose_name_plural = "KPI Results"
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['user', 'challenge', 'kpi', 'retrospect']),
+        ]
+        # 같은 (user, challenge, kpi, retrospect) 조합으로는 두 번 저장 불가
+        # 즉, 같은 회고에 대해 같은 KPI에 대해 한 번만 기록 가능
+        unique_together = ('user', 'challenge', 'kpi', 'retrospect')  
+
+
+
+    def __str__(self):
+        return f"Result for KPI '{self.kpi.name}' on retrospect {self.retrospect.id} (Score: {self.score:.2f})"
