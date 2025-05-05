@@ -70,6 +70,20 @@ class UserViewSet(viewsets.ModelViewSet):
 
 
     @action(detail=False, methods=['post'], permission_classes=[IsAuthenticated])
+    def update_password(self, request):
+        user = request.user
+        user.password = request.data.get('password')
+        user.save()
+        return Response(status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
+    def compare_password(self, request):
+        user = request.user
+        if not check_password(request.data.get('password'), user.password):
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
+        return Response(status=status.HTTP_200_OK)
+    
+    @action(detail=False, methods=['post'], permission_classes=[IsAuthenticated])
     def logout(self, request):
         try:
             token = RefreshToken(request.data.get('refresh_token'))
