@@ -5,6 +5,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:reme/routes.dart';
 import 'package:posthog_flutter/posthog_flutter.dart';
 import 'package:reme/themes/color.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 Future<void> main() async {
   // init WidgetsFlutterBinding if not yet
@@ -16,19 +17,31 @@ Future<void> main() async {
   // or EU Host: 'https://eu.i.posthog.com'
   config.host = 'https://us.i.posthog.com';
   await Posthog().setup(config);
-  runApp(const MyApp());
+
+  //sharedPreferences 설정
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  runApp(MyApp(prefs: prefs));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  SharedPreferences prefs;
+  MyApp({super.key, required this.prefs});
 
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     String isLogin; // 로그인 여부에 따라 시작 지점 저장
     const storage = FlutterSecureStorage();
+    bool? isFirstInstall = prefs.getBool("first_install");
     // FlutterSecureStorage에 AccessToken이 있으면 바로 메인화면으로 이동
-    if(storage.read(key: "AccessToken") != null) isLogin = Routes.splash;
+    if(isFirstInstall == null){
+    // 첫 로그인 화면으로 route 설정.
+    // first_install에 true 설정.
+      isLogin = Routes.first;
+    }else if(storage.read(key: 'AccessToken') != null){
+    // 로그인 정보가 있는지 확인 후 라우트 설정
+      isLogin = Routes.splash;
+    }
     else isLogin = Routes.login;
 
     // 안드로이드 하단바 꾸미기
