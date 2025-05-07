@@ -69,6 +69,7 @@ flutter:
    - assets/img/naver_login.png
    - assets/img/plusIcon.png
    - assets/img/account_circle.svg
+   - assets/images/
 
 
   # An image asset can refer to one or more resolution-specific "variants", see
