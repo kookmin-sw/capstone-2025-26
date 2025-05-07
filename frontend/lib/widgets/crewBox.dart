@@ -15,7 +15,7 @@ class CrewBox extends StatelessWidget {
     return Container(
       height: height,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: boxBackgroundColor,
         borderRadius: BorderRadius.circular(20),
       ),
       margin: marginLTRB,
@@ -25,7 +25,7 @@ class CrewBox extends StatelessWidget {
           CircleAvatar(
             backgroundImage: profileImage,
             radius: 27.5,
-            backgroundColor: Colors.white
+            backgroundColor: background
           ),
           SizedBox(width: 15,),
           Column(
