@@ -23,7 +23,7 @@ Future<void> main() async {
 }
 
 class MyApp extends StatelessWidget {
-  SharedPreferences prefs;
+  final SharedPreferences prefs;
   MyApp({super.key, required this.prefs});
 
   // This widget is the root of your application.
