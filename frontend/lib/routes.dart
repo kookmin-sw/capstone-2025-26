@@ -5,7 +5,7 @@ import 'package:reme/screens/login.dart';
 import 'package:reme/screens/signupPage.dart';
 
 class Routes {
-  static const splash = "/";
+  static const splash = "/main";
   static const login = "/login";
   static const signup = "/signup";
   static const crew = "/crew";

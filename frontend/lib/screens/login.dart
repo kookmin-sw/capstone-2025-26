@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:reme/routes.dart';
 import 'package:reme/screens/socialLoginWebView.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -45,7 +46,7 @@ class LoginPage extends StatelessWidget {
                       await storage.write(
                           key: 'RefreshToken', value: data.refreshToken);
                       Navigator.pushNamedAndRemoveUntil(
-                          context, "/", (route) => false);
+                          context, Routes.splash, (route) => false);
                     } else {
                       // Toast Message
                       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -77,7 +78,7 @@ class LoginPage extends StatelessWidget {
                     storage.write(
                         key: 'RefreshToken', value: data.refreshToken);
                     Navigator.pushNamedAndRemoveUntil(
-                        context, "/", (route) => false);
+                        context, Routes.splash, (route) => false);
                   });
                 },
               )
