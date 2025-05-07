@@ -147,9 +147,9 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
             ),
           const SizedBox(height: 24),
           _buildInputField(_currentStep),
-          if (_currentStep == 1 && _controllers[1].text.isNotEmpty)
+          if (_currentStep == 1)
             PasswordChecklist(validator: _passwordValidator),
-          if (_currentStep == 2 && _controllers[2].text.isNotEmpty)
+          if (_currentStep == 2)
             _buildPasswordMatchIndicator(),
         ],
       ),

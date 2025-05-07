@@ -1,18 +1,24 @@
 from django.shortcuts import render
 from rest_framework import viewsets, status, permissions
-from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
+from rest_framework.exceptions import NotFound, PermissionDenied
+
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from django.db.models import Q
 from .models import (Retrospect, Template, Challenge, Plan, ChallengeStatus, 
                  RetrospectWeeklyAnalysis, RetrospectVisibility, TemplateOwnerType, 
-                 ChallengeOwnerType, RetrospectOwnerType, RetrospectWeeklyAnalysisOwnerType)
-from .serializers import RetrospectSerializer, TemplateSerializer, ChallengeSerializer, PlanSerializer, RetrospectWeeklyAnalysisSerializer
+                 ChallengeOwnerType, RetrospectOwnerType, RetrospectWeeklyAnalysisOwnerType, Kpi, KpiDataEntry, KpiResult)
+from .serializers import (RetrospectSerializer, TemplateSerializer, ChallengeSerializer, 
+                      PlanSerializer, PlanResponseSerializer, RetrospectWeeklyAnalysisSerializer, KpiSerializer, KpiDataEntrySerializer, KpiResultSerializer)
 from crew.models import Crew, CrewMembership, CrewMembershipStatus # Import CrewMembership models
 from .permissions import (IsRetrospectOwnerOrCrewMemberOrReadOnly, # Use the new permission class
                           IsTemplateOwnerOrCrewMemberOrReadOnly, 
                           IsChallengeOwnerOrCrewMemberOrReadOnly, 
                           IsRetrospectWeeklyAnalysisOwnerOrCrewMemberOrReadOnly)
+from django.utils import timezone
+from datetime import timedelta
+
 # Create your views here.
 
 
@@ -58,14 +64,30 @@ class RetrospectViewSet(viewsets.ModelViewSet):
         ).distinct() # Use distinct to avoid duplicates if a user owns a public retrospect
         
         return queryset
-
+    
+    # 실제 회고 생성 시 발생하는 NOT NULL constraint 실패(예: user_id가 NULL인 경우) 때문에 추가
     def perform_create(self, serializer):
-        """Set the user field automatically when creating a retrospect.
-           The owner_type and crew (if applicable) should be validated by the serializer.
-           The creator is always the request.user.
-        """
-        # Ensure the user is always set as the creator
         serializer.save(user=self.request.user)
+
+    # 분리하는게 좋을 것 같아서 일단 주석처리
+    # def perform_create(self, serializer):
+    #     """회고 생성 시 Plan을 자동 생성하고 연결"""
+
+    #     user = self.request.user
+    #     retrospect = serializer.save(user=user)
+
+    #     try:
+    #         #회고 기반 Plan 생성
+    #         plan = generate_plan_from_retrospect(retrospect.challenge, retrospect)
+
+    #         #회고에 Plan 연결 후 저장
+    #         retrospect.plan = plan
+    #         retrospect.save(update_fields=['plan'])
+        
+    #     except Exception as e:
+    #         # 회고는 저장됐지만 Plan 생성 실패
+    #         print(f"[ERROR] 회고 기반 Plan 생성 실패: {e}")
+
 
     # Add specific actions if needed, e.g., linking to crew, etc.
     # Example: List retrospects for a specific challenge or user might be useful
@@ -147,7 +169,7 @@ class ChallengeViewSet(viewsets.ModelViewSet):
         if not user.is_authenticated:
             return Challenge.objects.none()
 
-        queryset = Challenge.objects.select_related('user', 'crew', 'plan').all()
+        queryset = Challenge.objects.select_related('user', 'crew').all()
 
         # Corrected: Get crew IDs via CrewMembership
         user_crew_ids = CrewMembership.objects.filter(
@@ -174,7 +196,6 @@ class ChallengeViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         """Handle Challenge creation:
         - Set user or crew based on owner_type.
-        - Generate Plan via LLM if initial_plan_description is provided.
         - Generate KPI via LLM.
         - Assign Plan and KPI results to the challenge instance.
         """
@@ -182,8 +203,7 @@ class ChallengeViewSet(viewsets.ModelViewSet):
         user = self.request.user
         crew = serializer.validated_data.get('crew')
         challenge_name = serializer.validated_data.get('challenge_name')
-        initial_plan_description = serializer.validated_data.pop('initial_plan_description', None)
-        plan_instance = serializer.validated_data.get('plan')
+        
 
         challenge_owner_user = None
         challenge_owner_crew = None
@@ -203,21 +223,9 @@ class ChallengeViewSet(viewsets.ModelViewSet):
             ).exists():
                  raise permissions.PermissionDenied("You are not a member of this crew.")
 
-        if initial_plan_description:
-            plan_data = generate_plan_from_description(initial_plan_description)
-            plan_instance = Plan.objects.create(**plan_data)
-            serializer.validated_data.pop('plan', None)
-
-        kpi_description, kpi_metrics = generate_kpi_from_challenge(
-            challenge_name, plan_instance.plan_list if plan_instance else [] # Handle case where plan might not exist yet
-        )
-
         serializer.save(
             user=challenge_owner_user,
             crew=challenge_owner_crew,
-            plan=plan_instance,
-            kpi_description=kpi_description,
-            kpi_metrics=kpi_metrics,
             status=ChallengeStatus.LIVE
         )
 
@@ -238,19 +246,6 @@ class ChallengeViewSet(viewsets.ModelViewSet):
 
         serializer = self.get_serializer(challenge)
         return Response(serializer.data)
-
-# --- Placeholder LLM functions --- #
-def generate_plan_from_description(description: str) -> dict:
-    print(f"[LLM Placeholder] Generating plan for: {description}")
-    plan_steps = [f"Step 1 based on '{description}'", f"Step 2 based on '{description}'", "Step 3 generic"]
-    return {"plan_list": plan_steps}
-
-def generate_kpi_from_challenge(challenge_name: str, plan_list: list) -> tuple[str, dict]:
-    print(f"[LLM Placeholder] Generating KPI for: {challenge_name} with plan: {plan_list}")
-    kpi_desc = f"KPI description generated for {challenge_name}."
-    kpi_metrics = {"completion_rate": 0, "step_1_focus": 0, "consistency": 0}
-    return kpi_desc, kpi_metrics
-# --- End Placeholder --- #
 
 
 class RetrospectWeeklyAnalysisViewSet(viewsets.ModelViewSet):
@@ -316,9 +311,124 @@ class RetrospectWeeklyAnalysisViewSet(viewsets.ModelViewSet):
         else:
             # Should be caught by serializer validation, but as a safeguard:
             super().perform_create(serializer)
-
-    # Add other necessary actions, e.g., for generating the analysis summary/KPI via LLM or calculation
-    # @action(detail=False, methods=['post'], url_path='generate-weekly')
-    # def generate_weekly_analysis(self, request):
-    #     ...
         
+class PlanViewSet(viewsets.ModelViewSet):
+    queryset = Plan.objects.all()
+    serializer_class = PlanSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get_serializer_class(self):
+        """
+        Return different serializers for different actions:
+        - Use PlanResponseSerializer for list and retrieve actions
+        - Use PlanSerializer for all other actions
+        """
+        if self.action in ['list', 'retrieve']:
+            return PlanResponseSerializer
+        return PlanSerializer
+    
+    def list(self, request, *args, **kwargs):
+        """
+        Override list method to return plans in the requested format
+        """
+        queryset = self.filter_queryset(self.get_queryset())
+        
+        # 챌린지로 필터링 (선택적)
+        challenge_id = request.query_params.get('challenge_id')
+        if challenge_id:
+            queryset = queryset.filter(challenge_id=challenge_id)
+            
+        # 사용자로 필터링 (기본적으로 자신의 계획만 볼 수 있음)
+        queryset = queryset.filter(user=request.user)
+        
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+    
+    def retrieve(self, request, *args, **kwargs):
+        """
+        Override retrieve method to return a single plan in the requested format
+        """
+        instance = self.get_object()
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)
+
+class KpiViewSet(viewsets.ModelViewSet):
+    """
+    KPI를 관리하는 ViewSet
+    """
+    serializer_class = KpiSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return Kpi.objects.filter(user=self.request.user)
+
+    @action(detail=False, methods=['get'])
+    def by_challenge(self, request, pk=None):
+        """
+        특정 챌린지의 KPI를 조회
+        """
+        challenge_id = request.query_params.get('challenge_id')
+        if not challenge_id:
+            return Response({"error": "challenge_id is required"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        kpis = Kpi.objects.filter(
+            user=request.user,
+            challenge_id=challenge_id
+        ).order_by('-created_at')
+        
+        serializer = self.get_serializer(kpis, many=True)
+        return Response(serializer.data)
+
+class KpiDataEntryViewSet(viewsets.ModelViewSet):
+    """
+    KPI 데이터 엔트리를 관리하는 ViewSet
+    """
+    serializer_class = KpiDataEntrySerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return KpiDataEntry.objects.filter(kpi__user=self.request.user)
+
+    @action(detail=False, methods=['get'])
+    def by_kpi(self, request, pk=None):
+        """
+        특정 KPI의 데이터 엔트리를 조회
+        """
+        kpi_id = request.query_params.get('kpi_id')
+        if not kpi_id:
+            return Response({"error": "kpi_id is required"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        entries = KpiDataEntry.objects.filter(
+            kpi_id=kpi_id,
+            kpi__user=request.user
+        ).order_by('date')
+        
+        serializer = self.get_serializer(entries, many=True)
+        return Response(serializer.data)
+
+class KpiResultViewSet(viewsets.ModelViewSet):
+    """
+    KPI 결과를 관리하는 ViewSet
+    """
+    serializer_class = KpiResultSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return KpiResult.objects.filter(user=self.request.user)
+
+    @action(detail=False, methods=['get'])
+    def by_challenge(self, request, pk=None):
+        """
+        특정 챌린지의 KPI 결과를 조회
+        """
+        challenge_id = request.query_params.get('challenge_id')
+        if not challenge_id:
+            return Response({"error": "challenge_id is required"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        results = KpiResult.objects.filter(
+            user=request.user,
+            challenge_id=challenge_id
+        ).order_by('-created_at')
+        
+        serializer = self.get_serializer(results, many=True)
+        return Response(serializer.data)

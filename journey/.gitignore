@@ -160,3 +160,6 @@ dmypy.json
 
 # Cython debug symbols
 cython_debug/
+journey/erd.png
+
+dummy_csv/

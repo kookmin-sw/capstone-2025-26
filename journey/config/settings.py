@@ -49,13 +49,14 @@ INSTALLED_APPS = [
     'rest_framework', 
     'rest_framework_simplejwt.token_blacklist', 
     'django_prometheus',
+    'django_extensions',
     'user_manager', 
     'kakao_manager', 
     'naver_manager', 
     'ai_manager',
     'community', 
     'crew',
-    'retrospect', 
+    'retrospect',
 ]
 
 MIDDLEWARE = [

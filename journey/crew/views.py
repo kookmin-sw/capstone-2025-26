@@ -17,7 +17,7 @@ class CrewViewSet(viewsets.ModelViewSet):
     queryset = Crew.objects.all()
     serializer_class = CrewSerializer
     # Require authentication for all crew actions
-    permission_classes = [permissions.IsAuthenticated, IsCrewCreatorOrReadOnly]
+    permission_classes = [permissions.IsAuthenticated]
 
     @action(detail=False, methods=['get'], url_path='my-crews')
     def my_crews(self, request):
@@ -31,7 +31,7 @@ class CrewViewSet(viewsets.ModelViewSet):
         serializer = CrewSerializer(crews, many=True, context={'request': request}) # Pass request context for potential hyperlinked fields
         return Response(serializer.data)
 
-    @action(detail=True, methods=['post'], url_path='join')
+    @action(detail=True, methods=['post'], url_path='join', permission_classes=[permissions.IsAuthenticated])
     def join_crew(self, request, pk=None):
         """Allows an authenticated user to join a specific crew.
         If the user has a PENDING request, it accepts it.
@@ -96,7 +96,7 @@ class CrewViewSet(viewsets.ModelViewSet):
             serializer = CrewMembershipSerializer(membership)
             return Response(serializer.data, status=status.HTTP_201_CREATED) # CREATED, as it's new
 
-    @action(detail=True, methods=['delete'], url_path='leave')
+    @action(detail=True, methods=['delete'], url_path='leave', permission_classes=[permissions.IsAuthenticated])
     def leave_crew(self, request, pk=None):
         """Allows an authenticated user to leave a specific crew."""
         crew = self.get_object() # Gets the crew instance based on pk
@@ -131,7 +131,7 @@ class CrewViewSet(viewsets.ModelViewSet):
         serializer = CrewMembershipSerializer(memberships, many=True, context={'request': request})
         return Response(serializer.data)
 
-    @action(detail=True, methods=['post'], url_path='request-join')
+    @action(detail=True, methods=['post'], url_path='request-join', permission_classes=[permissions.IsAuthenticated])
     def request_join(self, request, pk=None):
         """Allows an authenticated user to request joining a specific crew.
         Creates a membership record with PENDING status.
