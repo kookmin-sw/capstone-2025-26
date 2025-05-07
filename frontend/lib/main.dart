@@ -30,19 +30,17 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    String isLogin; // 로그인 여부에 따라 시작 지점 저장
-    const storage = FlutterSecureStorage();
     bool? isFirstInstall = prefs.getBool("first_install");
-    // FlutterSecureStorage에 AccessToken이 있으면 바로 메인화면으로 이동
-    if(isFirstInstall == null){
-    // 첫 로그인 화면으로 route 설정.
-    // first_install에 true 설정.
-      isLogin = Routes.first;
-    }else if(storage.read(key: 'AccessToken') != null){
-    // 로그인 정보가 있는지 확인 후 라우트 설정
-      isLogin = Routes.splash;
+    bool? isAccessToken = prefs.getBool("logined");
+    String initialRoute = Routes.first;
+
+    if (isFirstInstall == null) {
+      initialRoute = Routes.first;
+    } else if (isAccessToken == null) {
+      initialRoute = Routes.login;
+    } else {
+      initialRoute = Routes.splash;
     }
-    else isLogin = Routes.login;
 
     // 안드로이드 하단바 꾸미기
     SystemChrome.setSystemUIOverlayStyle(
@@ -54,35 +52,33 @@ class MyApp extends StatelessWidget {
 
     return ScreenUtilInit(
       designSize: Size(414, 896),
-      builder: (context, child){
-        return MaterialApp(
-          debugShowCheckedModeBanner: false,
-          title: 'Flutter Demo',
-          theme: ThemeData(
-            // This is the theme of your application.
-            //
-            // TRY THIS: Try running your application with "flutter run". You'll see
-            // the application has a purple toolbar. Then, without quitting the app,
-            // try changing the seedColor in the colorScheme below to Colors.green
-            // and then invoke "hot reload" (save your changes or press the "hot
-            // reload" button in a Flutter-supported IDE, or press "r" if you used
-            // the command line to start the app).
-            //
-            // Notice that the counter didn't reset back to zero; the application
-            // state is not lost during the reload. To reset the state, use hot
-            // restart instead.
-            //
-            // This works for code too, not just values: Most code changes can be
-            // tested with just a hot reload.
-            colorScheme: ColorScheme.fromSeed(seedColor: c500),
-            useMaterial3: true,
-            fontFamily: 'Pretendard',
-          ),
-          initialRoute: isLogin,
-          routes: namedRoute,
-          themeMode: ThemeMode.dark,
-        );
-      },
+      child: MaterialApp(
+        debugShowCheckedModeBanner: false,
+        title: 'Flutter Demo',
+        theme: ThemeData(
+          // This is the theme of your application.
+          //
+          // TRY THIS: Try running your application with "flutter run". You'll see
+          // the application has a purple toolbar. Then, without quitting the app,
+          // try changing the seedColor in the colorScheme below to Colors.green
+          // and then invoke "hot reload" (save your changes or press the "hot
+          // reload" button in a Flutter-supported IDE, or press "r" if you used
+          // the command line to start the app).
+          //
+          // Notice that the counter didn't reset back to zero; the application
+          // state is not lost during the reload. To reset the state, use hot
+          // restart instead.
+          //
+          // This works for code too, not just values: Most code changes can be
+          // tested with just a hot reload.
+          colorScheme: ColorScheme.fromSeed(seedColor: c500),
+          useMaterial3: true,
+          fontFamily: 'Pretendard',
+        ),
+        initialRoute: initialRoute,
+        routes: namedRoute,
+        themeMode: ThemeMode.dark,
+      ),
     );
   }
 }
