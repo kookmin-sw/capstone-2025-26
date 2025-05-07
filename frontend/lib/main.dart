@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:reme/routes.dart';
 import 'package:posthog_flutter/posthog_flutter.dart';
 import 'package:reme/themes/color.dart';
