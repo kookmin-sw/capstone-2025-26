@@ -23,8 +23,7 @@ class _GuidePageState extends State<GuidePage> {
       body: IntroductionScreen(
         key: introKey,
         globalBackgroundColor: c950,
-        bodyPadding: EdgeInsets.only(bottom: 26.h),
-        pages: [_FirstPage(), _FirstPage(), _FirstPage()],
+        rawPages: [_FirstPage(), _SecondPage(), _ThirdPage()],
         showNextButton: false,
         showDoneButton: false,
         showSkipButton: false,
@@ -32,9 +31,6 @@ class _GuidePageState extends State<GuidePage> {
         dotsDecorator: DotsDecorator(
           activeColor: Colors.transparent,
           color: Colors.transparent,
-          size: Size(0, 0),
-          activeSize: Size(0, 0),
-          spacing: EdgeInsets.zero,
         ),
         onChange: (idx) => setState(() => _currentPage = idx),
         globalFooter: Container(
@@ -51,7 +47,7 @@ class _GuidePageState extends State<GuidePage> {
                       onPressed: () async {
                         SharedPreferences prefs =
                             await SharedPreferences.getInstance();
-                        prefs.setBool("first_install", true);
+                        prefs.setBool("first_install", false);
                         Navigator.pushReplacementNamed(context, Routes.login);
                       },
                       child: Text("시작하기",
@@ -150,38 +146,145 @@ class _GuidePageState extends State<GuidePage> {
     );
   }
 
-  PageViewModel _FirstPage() {
-    return PageViewModel(
-        titleWidget: Align(
-          alignment: Alignment.topLeft,
-          child: Container(
-            width: 300.w,
-            margin: EdgeInsets.only(top: 63.h, left: 3.w),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.start,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  "내가 찾던 동아리가 한 곳에.",
-                  style: TextStyle(
-                      color: fontColor,
-                      fontSize: 24.sp,
-                      fontWeight: FontWeight.w600),
-                ),
-                SizedBox(height: 15.h),
-                Text(
-                  "지역별, 학교별, 관심사별로\n다양한 주제의 동아리를 쉽게 탐색할 수 있어요.",
-                  style: TextStyle(
-                      color: fontColor,
-                      fontSize: 16.sp,
-                      fontWeight: FontWeight.w400,
-                      letterSpacing: 0.02),
-                )
-              ],
+  Widget _FirstPage() {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 19.w, vertical: 35.h),
+      color: background,
+      child: Column(
+        children: [
+          Align(
+            alignment: Alignment.topLeft,
+            child: Container(
+              width: 300.w,
+              margin: EdgeInsets.only(top: 63.h, left: 3.w),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "회고 하는 방법을 모른다면?",
+                    style: TextStyle(
+                        color: fontColor,
+                        fontSize: 24.sp,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.02),
+                  ),
+                  SizedBox(height: 15.h),
+                  Text(
+                    "기본으로 제공되는 템플릿을 사용해보세요!\n물론 원한다면 템플릿을 만들 수 있습니다.",
+                    style: TextStyle(
+                        color: fontColor,
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w400,
+                        letterSpacing: 0.02),
+                  )
+                ],
+              ),
             ),
           ),
-        ),
-        bodyWidget: SizedBox.shrink(),
-        decoration: PageDecoration(pageColor: background));
+          SizedBox(
+            height: 165.h,
+          ),
+          Image.asset(
+            width: 300.w,
+            'assets/img/onBoarding_first.png',
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _SecondPage() {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 19.w, vertical: 35.h),
+      color: background,
+      child: Column(
+        children: [
+          Align(
+            alignment: Alignment.topLeft,
+            child: Container(
+              width: 300.w,
+              margin: EdgeInsets.only(top: 63.h, left: 3.w),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "AI가 해주는 회고 내용 분석",
+                    style: TextStyle(
+                        color: fontColor,
+                        fontSize: 24.sp,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.02),
+                  ),
+                  SizedBox(height: 15.h),
+                  Text(
+                    "당신이 오늘 한 일에 대한 내용을 분석해줘요!\n오늘보다 나은 내일을 위해 함께 해요",
+                    style: TextStyle(
+                        color: fontColor,
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w400,
+                        letterSpacing: 0.02),
+                  )
+                ],
+              ),
+            ),
+          ),
+          SizedBox(
+            height: 165.h,
+          ),
+          Image.asset(
+            width: 300.w,
+            'assets/img/onBoarding_second.png',
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _ThirdPage() {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 19.w, vertical: 35.h),
+      color: background,
+      child: Column(
+        children: [
+          Align(
+            alignment: Alignment.topLeft,
+            child: Container(
+              margin: EdgeInsets.only(top: 63.h, left: 3.w),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "나와 같은 목표를 가지는 크루",
+                    style: TextStyle(
+                        color: fontColor,
+                        fontSize: 24.sp,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.02),
+                  ),
+                  SizedBox(height: 15.h),
+                  Text(
+                    "나와 같은 목표를 가진 크루에 가입해서\n크루원들과 함께 목표 달성을 위한 자극제로 사용하세요!",
+                    style: TextStyle(
+                        color: fontColor,
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w400,
+                        letterSpacing: 0.02),
+                  )
+                ],
+              ),
+            ),
+          ),
+          SizedBox(
+            height: 123.h,
+          ),
+          Image.asset(
+            'assets/img/onBoarding_third.png',
+          ),
+        ],
+      ),
+    );
   }
 }

@@ -74,6 +74,9 @@ flutter:
    - assets/img/account_circle.svg
    - assets/img/whitebox.png
    - assets/img/blueBox.png
+   - assets/img/onBoarding_first.png
+   - assets/img/onBoarding_second.png
+   - assets/img/onBoarding_third.png
 
 
   # An image asset can refer to one or more resolution-specific "variants", see
