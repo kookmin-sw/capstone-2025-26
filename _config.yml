@@ -2,6 +2,6 @@ url: "https://kookmin-sw.github.io"
 baseurl: "/capstone-2025-26"
 title: "Capstone Project 2025-26"
 tagline: "회고 함 해볼래?"
-theme: jekyll-theme-darkly
+theme: jekyll-theme-tactile
 socials:
   github: "https://github.com/kookmin-sw"
