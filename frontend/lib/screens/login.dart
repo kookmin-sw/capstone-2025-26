@@ -147,7 +147,7 @@ class LoginPage extends StatelessWidget {
       } else {
         // Toast Message
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text("Login Cancel or Failed"),
+          content: Text("Login Canceled or Failed"),
           duration: Duration(seconds: 1),
         ));
       }

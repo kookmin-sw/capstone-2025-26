@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:reme/models/tokens.dart';
+import 'package:reme/themes/color.dart';
 import 'package:reme/utils/secret.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
@@ -17,14 +18,16 @@ class _WebViewState extends State<SocialLoginWebView> {
   String? refresh_token;
   int loading = 0;
   late WebViewController _webViewController;
+  bool showWebView = true;
 
   _WebViewState(this.service);
 
   Future<String> parseToken(int where) async {
-    final result = await _webViewController.runJavaScriptReturningResult(
-        "document.querySelectorAll('span')[" +
-            where.toString() +
-            "].innerText") as String;
+    String s_where = where.toString();
+    final result = await _webViewController.runJavaScriptReturningResult("""
+        var spans = document.querySelectorAll('.prettyprint')[1];
+        spans.querySelectorAll('span')[$s_where].innerText
+      """) as String;
 
     return result;
   }
@@ -37,7 +40,16 @@ class _WebViewState extends State<SocialLoginWebView> {
       ..setJavaScriptMode(
           JavaScriptMode.unrestricted) // WebView안에서 Javascript 실행할지
       ..setNavigationDelegate(NavigationDelegate(// Webview 설정
-          onPageStarted: (url) {
+          onNavigationRequest: (request) {
+        final url = request.url;
+        if (url.contains("/callback/")) {
+          // 웹뷰 숨기고 흰색 화면만 보여주기
+          setState(() {
+            showWebView = false;
+          });
+        }
+        return NavigationDecision.navigate;
+      }, onPageStarted: (url) {
         setState(() {
           loading = 0;
         });
@@ -52,19 +64,20 @@ class _WebViewState extends State<SocialLoginWebView> {
         });
         if (url.contains("/callback/")) {
           try {
-            access_token = await parseToken(136); // 파싱한 accessToken 위치
-            refresh_token = await parseToken(130); // 파싱한 refreshToken 위치
+            access_token = await parseToken(118); // 파싱한 accessToken 위치
+            refresh_token = await parseToken(112); // 파싱한 refreshToken 위치
             refresh_token = refresh_token!
                 .replaceAll('\\', "")
                 .replaceAll("\"", ""); // parsing한 토큰 역슬레시와 따옴표 지우기
             access_token = access_token!
                 .replaceAll('\\', "")
                 .replaceAll("\"", ""); // parsing한 토큰 역슬레시와 따옴표 지우기
-            String user_name = await parseToken(94); // 파싱한 user_name 위치
+            String user_name = await parseToken(76); // 파싱한 user_name 위치
             Navigator.pop(
                 context, Tokens(access_token, refresh_token, user_name));
           } catch (e) {
-            print(e);
+            print(e is Error);
+            Navigator.pop(context, e);
           }
         }
       }))
@@ -74,16 +87,22 @@ class _WebViewState extends State<SocialLoginWebView> {
   @override
   Widget build(BuildContext context) {
     return SafeArea(
-      child: Stack(children: [
-        if (loading < 100)
-          Center(
-            child: CircularProgressIndicator(
-              value: loading / 100.0,
-              strokeAlign: 40,
+      child: Stack(
+        children: [
+          if (showWebView)
+            WebViewWidget(controller: _webViewController)
+          else
+            Container(color: Colors.white), // 흰색 화면
+          if (loading < 100 && showWebView)
+            Center(
+              child: CircularProgressIndicator(
+                value: loading / 100.0,
+                strokeAlign: 40,
+                color: Colors.black,
+              ),
             ),
-          ),
-        WebViewWidget(controller: _webViewController),
-      ]),
+        ],
+      ),
     );
   }
 }
