@@ -1,8 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:reme/icon/tab_bar_icon_icons.dart';
+import 'package:reme/screens/retrospect_writing_screen.dart';
 
 class RetrospectMethodSelection extends StatefulWidget {
-  const RetrospectMethodSelection({super.key});
+  final List<Map<String, dynamic>> selectedChallenges;
+
+  const RetrospectMethodSelection({
+    super.key,
+    required this.selectedChallenges,
+  });
 
   @override
   State<RetrospectMethodSelection> createState() =>
@@ -31,6 +37,11 @@ class _RetrospectMethodSelectionState extends State<RetrospectMethodSelection> {
     },
     {
       'name': 'KIPET',
+      'description': '내가 만든 차세대 회고 기법',
+      'tags': [],
+    },
+    {
+      'name': 'KIPE',
       'description': '내가 만든 차세대 회고 기법',
       'tags': [],
     },
@@ -163,7 +174,7 @@ class _RetrospectMethodSelectionState extends State<RetrospectMethodSelection> {
                             child: Text(
                               method['description'],
                               style: const TextStyle(
-                                color: Colors.white,
+                                color: Color(0xFFC3C3C3),
                                 fontFamily: 'Pretendard',
                                 fontSize: 16,
                                 height: 1.4,
@@ -185,12 +196,15 @@ class _RetrospectMethodSelectionState extends State<RetrospectMethodSelection> {
         child: InkWell(
           onTap: () {
             if (_selectedMethodIndex != -1) {
-              // Navigate to the next step (would be implemented later)
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                      '선택된 회고 방법: ${_retrospectMethods[_selectedMethodIndex]['name']}'),
-                  duration: const Duration(seconds: 2),
+              // Navigate to the retrospect writing screen
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => RetrospectWritingScreen(
+                    methodName: _retrospectMethods[_selectedMethodIndex]
+                        ['name'],
+                    selectedChallenges: widget.selectedChallenges,
+                  ),
                 ),
               );
             } else {

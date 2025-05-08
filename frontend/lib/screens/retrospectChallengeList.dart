@@ -357,7 +357,7 @@ class _RetrospectChallengeListState extends State<RetrospectChallengeList> {
       {
         'id': 2,
         'icon': Icons.flash_on,
-        'title': '어크로 끌리는 체육 연구',
+        'title': '어그로 끌리는 체육 연구',
         'type': 'personal',
         'iconBgColor': const Color(0xFFE75C3C)
       },
