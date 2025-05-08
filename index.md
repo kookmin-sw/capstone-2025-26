@@ -22,8 +22,9 @@ KPT, 4L, PMI 등 다양한 회고 방식이 있지만 혼자 하기에는 부담
 
 
 ## 4. 팀소개
-|[**강은성(klaqwe1)**](https://github.com/klaqwe1)|[**김민수(ms214)**](https://github.com/ms214)|[**김선우(SunwooKim11)**](https://github.com/SunwooKim11)|[**나성민(sungminna)**](https://github.com/sungminna)|[**송보경(Muon05)**](https://github.com/Muon05)|[**이다현(leleleehouse)**](https://github.com/leleleehouse)|
-|:---:|:---:|:---:|:---:|:---:|:---:|
-|Full Stack|Frontend|Backend, AI|Backend, PO|Backend, PO|Backend, AI|
-|****3022|****3037|****3039|****5225|****0303|****2006|
+
+| **강은성(klaqwe1)** | **김민수(ms214)** | **김선우(SunwooKim11)** | **나성민(sungminna)** | **송보경(Muon05)** | **이다현(leleleehouse)** |
+|:-------------------:|:-----------------:|:------------------------:|:----------------------:|:-------------------:|:------------------------:|
+| Full Stack          | Frontend          | Backend, AI              | Backend, PO            | Backend, PO          | Backend, AI              |
+| 3022                | 3037              | 3039                     | 5225                   | 0303                | 2006                     |
 
