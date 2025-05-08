@@ -137,8 +137,13 @@ class LoginPage extends StatelessWidget {
             FlutterSecureStorage(); // accessToken과 refreshToken을 저장하는 SecrueStorage
         await storage.write(key: 'AccessToken', value: data.accessToken);
         await storage.write(key: 'RefreshToken', value: data.refreshToken);
-        Navigator.pushNamedAndRemoveUntil(
-            context, Routes.splash, (route) => false);
+
+        if (data.userName == 'null') {
+          Navigator.pushNamed(context, Routes.signup);
+        } else {
+          Navigator.pushNamedAndRemoveUntil(
+              context, Routes.splash, (route) => false);
+        }
       } else {
         // Toast Message
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(

@@ -15,6 +15,7 @@ class Routes {
 var namedRoute = {
   Routes.splash: (context) => Initialpage(),
   Routes.login: (context) => LoginPage(),
+  Routes.signup: (context) => SignupPage(),
   Routes.crew: (context) => CrewDetail(),
   Routes.first: (context) => GuidePage(),
 };
