@@ -17,13 +17,43 @@ class _GuidePageState extends State<GuidePage> {
   int _currentPage = 0;
   final int _lastPage = 2; // 페이지 개수 - 1
 
+  // 온보딩 데이터 구조화
+  final List<_OnBoardingData> _pages = [
+    _OnBoardingData(
+      title: "회고 하는 방법을 모른다면?",
+      desc: "기본으로 제공되는 템플릿을 사용해보세요!\n물론 원한다면 템플릿을 만들 수 있습니다.",
+      image: 'assets/img/onBoarding_first.png',
+      imageWidth: 300,
+      imageBottomGap: 165,
+    ),
+    _OnBoardingData(
+      title: "AI가 해주는 회고 내용 분석",
+      desc: "당신이 오늘 한 일에 대한 내용을 분석해줘요!\n오늘보다 나은 내일을 위해 함께 해요",
+      image: 'assets/img/onBoarding_second.png',
+      imageWidth: 300,
+      imageBottomGap: 165,
+    ),
+    _OnBoardingData(
+      title: "나와 같은 목표를 가지는 크루",
+      desc: "나와 같은 목표를 가진 크루에 가입해서\n크루원들과 함께 목표 달성을 위한 자극제로 사용하세요!",
+      image: 'assets/img/onBoarding_third.png',
+      imageWidth: null,
+      imageBottomGap: 100,
+    ),
+  ];
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: IntroductionScreen(
         key: introKey,
         globalBackgroundColor: c950,
-        rawPages: [_FirstPage(), _SecondPage(), _ThirdPage()],
+        rawPages: List.generate(
+          _pages.length,
+          (idx) => _OnBoardingPage(
+            data: _pages[idx],
+          ),
+        ),
         showNextButton: false,
         showDoneButton: false,
         showSkipButton: false,
@@ -108,7 +138,7 @@ class _GuidePageState extends State<GuidePage> {
                           margin: EdgeInsets.only(right: 20.w, bottom: 5.h),
                           child: Row(
                             children: List.generate(
-                                3,
+                                _pages.length,
                                 (idx) => Container(
                                       margin:
                                           EdgeInsets.symmetric(horizontal: 4),
@@ -145,8 +175,32 @@ class _GuidePageState extends State<GuidePage> {
       ),
     );
   }
+}
 
-  Widget _FirstPage() {
+// 온보딩 데이터 구조
+class _OnBoardingData {
+  final String title;
+  final String desc;
+  final String image;
+  final int? imageWidth;
+  final int imageBottomGap;
+
+  const _OnBoardingData({
+    required this.title,
+    required this.desc,
+    required this.image,
+    this.imageWidth,
+    required this.imageBottomGap,
+  });
+}
+
+// 온보딩 페이지 위젯
+class _OnBoardingPage extends StatelessWidget {
+  final _OnBoardingData data;
+  const _OnBoardingPage({required this.data});
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 19.w, vertical: 35.h),
       color: background,
@@ -155,23 +209,22 @@ class _GuidePageState extends State<GuidePage> {
           Align(
             alignment: Alignment.topLeft,
             child: Container(
-              width: 300.w,
-              margin: EdgeInsets.only(top: 63.h, left: 3.w),
+              margin: EdgeInsets.only(top: 63.h, left: 2.w),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.start,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    "회고 하는 방법을 모른다면?",
+                    data.title,
                     style: TextStyle(
                         color: fontColor,
                         fontSize: 24.sp,
                         fontWeight: FontWeight.w600,
                         letterSpacing: 0.02),
                   ),
-                  SizedBox(height: 15.h),
+                  SizedBox(height: 14.h),
                   Text(
-                    "기본으로 제공되는 템플릿을 사용해보세요!\n물론 원한다면 템플릿을 만들 수 있습니다.",
+                    data.desc,
                     style: TextStyle(
                         color: fontColor,
                         fontSize: 16.sp,
@@ -182,106 +235,10 @@ class _GuidePageState extends State<GuidePage> {
               ),
             ),
           ),
-          SizedBox(
-            height: 165.h,
-          ),
+          SizedBox(height: data.imageBottomGap.h),
           Image.asset(
-            width: 300.w,
-            'assets/img/onBoarding_first.png',
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _SecondPage() {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 19.w, vertical: 35.h),
-      color: background,
-      child: Column(
-        children: [
-          Align(
-            alignment: Alignment.topLeft,
-            child: Container(
-              width: 300.w,
-              margin: EdgeInsets.only(top: 63.h, left: 3.w),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.start,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "AI가 해주는 회고 내용 분석",
-                    style: TextStyle(
-                        color: fontColor,
-                        fontSize: 24.sp,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 0.02),
-                  ),
-                  SizedBox(height: 15.h),
-                  Text(
-                    "당신이 오늘 한 일에 대한 내용을 분석해줘요!\n오늘보다 나은 내일을 위해 함께 해요",
-                    style: TextStyle(
-                        color: fontColor,
-                        fontSize: 16.sp,
-                        fontWeight: FontWeight.w400,
-                        letterSpacing: 0.02),
-                  )
-                ],
-              ),
-            ),
-          ),
-          SizedBox(
-            height: 165.h,
-          ),
-          Image.asset(
-            width: 300.w,
-            'assets/img/onBoarding_second.png',
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _ThirdPage() {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 19.w, vertical: 35.h),
-      color: background,
-      child: Column(
-        children: [
-          Align(
-            alignment: Alignment.topLeft,
-            child: Container(
-              margin: EdgeInsets.only(top: 63.h, left: 3.w),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.start,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "나와 같은 목표를 가지는 크루",
-                    style: TextStyle(
-                        color: fontColor,
-                        fontSize: 24.sp,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 0.02),
-                  ),
-                  SizedBox(height: 15.h),
-                  Text(
-                    "나와 같은 목표를 가진 크루에 가입해서\n크루원들과 함께 목표 달성을 위한 자극제로 사용하세요!",
-                    style: TextStyle(
-                        color: fontColor,
-                        fontSize: 16.sp,
-                        fontWeight: FontWeight.w400,
-                        letterSpacing: 0.02),
-                  )
-                ],
-              ),
-            ),
-          ),
-          SizedBox(
-            height: 123.h,
-          ),
-          Image.asset(
-            'assets/img/onBoarding_third.png',
+            data.image,
+            width: data.imageWidth?.w,
           ),
         ],
       ),
