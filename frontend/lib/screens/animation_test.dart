@@ -18,15 +18,22 @@ class _StaggeredBoxAnimationState extends State<StaggeredBoxAnimation>
   bool _isReversing = false;
 
   final List<double> _yposInit = [
-    -0.4, -0.3, -0.2, -0.1,
+    -0.4,
+    -0.3,
+    -0.2,
+    -0.1,
   ]; // 위에서부터 흰색, 파란색, 흰색, 파란색 순. 값이 클수록 아래로
-  final List<double> _yposFin = [
-    0.1, 0.2, 0.3, 0.4
-  ];
+  final List<double> _yposFin = [0.1, 0.2, 0.3, 0.4];
 
   final List<Widget> _blocks = [
-    Image.asset('assets/img/whitebox.png', width: 370.w,),
-    Image.asset('assets/img/blueBox.png', width: 370.w,),
+    Image.asset(
+      'assets/img/whitebox.png',
+      width: 370.w,
+    ),
+    Image.asset(
+      'assets/img/blueBox.png',
+      width: 370.w,
+    ),
   ];
 
   @override
@@ -35,44 +42,38 @@ class _StaggeredBoxAnimationState extends State<StaggeredBoxAnimation>
 
     // 1. 애니메이션 컨트롤러 설정
     _controller = AnimationController(
-      vsync: this,
-      duration: Duration(milliseconds: 3000),
-      reverseDuration: Duration(milliseconds: 1500)
-    );
+        vsync: this,
+        duration: const Duration(milliseconds: 3000),
+        reverseDuration: const Duration(milliseconds: 1500));
 
     for (int i = 0; i < 4; i++) {
       // 2. 내려오는 애니메이션 - 박스별로 다른 시간에 시작
       _downAnimations.add(
         Tween(
           begin: Offset(0, _yposInit[i]), // 시작 위치 (상단 밖)
-          end: Offset(0, _yposFin[i]),              // 최종 위치
+          end: Offset(0, _yposFin[i]), // 최종 위치
         ).animate(
           CurvedAnimation(
             parent: _controller,
             curve: Interval(
-              (3 - i) * 0.18,  // 하단 박스부터 먼저 시작
-              (3 - i) * 0.18 + 0.35,
-              curve: Curves.easeInOutCubic
-            ),
+                (3 - i) * 0.18, // 하단 박스부터 먼저 시작
+                (3 - i) * 0.18 + 0.35,
+                curve: Curves.easeInOutCubic),
           ),
         ),
       );
 
       // 3. 올라가는 애니메이션 - 모든 박스가 동시에 시작
-      _upAnimation.add(
-          Tween<Offset>(
-            begin: Offset(0, _yposInit[i]), // 현재위치
-            end: Offset(0, _yposFin[i]), // 최종위치
-          ).animate(
-            CurvedAnimation(
-              parent: _controller,
-              curve: const Interval(0.0, 0.5, curve: Curves.easeInOutCubic),
-            ),
-          )
-      );
+      _upAnimation.add(Tween<Offset>(
+        begin: Offset(0, _yposInit[i]), // 현재위치
+        end: Offset(0, _yposFin[i]), // 최종위치
+      ).animate(
+        CurvedAnimation(
+          parent: _controller,
+          curve: const Interval(0.0, 0.5, curve: Curves.easeInOutCubic),
+        ),
+      ));
     }
-
-
 
     // 4. 애니메이션 상태 리스너 추가
     _controller.addStatusListener((status) {
@@ -105,13 +106,13 @@ class _StaggeredBoxAnimationState extends State<StaggeredBoxAnimation>
       backgroundColor: background,
       body: Stack(
         children: [
-          for(int i = 3; i>=0; i--)
-          Center(
-            child: SlideTransition(
-              position: _isReversing ? _upAnimation[i] : _downAnimations[i],
-              child: _blocks[i%2],
-            ),
-          )
+          for (int i = 3; i >= 0; i--)
+            Center(
+              child: SlideTransition(
+                position: _isReversing ? _upAnimation[i] : _downAnimations[i],
+                child: _blocks[i % 2],
+              ),
+            )
         ],
       ),
     );
