@@ -16,12 +16,62 @@ KPT, 4L, PMI 등 다양한 회고 방식이 있지만 혼자 하기에는 부담
 ## 2. User Interface
 ![image](https://github.com/user-attachments/assets/415d6cb2-8af8-48c4-beb7-4a765693cd81)
 
+## 3. 기술스택
 
-## 3. 아키텍처
+<div align="center">
+
+ ### 💻 Front-end
+ <img src="https://img.shields.io/badge/flutter-02569B?style=for-the-badge&logo=flutter&logoColor=white">
+ <img src="https://img.shields.io/badge/Dart-0175C2?style=for-the-badge&logo=Dart&logoColor=white">
+ 
+ ### 🛠️ Back-end
+ <img src="https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white">
+ <img src="https://img.shields.io/badge/MySQL-005C84?style=for-the-badge&logo=mysql&logoColor=white">
+ <img src="https://img.shields.io/badge/Django-092E20?style=for-the-badge&logo=django&logoColor=white">
+
+ ### 🤖 AI
+  <img src="https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=Python&logoColor=white">
+  <img src="https://img.shields.io/badge/langchain-1C3B3B?style=for-the-badge&logo=langchain&logoColor=white">
+
+ ### 🤝 Common
+ <img src="https://img.shields.io/badge/Figma-F24E1E?style=for-the-badge&logo=Figma&logoColor=white">
+ <img src="https://img.shields.io/badge/Notion-000000?style=for-the-badge&logo=Notion&logoColor=white">
+ <img src="https://img.shields.io/badge/Discord-7289DA?style=for-the-badge&logo=discord&logoColor=white">
+
+ ### 🚀 Deploy
+ <img src="https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=Docker&logoColor=white">
+ <img src="https://img.shields.io/badge/Google_Cloud-4285F4?style=for-the-badge&logo=google-cloud&logoColor=white">
+
+</div>
+
+
+## 4. 아키텍처
 ![image](https://github.com/user-attachments/assets/1ebb7fe9-060b-4eea-8004-2c066b2ef88c)
 
 
-## 4. 팀소개
+## 5. 설치 및 실행
+frontend
+- 에뮬레이터 실행
+```
+flutter devices
+flutter emulators --launch [deviceName]
+```
+- 실제 프로젝트 실행
+```
+git clone https://github.com/kookmin-sw/capstone-2025-26.git
+cd frontend
+flutter pub get
+flutter run
+```
+backend
+```
+git clone https://github.com/kookmin-sw/capstone-2025-26.git
+cd journey
+sudo docker compose up
+```
+
+
+## 6. 팀소개
 |[**강은성(klaqwe1)**](https://github.com/klaqwe1)|[**김민수(ms214)**](https://github.com/ms214)|[**김선우(SunwooKim11)**](https://github.com/SunwooKim11)|[**나성민(sungminna)**](https://github.com/sungminna)|[**송보경(Muon05)**](https://github.com/Muon05)|[**이다현(leleleehouse)**](https://github.com/leleleehouse)|
 |:---:|:---:|:---:|:---:|:---:|:---:|
 |Full Stack|Frontend|Backend, AI|Backend, PO|Backend, PO|Backend, AI|
