@@ -31,7 +31,7 @@ KPT, 4L, PMI 등 다양한 회고 방식이 있지만 혼자 하기에는 부담
 
  ### 🤖 AI
   <img src="https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=Python&logoColor=white">
-  <img src="https://img.shields.io/badge/google%20gemini-4285F4?style=for-the-badge&logo=google%20gemini&logoColor=white">
+  <img src="https://img.shields.io/badge/langchain-1C3B3B?style=for-the-badge&logo=langchain&logoColor=white">
 
  ### 🤝 Common
  <img src="https://img.shields.io/badge/Figma-F24E1E?style=for-the-badge&logo=Figma&logoColor=white">
