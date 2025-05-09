@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:reme/widgets/customListItem.dart';
 import 'package:reme/widgets/widgetBox.dart';
+import 'package:reme/screens/retrospectChallengeList.dart';
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -25,7 +26,10 @@ class _HomeState extends State<Home> {
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
                     ElevatedButton(
-                        onPressed: () {}, child: const Text("회고하러가기")),
+                        onPressed: () {
+                          Navigator.pushNamed(context, '/retrospect-challenge');
+                        },
+                        child: const Text("회고하러 가기")),
                     ElevatedButton(
                         onPressed: () {
                           Navigator.pushNamed(context, '/signup');
@@ -37,7 +41,7 @@ class _HomeState extends State<Home> {
                         },
                         child: const Text("크루 상세")),
                   ],
-                )
+                ),
               ]),
           Container(
             height: 190,
