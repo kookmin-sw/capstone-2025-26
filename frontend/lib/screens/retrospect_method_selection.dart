@@ -56,13 +56,14 @@ class _RetrospectMethodSelectionState extends State<RetrospectMethodSelection> {
         elevation: 0,
         centerTitle: false,
         title: null,
+        toolbarHeight: 40,
         leadingWidth: 52,
         leading: GestureDetector(
           onTap: () {
             Navigator.pop(context);
           },
           child: Container(
-            margin: const EdgeInsets.only(top: 1, left: 16),
+            margin: const EdgeInsets.only(left: 16),
             child: const Icon(
               TabBarIcon.leftArrow,
               size: 20,
@@ -75,7 +76,7 @@ class _RetrospectMethodSelectionState extends State<RetrospectMethodSelection> {
         children: [
           // 타이틀 텍스트
           const Padding(
-            padding: EdgeInsets.fromLTRB(21.0, 27.0, 16.0, 27.0),
+            padding: EdgeInsets.fromLTRB(21.0, 15.0, 16.0, 27.0),
             child: Align(
               alignment: Alignment.centerLeft,
               child: Text(
@@ -95,7 +96,7 @@ class _RetrospectMethodSelectionState extends State<RetrospectMethodSelection> {
           // 회고 방법 리스트
           Expanded(
             child: ListView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              padding: const EdgeInsets.symmetric(horizontal: 20.0),
               itemCount: _retrospectMethods.length,
               itemBuilder: (context, index) {
                 final method = _retrospectMethods[index];
@@ -110,10 +111,12 @@ class _RetrospectMethodSelectionState extends State<RetrospectMethodSelection> {
                         padding: const EdgeInsets.only(right: 8.0),
                         child: Text(
                           '#$tag',
-                          style: const TextStyle(
-                            color: Color(0xFF3B82F6),
+                          style: TextStyle(
+                            color: isSelected
+                                ? Colors.white
+                                : const Color(0xFF3B82F6),
                             fontFamily: 'Pretendard',
-                            fontSize: 14,
+                            fontSize: 15,
                           ),
                         ),
                       ),
@@ -123,12 +126,16 @@ class _RetrospectMethodSelectionState extends State<RetrospectMethodSelection> {
 
                 return Container(
                   margin: const EdgeInsets.only(bottom: 16.0),
-                  padding: const EdgeInsets.symmetric(vertical: 16.0),
+                  padding: const EdgeInsets.symmetric(vertical: 20.0),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF1A1A1A),
+                    color: isSelected
+                        ? const Color(0xFF1C398E)
+                        : const Color(0xFF1A1A1A),
                     borderRadius: BorderRadius.circular(16),
                     border: isSelected
-                        ? Border.all(color: const Color(0xFF223990), width: 2)
+                        ? Border.all(
+                            color: const Color.fromARGB(255, 67, 79, 255),
+                            width: 1.5)
                         : null,
                   ),
                   child: InkWell(
@@ -154,7 +161,7 @@ class _RetrospectMethodSelectionState extends State<RetrospectMethodSelection> {
                                   style: const TextStyle(
                                     color: Colors.white,
                                     fontFamily: 'Pretendard',
-                                    fontSize: 20,
+                                    fontSize: 22,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
@@ -173,10 +180,13 @@ class _RetrospectMethodSelectionState extends State<RetrospectMethodSelection> {
                             padding: const EdgeInsets.only(top: 4.0),
                             child: Text(
                               method['description'],
-                              style: const TextStyle(
-                                color: Color(0xFFC3C3C3),
+                              style: TextStyle(
+                                color: const Color(0xFFC3C3C3),
                                 fontFamily: 'Pretendard',
-                                fontSize: 16,
+                                fontSize: 15,
+                                fontWeight: isSelected
+                                    ? FontWeight.w500
+                                    : FontWeight.normal,
                                 height: 1.4,
                               ),
                             ),

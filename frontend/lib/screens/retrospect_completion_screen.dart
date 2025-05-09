@@ -61,32 +61,14 @@ class _RetrospectCompletionScreenState
             context, Routes.splash, (route) => false);
         return false; // WillPopScope의 기본 동작 방지
       },
-      child: Scaffold(
-        backgroundColor: background,
+      child: const Scaffold(
+        backgroundColor: Color(0xFF000000),
         body: SafeArea(
           child: Stack(
             children: [
-              // 뒤로가기 버튼
-              Positioned(
-                top: 4, // 상단에 더 가깝게 위치
-                left: 13,
-                child: GestureDetector(
-                  onTap: () {
-                    // 홈 화면으로 이동
-                    Navigator.pushNamedAndRemoveUntil(
-                        context, Routes.splash, (route) => false);
-                  },
-                  child: const Icon(
-                    TabBarIcon.leftArrow,
-                    size: 20,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-
               // 기존 컨텐츠
-              const Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // 상단 여백 (뒤로가기 버튼 높이만큼)
                   SizedBox(height: 40),
@@ -95,7 +77,7 @@ class _RetrospectCompletionScreenState
                   Padding(
                     padding: EdgeInsets.fromLTRB(21.0, 27.0, 21.0, 40.0),
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           "오늘 회고가 마무리 되었습니다.",
@@ -114,9 +96,10 @@ class _RetrospectCompletionScreenState
                           style: TextStyle(
                             color: Colors.white,
                             fontFamily: 'Pretendard',
-                            fontSize: 18,
-                            fontWeight: FontWeight.normal,
+                            fontSize: 27,
+                            fontWeight: FontWeight.w800,
                             height: 1.50,
+                            letterSpacing: 0.54,
                           ),
                         ),
                       ],
@@ -158,23 +141,26 @@ class _ReflectionAnalysisScreenState extends State<ReflectionAnalysisScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: background,
+      backgroundColor: const Color(0xFF000000),
       body: SafeArea(
         child: Stack(
           children: [
             // 뒤로가기 버튼
             Positioned(
-              top: 4, // 상단에 더 가깝게 위치
+              top: 1,
               left: 13,
               child: GestureDetector(
                 onTap: () {
-                  Navigator.pop(context);
+                  Navigator.pushNamedAndRemoveUntil(
+                      context, Routes.splash, (route) => false);
                 },
-                child: const Icon(
-                  TabBarIcon.leftArrow,
-                  size: 20,
-                  color: Colors.white,
-                ),
+                child: Container(
+                    margin: const EdgeInsets.only(left: 16),
+                    child: const Icon(
+                      TabBarIcon.leftArrow,
+                      size: 20,
+                      color: Colors.white,
+                    )),
               ),
             ),
 
@@ -187,7 +173,7 @@ class _ReflectionAnalysisScreenState extends State<ReflectionAnalysisScreen> {
 
                 // 타이틀 텍스트
                 const Padding(
-                  padding: EdgeInsets.fromLTRB(21.0, 27.0, 21.0, 20.0),
+                  padding: EdgeInsets.fromLTRB(21.0, 0.0, 21.0, 20.0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -353,8 +339,8 @@ class _ReflectionAnalysisScreenState extends State<ReflectionAnalysisScreen> {
           imagePath: 'assets/img/lightning.png',
         ),
         _buildChallengeTypeItem(
-          title: "저칼노화 식단하기",
-          description: "오늘은 저칼노화 식단을 하지 않았어요. 내일은 꼭 한번 도전해 봐요",
+          title: "저속노화 식단하기",
+          description: "오늘은 저속노화 식단을 하지 않았어요. 내일은 꼭 한번 도전해 봐요",
           score: 0,
           hasSuccess: false,
           imagePath: 'assets/img/food.png',
@@ -402,10 +388,10 @@ class _ReflectionAnalysisScreenState extends State<ReflectionAnalysisScreen> {
     required bool hasSuccess,
   }) {
     return Container(
-      margin: const EdgeInsets.fromLTRB(21.0, 20.0, 21.0, 0),
+      margin: const EdgeInsets.fromLTRB(21.0, 0.0, 21.0, 0),
       padding: const EdgeInsets.all(16.0),
       decoration: BoxDecoration(
-        color: const Color(0xFF111111),
+        color: const Color(0xFF000000),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
@@ -432,7 +418,7 @@ class _ReflectionAnalysisScreenState extends State<ReflectionAnalysisScreen> {
                 style: const TextStyle(
                   color: Colors.white,
                   fontFamily: 'Pretendard',
-                  fontSize: 18,
+                  fontSize: 20,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -461,7 +447,7 @@ class _ReflectionAnalysisScreenState extends State<ReflectionAnalysisScreen> {
                 style: TextStyle(
                   color: hasSuccess ? Colors.orange : Colors.yellow,
                   fontFamily: 'Pretendard',
-                  fontSize: 16,
+                  fontSize: 14,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -480,11 +466,10 @@ class _ReflectionAnalysisScreenState extends State<ReflectionAnalysisScreen> {
     required String imagePath,
   }) {
     return Container(
-      margin: const EdgeInsets.fromLTRB(21.0, 20.0, 21.0, 0),
+      margin: const EdgeInsets.fromLTRB(21.0, 0.0, 21.0, 0),
       padding: const EdgeInsets.all(16.0),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1A1A1A),
-        borderRadius: BorderRadius.circular(16),
+      decoration: const BoxDecoration(
+        color: Color(0xFF000000),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -517,7 +502,7 @@ class _ReflectionAnalysisScreenState extends State<ReflectionAnalysisScreen> {
                   style: const TextStyle(
                     color: Colors.white,
                     fontFamily: 'Pretendard',
-                    fontSize: 18,
+                    fontSize: 20,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -530,7 +515,7 @@ class _ReflectionAnalysisScreenState extends State<ReflectionAnalysisScreen> {
             style: const TextStyle(
               color: Colors.white,
               fontFamily: 'Pretendard',
-              fontSize: 16,
+              fontSize: 15,
             ),
           ),
           const SizedBox(height: 8),
@@ -547,7 +532,7 @@ class _ReflectionAnalysisScreenState extends State<ReflectionAnalysisScreen> {
                 style: TextStyle(
                   color: hasSuccess ? Colors.orange : Colors.yellow,
                   fontFamily: 'Pretendard',
-                  fontSize: 16,
+                  fontSize: 14,
                   fontWeight: FontWeight.w600,
                 ),
               ),

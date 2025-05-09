@@ -51,13 +51,14 @@ class _RetrospectWritingScreenState extends State<RetrospectWritingScreen> {
         elevation: 0,
         centerTitle: false,
         title: null,
+        toolbarHeight: 40,
         leadingWidth: 52,
         leading: GestureDetector(
           onTap: () {
             Navigator.pop(context);
           },
           child: Container(
-            margin: const EdgeInsets.only(top: 1, left: 16),
+            margin: const EdgeInsets.only(left: 16),
             child: const Icon(
               TabBarIcon.leftArrow,
               size: 20,
@@ -70,26 +71,26 @@ class _RetrospectWritingScreenState extends State<RetrospectWritingScreen> {
         children: [
           // 챌린지 제목
           Padding(
-            padding: const EdgeInsets.fromLTRB(21.0, 27.0, 21.0, 16.0),
+            padding: const EdgeInsets.fromLTRB(21.0, 15.0, 16.0, 27.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    // 현재 챌린지 번호
-                    Text(
-                      "${_currentChallengeIndex + 1}/${widget.selectedChallenges.length}",
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontFamily: 'Pretendard',
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
+                const Row(
+                    // children: [
+                    //   // 현재 챌린지 번호
+                    //   Text(
+                    //     "${_currentChallengeIndex + 1}/${widget.selectedChallenges.length}",
+                    //     style: const TextStyle(
+                    //       color: Colors.white,
+                    //       fontFamily: 'Pretendard',
+                    //       fontSize: 16,
+                    //       fontWeight: FontWeight.bold,
+                    //     ),
+                    //   ),
+                    //   const Spacer(),
+                    // ],
                     ),
-                    const Spacer(),
-                  ],
-                ),
-                const SizedBox(height: 16),
+                //const SizedBox(height: 16),
 
                 // 챌린지 제목
                 Text(
@@ -109,10 +110,10 @@ class _RetrospectWritingScreenState extends State<RetrospectWritingScreen> {
 
           // 챌린지 진행 상태 표시
           Container(
-            margin: const EdgeInsets.fromLTRB(21.0, 0, 21.0, 16.0),
+            margin: const EdgeInsets.fromLTRB(21.0, 0, 21.0, 0.0),
             padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
             decoration: BoxDecoration(
-              color: const Color(0xFF1A1A1A),
+              color: const Color.fromARGB(255, 0, 0, 0),
               borderRadius: BorderRadius.circular(16),
             ),
             child: Row(
@@ -131,23 +132,28 @@ class _RetrospectWritingScreenState extends State<RetrospectWritingScreen> {
                       width: 40,
                       child: Column(
                         children: [
-                          // 언더바 또는 깃발
-                          _retrospectEntries[i]['isCompleted']
-                              ? const Icon(
-                                  Icons.flag,
-                                  color: Colors.green,
-                                  size: 24,
-                                )
-                              : Container(
-                                  height: 4,
-                                  width: 30,
-                                  decoration: BoxDecoration(
-                                    color: i == _currentChallengeIndex
-                                        ? Colors.blue
-                                        : Colors.grey,
-                                    borderRadius: BorderRadius.circular(2),
-                                  ),
-                                ),
+                          // 언더바 또는 깃발을 같은 크기의 컨테이너에 넣어 정렬
+                          SizedBox(
+                            height: 16, // 고정 높이
+                            child: Center(
+                              child: _retrospectEntries[i]['isCompleted']
+                                  ? const Icon(
+                                      Icons.flag,
+                                      color: Colors.green,
+                                      size: 24,
+                                    )
+                                  : Container(
+                                      height: 4,
+                                      width: 30,
+                                      decoration: BoxDecoration(
+                                        color: i == _currentChallengeIndex
+                                            ? Colors.blue
+                                            : Colors.grey,
+                                        borderRadius: BorderRadius.circular(2),
+                                      ),
+                                    ),
+                            ),
+                          ),
                           const SizedBox(height: 8),
 
                           // 챌린지 번호
@@ -176,7 +182,7 @@ class _RetrospectWritingScreenState extends State<RetrospectWritingScreen> {
           Expanded(
             child: SingleChildScrollView(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(21.0, 10.0, 21.0, 10.0),
+                padding: const EdgeInsets.fromLTRB(21.0, 0.0, 21.0, 10.0),
                 child: Column(
                   children: [
                     // Keep 항목
@@ -192,7 +198,7 @@ class _RetrospectWritingScreenState extends State<RetrospectWritingScreen> {
                       },
                     ),
 
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 10),
 
                     // Problem 항목
                     _buildRetrospectField(
@@ -207,7 +213,7 @@ class _RetrospectWritingScreenState extends State<RetrospectWritingScreen> {
                       },
                     ),
 
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 10),
 
                     // Try 항목
                     _buildRetrospectField(
@@ -243,17 +249,17 @@ class _RetrospectWritingScreenState extends State<RetrospectWritingScreen> {
                   }
                 },
                 child: Container(
-                  height: 60,
+                  height: 45,
                   decoration: BoxDecoration(
                     color: const Color(0xFF1A1A1A),
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(8),
                   ),
                   child: const Center(
                     child: Text(
                       '이전 챌린지',
                       style: TextStyle(
                         color: Colors.white,
-                        fontSize: 18,
+                        fontSize: 16,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -291,10 +297,10 @@ class _RetrospectWritingScreenState extends State<RetrospectWritingScreen> {
                   }
                 },
                 child: Container(
-                  height: 60,
+                  height: 45,
                   decoration: BoxDecoration(
                     color: const Color(0xFF223990),
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(8),
                   ),
                   child: Center(
                     child: Text(
@@ -304,7 +310,7 @@ class _RetrospectWritingScreenState extends State<RetrospectWritingScreen> {
                           : '다음 챌린지',
                       style: const TextStyle(
                         color: Colors.white,
-                        fontSize: 18,
+                        fontSize: 16,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -341,11 +347,11 @@ class _RetrospectWritingScreenState extends State<RetrospectWritingScreen> {
               style: const TextStyle(
                 color: Colors.white,
                 fontFamily: 'Pretendard',
-                fontSize: 18,
+                fontSize: 21,
                 fontWeight: FontWeight.bold,
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 5),
 
             // 입력 필드
             TextField(
@@ -356,14 +362,14 @@ class _RetrospectWritingScreenState extends State<RetrospectWritingScreen> {
               style: const TextStyle(
                 color: Colors.white,
                 fontFamily: 'Pretendard',
-                fontSize: 16,
+                fontSize: 15,
               ),
               decoration: InputDecoration(
                 hintText: hintText,
                 hintStyle: TextStyle(
                   color: Colors.white.withOpacity(0.5),
                   fontFamily: 'Pretendard',
-                  fontSize: 16,
+                  fontSize: 15,
                 ),
                 border: InputBorder.none,
                 contentPadding: EdgeInsets.zero,

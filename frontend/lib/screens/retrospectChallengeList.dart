@@ -26,13 +26,14 @@ class _RetrospectChallengeListState extends State<RetrospectChallengeList> {
         elevation: 0,
         centerTitle: false,
         title: null,
+        toolbarHeight: 40,
         leadingWidth: 52,
         leading: GestureDetector(
           onTap: () {
             Navigator.pop(context);
           },
           child: Container(
-            margin: const EdgeInsets.only(top: 1, left: 16),
+            margin: const EdgeInsets.only(left: 16),
             child: const Icon(
               TabBarIcon.leftArrow,
               size: 20,
@@ -45,7 +46,7 @@ class _RetrospectChallengeListState extends State<RetrospectChallengeList> {
         children: [
           // 타이틀 텍스트
           const Padding(
-            padding: EdgeInsets.fromLTRB(21.0, 0.0, 16.0, 27.0),
+            padding: EdgeInsets.fromLTRB(21.0, 0.0, 16.0, 15.0),
             child: Align(
               alignment: Alignment.centerLeft,
               child: Column(
@@ -62,7 +63,7 @@ class _RetrospectChallengeListState extends State<RetrospectChallengeList> {
                       letterSpacing: 0.54,
                     ),
                   ),
-                  SizedBox(height: 4),
+                  SizedBox(height: 2),
                   Text(
                     '선택해 주세요!',
                     style: TextStyle(
@@ -81,14 +82,14 @@ class _RetrospectChallengeListState extends State<RetrospectChallengeList> {
 
           // 카테고리 버튼 모음
           Padding(
-            padding: const EdgeInsets.fromLTRB(21.0, 0.0, 30.0, 0.0),
+            padding: const EdgeInsets.fromLTRB(21.0, 0.0, 30.0, 5.0),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 _buildCategoryButton("전체", 0, height: 25),
-                const SizedBox(width: 20),
+                const SizedBox(width: 15),
                 _buildCategoryButton("개인", 1, height: 25),
-                const SizedBox(width: 20),
+                const SizedBox(width: 15),
                 _buildCategoryButton("크루", 2, height: 25),
               ],
             ),
@@ -204,14 +205,14 @@ class _RetrospectChallengeListState extends State<RetrospectChallengeList> {
         : challenges.where((c) => c['type'] == type).toList();
 
     return ListView.builder(
-      padding: const EdgeInsets.only(top: 10.0, bottom: 80.0),
+      padding: const EdgeInsets.only(top: 12.0, bottom: 60.0),
       itemCount: filteredChallenges.length + 1, // +1 for the 모두 선택 button
       itemBuilder: (context, index) {
         // 마지막 아이템인 경우 모두 선택 버튼 표시
         if (index == filteredChallenges.length) {
           return Padding(
             padding:
-                const EdgeInsets.symmetric(vertical: 16.0, horizontal: 16.0),
+                const EdgeInsets.symmetric(vertical: 20.0, horizontal: 16.0),
             child: Align(
               alignment: Alignment.centerRight,
               child: SizedBox(
@@ -223,7 +224,7 @@ class _RetrospectChallengeListState extends State<RetrospectChallengeList> {
                     foregroundColor: Colors.white,
                     elevation: 0,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(10),
                     ),
                     padding: const EdgeInsets.symmetric(horizontal: 12),
                   ),
@@ -269,12 +270,12 @@ class _RetrospectChallengeListState extends State<RetrospectChallengeList> {
         final isSelected = _selectedChallenges.contains(id);
 
         return Padding(
-          padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 21.0),
+          padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 21.0),
           child: Row(
             children: [
               Container(
-                width: 40,
-                height: 40,
+                width: 36,
+                height: 36,
                 decoration: BoxDecoration(
                   color: challenge['iconBgColor'] as Color,
                   borderRadius: BorderRadius.circular(8),
@@ -290,7 +291,7 @@ class _RetrospectChallengeListState extends State<RetrospectChallengeList> {
                             return Icon(
                               challenge['icon'] as IconData,
                               color: Colors.white,
-                              size: 24,
+                              size: 20,
                             );
                           },
                         ),
@@ -298,22 +299,22 @@ class _RetrospectChallengeListState extends State<RetrospectChallengeList> {
                     : Icon(
                         challenge['icon'] as IconData,
                         color: Colors.white,
-                        size: 24,
+                        size: 20,
                       ),
               ),
-              const SizedBox(width: 20),
+              const SizedBox(width: 15),
               Expanded(
                 child: Text(
                   challenge['title'] as String,
                   style: const TextStyle(
                     color: Colors.white,
-                    fontSize: 16,
+                    fontSize: 15,
                   ),
                 ),
               ),
               SizedBox(
-                height: 38,
-                width: 70,
+                height: 34,
+                width: 65,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF1A1A1A),
