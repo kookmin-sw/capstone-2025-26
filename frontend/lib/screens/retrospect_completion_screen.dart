@@ -62,7 +62,7 @@ class _RetrospectCompletionScreenState
         return false; // WillPopScope의 기본 동작 방지
       },
       child: const Scaffold(
-        backgroundColor: Color(0xFF000000),
+        backgroundColor: background,
         body: SafeArea(
           child: Stack(
             children: [
@@ -141,7 +141,7 @@ class _ReflectionAnalysisScreenState extends State<ReflectionAnalysisScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF000000),
+      backgroundColor: background,
       body: SafeArea(
         child: Stack(
           children: [
@@ -208,7 +208,7 @@ class _ReflectionAnalysisScreenState extends State<ReflectionAnalysisScreen> {
                   decoration: const BoxDecoration(
                     border: Border(
                       bottom: BorderSide(
-                        color: Color(0xFF1A1A1A),
+                        color: boxBackgroundColor,
                         width: 1.0,
                       ),
                     ),
@@ -264,7 +264,7 @@ class _ReflectionAnalysisScreenState extends State<ReflectionAnalysisScreen> {
                                 bottom: BorderSide(
                                   color: _selectedTabIndex == 1
                                       ? Colors.white
-                                      : Colors.transparent,
+                                      : background,
                                   width: 2.0,
                                 ),
                               ),
@@ -390,9 +390,8 @@ class _ReflectionAnalysisScreenState extends State<ReflectionAnalysisScreen> {
     return Container(
       margin: const EdgeInsets.fromLTRB(21.0, 0.0, 21.0, 0),
       padding: const EdgeInsets.all(16.0),
-      decoration: BoxDecoration(
-        color: const Color(0xFF000000),
-        borderRadius: BorderRadius.circular(16),
+      decoration: const BoxDecoration(
+        color: background,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -469,7 +468,7 @@ class _ReflectionAnalysisScreenState extends State<ReflectionAnalysisScreen> {
       margin: const EdgeInsets.fromLTRB(21.0, 0.0, 21.0, 0),
       padding: const EdgeInsets.all(16.0),
       decoration: const BoxDecoration(
-        color: Color(0xFF000000),
+        color: background,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

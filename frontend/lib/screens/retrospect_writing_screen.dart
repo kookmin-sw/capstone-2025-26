@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:reme/icon/tab_bar_icon_icons.dart';
 import 'package:reme/screens/retrospect_completion_screen.dart';
 import 'package:reme/routes.dart';
+import 'package:reme/themes/color.dart';
 
 class RetrospectWritingScreen extends StatefulWidget {
   final String methodName;
@@ -45,9 +46,9 @@ class _RetrospectWritingScreenState extends State<RetrospectWritingScreen> {
     final currentEntry = _retrospectEntries[_currentChallengeIndex];
 
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: background,
       appBar: AppBar(
-        backgroundColor: Colors.black,
+        backgroundColor: background,
         elevation: 0,
         centerTitle: false,
         title: null,
@@ -75,23 +76,6 @@ class _RetrospectWritingScreenState extends State<RetrospectWritingScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Row(
-                    // children: [
-                    //   // 현재 챌린지 번호
-                    //   Text(
-                    //     "${_currentChallengeIndex + 1}/${widget.selectedChallenges.length}",
-                    //     style: const TextStyle(
-                    //       color: Colors.white,
-                    //       fontFamily: 'Pretendard',
-                    //       fontSize: 16,
-                    //       fontWeight: FontWeight.bold,
-                    //     ),
-                    //   ),
-                    //   const Spacer(),
-                    // ],
-                    ),
-                //const SizedBox(height: 16),
-
                 // 챌린지 제목
                 Text(
                   currentChallenge['title'],
@@ -112,10 +96,7 @@ class _RetrospectWritingScreenState extends State<RetrospectWritingScreen> {
           Container(
             margin: const EdgeInsets.fromLTRB(21.0, 0, 21.0, 0.0),
             padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-            decoration: BoxDecoration(
-              color: const Color.fromARGB(255, 0, 0, 0),
-              borderRadius: BorderRadius.circular(16),
-            ),
+            decoration: const BoxDecoration(color: background),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
@@ -251,7 +232,7 @@ class _RetrospectWritingScreenState extends State<RetrospectWritingScreen> {
                 child: Container(
                   height: 45,
                   decoration: BoxDecoration(
-                    color: const Color(0xFF1A1A1A),
+                    color: boxBackgroundColor,
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: const Center(
@@ -333,7 +314,7 @@ class _RetrospectWritingScreenState extends State<RetrospectWritingScreen> {
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF1A1A1A),
+        color: boxBackgroundColor,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Padding(

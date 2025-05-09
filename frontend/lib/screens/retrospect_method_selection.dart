@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:reme/icon/tab_bar_icon_icons.dart';
 import 'package:reme/screens/retrospect_writing_screen.dart';
+import 'package:reme/themes/color.dart';
 
 class RetrospectMethodSelection extends StatefulWidget {
   final List<Map<String, dynamic>> selectedChallenges;
@@ -50,9 +51,9 @@ class _RetrospectMethodSelectionState extends State<RetrospectMethodSelection> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: background,
       appBar: AppBar(
-        backgroundColor: Colors.black,
+        backgroundColor: background,
         elevation: 0,
         centerTitle: false,
         title: null,
@@ -130,7 +131,7 @@ class _RetrospectMethodSelectionState extends State<RetrospectMethodSelection> {
                   decoration: BoxDecoration(
                     color: isSelected
                         ? const Color(0xFF1C398E)
-                        : const Color(0xFF1A1A1A),
+                        : boxBackgroundColor,
                     borderRadius: BorderRadius.circular(16),
                     border: isSelected
                         ? Border.all(

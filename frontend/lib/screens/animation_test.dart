@@ -103,7 +103,7 @@ class _StaggeredBoxAnimationState extends State<StaggeredBoxAnimation>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF000000),
+      backgroundColor: background,
       body: Stack(
         children: [
           for (int i = 3; i >= 0; i--)

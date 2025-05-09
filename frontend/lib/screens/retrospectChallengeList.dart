@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:reme/icon/tab_bar_icon_icons.dart';
 import 'package:reme/screens/retrospect_method_selection.dart';
+import 'package:reme/themes/color.dart';
 
 class RetrospectChallengeList extends StatefulWidget {
   const RetrospectChallengeList({super.key});
@@ -20,9 +21,9 @@ class _RetrospectChallengeListState extends State<RetrospectChallengeList> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: background,
       appBar: AppBar(
-        backgroundColor: Colors.black,
+        backgroundColor: background,
         elevation: 0,
         centerTitle: false,
         title: null,
@@ -173,7 +174,7 @@ class _RetrospectChallengeListState extends State<RetrospectChallengeList> {
         },
         style: ElevatedButton.styleFrom(
           backgroundColor:
-              isSelected ? const Color(0xFF1C398E) : const Color(0xFF171717),
+              isSelected ? const Color(0xFF1C398E) : boxBackgroundColor,
           foregroundColor: Colors.white,
           elevation: 0,
           padding:
@@ -317,7 +318,9 @@ class _RetrospectChallengeListState extends State<RetrospectChallengeList> {
                 width: 65,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF1A1A1A),
+                    backgroundColor: isSelected
+                        ? const Color(0xFF1C398E)
+                        : boxBackgroundColor,
                     foregroundColor: Colors.white,
                     elevation: 0,
                     shape: RoundedRectangleBorder(
@@ -334,7 +337,7 @@ class _RetrospectChallengeListState extends State<RetrospectChallengeList> {
                       }
                     });
                   },
-                  child: Text(isSelected ? '선택됨' : '선택',
+                  child: Text(isSelected ? '회고' : '선택',
                       style: const TextStyle(fontSize: 16)),
                 ),
               ),
