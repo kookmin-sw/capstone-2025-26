@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:reme/themes/color.dart';
 
 class WidgetBox extends StatelessWidget {
@@ -34,7 +35,7 @@ class WidgetBox extends StatelessWidget {
           children: [
             if (title != '')
               Container(
-                padding: const EdgeInsets.fromLTRB(28, 24, 0, 0),
+                padding: EdgeInsets.fromLTRB(24.w, 24.h, 0, 0),
                 child: Text(
                   title,
                   style: const TextStyle(

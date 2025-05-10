@@ -71,6 +71,9 @@ flutter:
    - assets/img/account_circle.svg
 
    - assets/images/
+   - assets/img/3d_calendar.png
+   - assets/img/3d_fire.png
+   - assets/img/3d_glassMagnifier.png
 
    - assets/img/whitebox.png
    - assets/img/blueBox.png

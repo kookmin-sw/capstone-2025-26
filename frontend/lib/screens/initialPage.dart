@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:reme/screens/feed.dart';
 import 'package:reme/screens/home.dart';
 import 'package:reme/screens/restroPage.dart';
@@ -18,19 +19,23 @@ class _InitialpageState extends State<Initialpage>
   ScrollController scrollController = ScrollController();
   int _selectIndex = 0;
   double _opacity = 1.0;
-
-  final List<Widget> _pageOptions = [
-    const Home(),
-    const RetroPage(), // Retrospect
-    Container(), //dummy Widget - crew
-    Container(), //dummy Widget - challenge
-    const Feed(), // Feed
-  ];
+  late final List<Widget> _pageOptions;
 
   @override
   void initState() {
     super.initState();
-    tabController = TabController(length: 5, vsync: this);
+    _pageOptions = [
+      Home(onCrewMoreTap: () {
+        setState(() {
+          _selectIndex = 2;
+          tabController?.index = 2;
+        });
+      }),
+      const RetroPage(),
+      Container(),
+      const Feed(),
+    ];
+    tabController = TabController(length: 4, vsync: this);
     tabController!.addListener(() => setState(() {
           scrollController.jumpTo(0);
           _selectIndex = tabController!.index;
@@ -62,9 +67,13 @@ class _InitialpageState extends State<Initialpage>
               physics: const BouncingScrollPhysics(),
               slivers: [
                 SliverAppBar(
-                  title: const Text(
-                    "Re:Me",
-                    style: TextStyle(fontWeight: FontWeight.bold, color: c700),
+                  title: Text(
+                    "To-Go",
+                    style: TextStyle(
+                      fontSize: 24.sp,
+                      fontWeight: FontWeight.w700,
+                      color: c700,
+                    ),
                   ),
                   backgroundColor: background,
                   centerTitle: false,
@@ -150,10 +159,6 @@ class _InitialpageState extends State<Initialpage>
                           TabBarIcon.award,
                         ),
                         text: "크루",
-                      ),
-                      Tab(
-                        icon: Icon(TabBarIcon.command),
-                        text: "목표",
                       ),
                       Tab(
                         icon: Icon(TabBarIcon.files),
