@@ -24,4 +24,4 @@ var namedRoute = {
   Routes.first: (context) => GuidePage(),
   Routes.retrospectChallenge: (context) => const RetrospectChallengeList(),
   Routes.retrospectCompletion: (context) => const RetrospectCompletionScreen(),
-}
+};
