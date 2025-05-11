@@ -3,7 +3,7 @@ from rest_framework.routers import DefaultRouter
 
 from .views import (
     RetrospectViewSet, TemplateViewSet, ChallengeViewSet, PlanViewSet,
-    RetrospectWeeklyAnalysisViewSet, KpiViewSet, KpiDataEntryViewSet, KpiResultViewSet
+    RetrospectWeeklyAnalysisViewSet, KpiViewSet, KpiResultViewSet, KpiDataEntryViewSet
 )
 
 # Create a router and register our viewsets with it

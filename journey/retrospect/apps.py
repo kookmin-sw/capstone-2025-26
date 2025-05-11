@@ -5,4 +5,5 @@ class RetrospectConfig(AppConfig):
     name = 'retrospect'
     
     def ready(self):
-        import retrospect.signals 
+        from . import signals
+

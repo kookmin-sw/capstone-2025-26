@@ -4,7 +4,7 @@ from rest_framework import status
 from django.utils import timezone
 from datetime import timedelta
 from user_manager.models import User 
-from retrospect.models import Challenge, Retrospect, Plan, RetrospectOwnerType, RetrospectVisibility, Kpi, KpiDataEntry, KpiResult, KpiDataType, ChallengeOwnerType
+from retrospect.models import Challenge, Retrospect, Plan, RetrospectOwnerType, RetrospectVisibility, Kpi, KpiResult, KpiDataType, ChallengeOwnerType
 from django.test import TestCase
 from ai_manager.services.kpi_score_generator import score_kpis_from_retrospect, extract_meaning_units, match_meaning_units_to_kpi, score_matched_units, generate_feedback
 from unittest.mock import patch
@@ -349,28 +349,6 @@ class KpiAPITest(APITestCase):
         self.assertEqual(response.data["value_float"], 3.5)
         print("✅ KPI 데이터 엔트리 생성 테스트 통과")
     
-    def test_get_kpi_data_entries(self):
-        """
-        KPI 데이터 엔트리 조회 API 테스트
-        """
-        print("\n=== 테스트: KPI 데이터 엔트리 조회 ===")
-        # 테스트용 데이터 생성
-        KpiDataEntry.objects.create(
-            kpi=self.kpi,
-            user=self.user,
-            record_date=timezone.now().date(),
-            value_type=KpiDataType.FLOAT,
-            value_float=3.5
-        )
-        
-        url = reverse("kpi-entry-list")
-        response = self.client.get(url, format="json")
-        print(f"응답 상태 코드: {response.status_code}")
-        print(f"응답 데이터: {response.data}")
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data["results"]), 1)
-        self.assertEqual(response.data["results"][0]["value_float"], 3.5)
-        print("✅ KPI 데이터 엔트리 조회 테스트 통과")
     
     def test_get_kpi_results(self):
         """

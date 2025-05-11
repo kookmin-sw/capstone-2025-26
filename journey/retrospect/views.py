@@ -8,9 +8,9 @@ from rest_framework.decorators import action
 from django.db.models import Q
 from .models import (Retrospect, Template, Challenge, Plan, ChallengeStatus, 
                  RetrospectWeeklyAnalysis, RetrospectVisibility, TemplateOwnerType, 
-                 ChallengeOwnerType, RetrospectOwnerType, RetrospectWeeklyAnalysisOwnerType, Kpi, KpiDataEntry, KpiResult)
+                 ChallengeOwnerType, RetrospectOwnerType, RetrospectWeeklyAnalysisOwnerType, Kpi, KpiResult, KpiDataEntry)
 from .serializers import (RetrospectSerializer, TemplateSerializer, ChallengeSerializer, 
-                      PlanSerializer, PlanResponseSerializer, RetrospectWeeklyAnalysisSerializer, KpiSerializer, KpiDataEntrySerializer, KpiResultSerializer)
+                      PlanSerializer, PlanResponseSerializer, RetrospectWeeklyAnalysisSerializer, KpiSerializer, KpiDataEntrySerializer,KpiResultSerializer)
 from crew.models import Crew, CrewMembership, CrewMembershipStatus # Import CrewMembership models
 from .permissions import (IsRetrospectOwnerOrCrewMemberOrReadOnly, # Use the new permission class
                           IsTemplateOwnerOrCrewMemberOrReadOnly, 
