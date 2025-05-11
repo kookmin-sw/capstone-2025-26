@@ -8,6 +8,18 @@ from retrospect.models import Challenge, Retrospect, Plan, RetrospectOwnerType, 
 from django.test import TestCase
 from ai_manager.services.kpi_score_generator import score_kpis_from_retrospect, extract_meaning_units, match_meaning_units_to_kpi, score_matched_units, generate_feedback
 from unittest.mock import patch
+from django.contrib.auth import get_user_model
+from langchain_google_vertexai.chat_models import ChatVertexAI
+import os
+
+# LangChain LLM 설정
+llm = ChatVertexAI(
+    project=os.getenv("PROJECT_ID"),
+    location="us-central1",
+    model_name="gemini-2.0-flash-lite-001",
+    max_output_tokens=1024,
+    temperature=0.7,
+)
 
 class ChallengeAPITest(APITestCase):
     def setUp(self):
@@ -84,6 +96,22 @@ class ChallengeAPITest(APITestCase):
         challenge.refresh_from_db()
         self.assertEqual(challenge.challenge_name, "Updated Challenge Name")
         print("✅ 챌린지 수정 테스트 통과")
+
+    def test_create_challenge_missing_name(self):
+        bad_data = self.challenge_data.copy()
+        del bad_data["challenge_name"]
+        url = reverse("challenge-list")
+        response = self.client.post(url, bad_data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        print("✅ 필수 필드 누락 시 400 테스트 통과")
+
+    def test_list_challenges(self):
+        Challenge.objects.create(user=self.user, **self.challenge_data)
+        url = reverse("challenge-list")
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(len(response.data) >= 1)
+        print("✅ 챌린지 목록 조회 테스트 통과")
     
     def test_delete_challenge(self):
         """
@@ -272,7 +300,7 @@ class KpiScoringTestCase(TestCase):
         )
         
         # KPI 스코어링 실행
-        results = score_kpis_from_retrospect(retrospect)
+        results = score_kpis_from_retrospect(retrospect, llm)   
         
 
         # 결과 검증
@@ -488,7 +516,7 @@ class KpiScoreGeneratorTest(TestCase):
         회고 기반 KPI 점수 생성 테스트
         """
         print("\n=== 테스트: 회고 기반 KPI 점수 생성 ===")
-        results = score_kpis_from_retrospect(self.retrospect)
+        results = score_kpis_from_retrospect(self.retrospect, llm)
         print(f"생성된 KPI 결과: {results}")
         
         # 결과 검증
@@ -513,7 +541,7 @@ class KpiScoreGeneratorTest(TestCase):
             data_type=KpiDataType.FLOAT
         )
         
-        results = score_kpis_from_retrospect(self.retrospect)
+        results = score_kpis_from_retrospect(self.retrospect, llm)
         print(f"생성된 KPI 결과: {results}")
         
         # 결과 검증
@@ -522,8 +550,6 @@ class KpiScoreGeneratorTest(TestCase):
         self.assertTrue(any(result.kpi == self.kpi for result in results))
         self.assertTrue(any(result.kpi == kpi2 for result in results))
         print("✅ 여러 KPI 점수 생성 테스트 통과")
-
-
 
 class GenerateFeedbackTest(TestCase):
 

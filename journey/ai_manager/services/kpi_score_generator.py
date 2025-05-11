@@ -165,45 +165,68 @@ def compare_retrospects(prev, curr, kpi, chain):
         chain=chain
     )
 
-
 def score_kpis_from_retrospect(retrospect, llm):
+    print(f"\n[INFO] 🔍 KPI 평가 시작 - 회고 ID: {retrospect.id}")
+    
     challenge = retrospect.challenge
     user = retrospect.user
     retrospect_text = retrospect.content
 
+    print(f"[DEBUG] 유저: {user.username}, 챌린지: {challenge.challenge_name}")
+    
+    # 1. 평가 대상 KPI 조회
     kpis = Kpi.objects.filter(challenge=challenge, user=user)
-    prev_retrospect = get_previous_retrospect(retrospect)
+    print(f"[DEBUG] 평가 대상 KPI 수: {kpis.count()}개")
 
-    # ✅ LLMChain 초기화
-    improvement_chain = build_improvement_evaluator(llm)
+    if not kpis.exists():
+        print(f"[WARN] 평가할 KPI가 없습니다. 회고 ID: {retrospect.id}")
+        return []
+
+    prev_retrospect = get_previous_retrospect(retrospect)
+    if prev_retrospect:
+        print(f"[DEBUG] 전날 회고 있음 → ID: {prev_retrospect.id}")
+    else:
+        print(f"[DEBUG] 전날 회고 없음")
 
     results = []
 
     for kpi in kpis:
-        # 현재 회고만 기반한 기본 점수
-        score, matched_units = score_kpi_using_meaning_units(kpi, retrospect_text)
+        print(f"\n[INFO] → KPI 평가 중: {kpi.name}")
 
-        # 전날 회고가 존재하면 개선도 분석
-        if prev_retrospect is not None:
-            improvement_score = compare_retrospects(prev_retrospect, retrospect, kpi, improvement_chain)
-            score = min(score + improvement_score, 1.0)
-        # 없으면 개선 점수 없이 기본 점수만 사용
-        else:
-            improvement_score = 0.0     
+        try:
+            # 기본 점수 계산
+            score, matched_units = score_kpi_using_meaning_units(kpi, retrospect_text)
+            print(f"[DEBUG] 기본 점수: {score}, 매칭된 의미 단위 수: {len(matched_units)}")
 
-        feedback = generate_feedback(kpi, matched_units, score)
+            # 개선 여부 판단 및 보정 점수
+            if prev_retrospect is not None:
+                improvement_score = compare_retrospects(prev_retrospect, retrospect, kpi, llm)
+                score = min(score + improvement_score, 1.0)
+                print(f"[DEBUG] 개선 점수: {improvement_score} → 최종 점수: {score}")
+            else:
+                print(f"[DEBUG] 개선 비교 생략 (전날 회고 없음)")
 
-        result = KpiResult.objects.create(
-            user=user,
-            challenge=challenge,
-            kpi=kpi,
-            retrospect=retrospect,
-            score=score,
-            comment=feedback
-        )
-        results.append(result)
+            feedback = generate_feedback(kpi, matched_units, score)
 
+            # KPIResult 저장
+            result = KpiResult.objects.create(
+                user=user,
+                challenge=challenge,
+                kpi=kpi,
+                retrospect=retrospect,
+                score=score,
+                comment=feedback
+            )
+            results.append(result)
+            print(f"[SUCCESS] KPIResult 저장 완료 → ID: {result.id}, 점수: {score:.2f}")
+
+        except Exception as e:
+            print(f"[ERROR] KPI '{kpi.name}' 평가 중 오류 발생: {e}")
+            continue
+
+    print(f"\n[INFO] ✅ KPI 평가 종료 - 총 {len(results)}개 저장됨")
     return results
+
 
 '''
 Input: 1일치 회고 (Retrospect), LLM 인스턴스
