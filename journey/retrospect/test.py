@@ -329,26 +329,6 @@ class KpiAPITest(APITestCase):
         self.assertEqual(response.data["name"], "New KPI")
         print("✅ KPI 생성 테스트 통과")
     
-    def test_create_kpi_data_entry(self):
-        """
-        KPI 데이터 엔트리 생성 API 테스트
-        """
-        print("\n=== 테스트: KPI 데이터 엔트리 생성 ===")
-        data = {
-            "kpi": self.kpi.id,
-            "user": self.user.id,  # user 필드 추가
-            "record_date": timezone.now().date().isoformat(),
-            "value_type": KpiDataType.FLOAT,
-            "value_float": 3.5
-        }
-        url = reverse("kpi-entry-list")
-        response = self.client.post(url, data, format="json")
-        print(f"응답 상태 코드: {response.status_code}")
-        print(f"응답 데이터: {response.data}")
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(response.data["value_float"], 3.5)
-        print("✅ KPI 데이터 엔트리 생성 테스트 통과")
-    
     
     def test_get_kpi_results(self):
         """

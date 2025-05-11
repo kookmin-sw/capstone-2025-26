@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Retrospect, Challenge, Template, Plan, RetrospectWeeklyAnalysis, KpiResult, Kpi, KpiDataEntry
+from .models import Retrospect, Challenge, Template, Plan, RetrospectWeeklyAnalysis, KpiResult, Kpi
 from user_manager.models import User
 from crew.models import Crew
 import json
@@ -246,14 +246,6 @@ class KpiSerializer(serializers.ModelSerializer):
         model = Kpi
         fields = ['id', 'name', 'definition', 'challenge', 'user', 'created_at']
         read_only_fields = ['id', 'created_at']
-
-class KpiDataEntrySerializer(serializers.ModelSerializer):
-    class Meta:
-        model = KpiDataEntry
-        fields = ['id', 'kpi', 'user', 'record_date', 'value_type', 
-                 'value_float', 'value_integer', 'value_text', 'value_boolean', 
-                 'created_at', 'updated_at']
-        read_only_fields = ['id', 'created_at', 'updated_at']
 
 class KpiResultSerializer(serializers.ModelSerializer):
     """

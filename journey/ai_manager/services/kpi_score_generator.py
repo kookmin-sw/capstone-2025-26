@@ -3,7 +3,7 @@ from langchain.chains import LLMChain
 from langchain.prompts import PromptTemplate
 from langchain_google_vertexai.chat_models import ChatVertexAI
 from langfuse.callback import CallbackHandler
-from retrospect.models import Plan, Challenge, Kpi, KpiDataType, KpiResult
+from retrospect.models import Plan, Challenge, Kpi, KpiDataType, KpiResult, Retrospect
 from ai_manager.serializers import KpiOutputSerializer
 import os
 import re
@@ -11,6 +11,8 @@ import json
 import logging
 from typing import List, Dict, Any
 from datetime import datetime, timedelta
+from datetime import timedelta
+
 import dotenv
 
 dotenv.load_dotenv()
@@ -111,17 +113,84 @@ def score_kpi_using_meaning_units(kpi: Kpi, retrospect_text: str) -> float:
     score = score_matched_units(matched_units)
     return score, matched_units
 
-def score_kpis_from_retrospect(retrospect):
+
+# 전날 회고 조회 후 비교해서 kpi 점수 부여
+def get_previous_retrospect(current_retrospect):
+    previous_day = current_retrospect.created_at.date() - timedelta(days=1)
+    return Retrospect.objects.filter(
+        user=current_retrospect.user,
+        challenge=current_retrospect.challenge,
+        created_at__date=previous_day
+    ).order_by('-created_at').first()
+
+
+def build_improvement_evaluator(llm_instance) -> LLMChain:
+    prompt = PromptTemplate(
+        input_variables=["prev", "curr", "kpi_name"],
+        template=(
+            "KPI 항목: {kpi_name}\n"
+            "사용자의 전날 회고:\n{prev}\n\n"
+            "사용자의 오늘 회고:\n{curr}\n\n"
+            "이 KPI 기준으로 사용자가 개선되었는지 평가해줘. 세 가지 중 하나만 출력해:\n"
+            "- IMPROVED: 명확히 더 나아짐\n"
+            "- SAME: 변화 없음\n"
+            "- WORSENED: 악화됨\n"
+            "다른 말은 하지 말고 위 단어 중 하나만 출력해."
+        )
+    )
+    return LLMChain(prompt=prompt, llm=llm_instance)
+
+
+def evaluate_improvement_with_llm(prev_text: str, curr_text: str, kpi_name: str, chain: LLMChain) -> float:
+    try:
+        result = chain.run(prev=prev_text, curr=curr_text, kpi_name=kpi_name).strip().upper()
+        if result == "IMPROVED":
+            return 0.1
+        elif result == "SAME":
+            return 0.0
+        elif result == "WORSENED":
+            return -0.1
+        else:
+            return 0.0
+    except Exception as e:
+        print(f"[evaluate_improvement_with_llm] Error: {e}")
+        return 0.0
+
+def compare_retrospects(prev, curr, kpi, chain):
+    """전날과 오늘 회고 비교하여 KPI 개선 여부 판단"""
+    return evaluate_improvement_with_llm(
+        prev_text=prev.content,
+        curr_text=curr.content,
+        kpi_name=kpi.name,
+        chain=chain
+    )
+
+
+def score_kpis_from_retrospect(retrospect, llm):
     challenge = retrospect.challenge
     user = retrospect.user
     retrospect_text = retrospect.content
 
     kpis = Kpi.objects.filter(challenge=challenge, user=user)
+    prev_retrospect = get_previous_retrospect(retrospect)
+
+    # ✅ LLMChain 초기화
+    improvement_chain = build_improvement_evaluator(llm)
 
     results = []
 
     for kpi in kpis:
+        # 현재 회고만 기반한 기본 점수
         score, matched_units = score_kpi_using_meaning_units(kpi, retrospect_text)
+
+        # 전날 회고가 존재하면 개선도 분석
+        if prev_retrospect is not None:
+            improvement_score = compare_retrospects(prev_retrospect, retrospect, kpi, improvement_chain)
+            score = min(score + improvement_score, 1.0)
+        # 없으면 개선 점수 없이 기본 점수만 사용
+        else:
+            improvement_score = 0.0     
+
         feedback = generate_feedback(kpi, matched_units, score)
 
         result = KpiResult.objects.create(
@@ -135,6 +204,26 @@ def score_kpis_from_retrospect(retrospect):
         results.append(result)
 
     return results
+
+'''
+Input: 1일치 회고 (Retrospect), LLM 인스턴스
+↓
+1. 관련 KPI 조회
+↓
+2. 의미 단위 기반 기본 점수 평가 (오늘 회고 단독 기준)
+↓
+3. 전날 회고 존재 여부 확인
+    ↓ 있음 → LLM 기반 비교 평가 → 보정 점수 계산
+    ↓ 없음 → 0.0 보정 점수 계산
+↓
+4. 점수 보정 및 feedback 생성
+↓
+5. KpiResult 저장
+↓
+Output: KPI 평가 결과 리스트
+'''
+
+
 
 ## 카테고리 만들어서 프롬프트에 가이드로 추가
 ## 더 자세하게 추가하면 좋을것같기도 하고.... 
