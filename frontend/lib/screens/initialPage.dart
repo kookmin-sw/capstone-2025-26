@@ -54,7 +54,7 @@ class _InitialpageState extends State<Initialpage>
 
   @override
   Widget build(BuildContext context) {
-    final List<Widget> _pageOptions = [
+    final List<Widget> pageOptions = [
       Home(onCrewMoreTap: () {
         setState(() {
           _selectIndex = 2;
@@ -135,7 +135,7 @@ class _InitialpageState extends State<Initialpage>
                 ),
                 SliverList(
                     delegate: SliverChildListDelegate([
-                  _pageOptions.elementAt(_selectIndex),
+                  pageOptions.elementAt(_selectIndex),
                 ]))
               ],
               controller: scrollController,

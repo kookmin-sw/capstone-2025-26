@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:reme/themes/color.dart';
 
 class ChallengeTypeItem extends StatelessWidget {
-  String title;
-  String description;
-  int score;
-  bool hasSuccess;
-  String imagePath;
+  final String title;
+  final String description;
+  final int score;
+  final bool hasSuccess;
+  final String imagePath;
 
-  ChallengeTypeItem({
+  const ChallengeTypeItem({
     required this.title,
     required this.description,
     required this.score,
