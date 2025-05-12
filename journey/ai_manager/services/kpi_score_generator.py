@@ -46,20 +46,41 @@ def extract_meaning_units(text: str) -> List[Dict[str, Any]]:
     """
     prompt = PromptTemplate(
         input_variables=["text"],
-        template="""
-        다음은 사용자의 회고 텍스트입니다. 이 텍스트에서 의미 있는 단위(행동, 성과, 문제, 시간 등)를 JSON 리스트로 추출하세요.
+        template=f"""
+        다음은 사용자의 회고 텍스트입니다. 
+        이 텍스트에서 다음 네 가지 범주 중 하나에 해당하는 의미 단위(행동, 성과, 문제, 시간)를 식별하고, 이를 JSON 객체 형식으로 정리하세요. 
+        각 의미 단위는 아래와 같이 추출합니다:
+        category: ["행동", "성과", "문제", "시간"] 중 해당하는 범주
+        keyword: 문장에서 핵심적인 개념어
+        value: keyword에 대한 구체적 수치, 수준, 혹은 상태 표현
+
+        [추출 기준]
+        행동: 사용자가 수행한 활동 (예: 공부, 운동, 독서 등)
+        성과: 행동의 결과 또는 긍정적인 변화 (예: 이해도 향상, 과제 완료 등)
+        문제: 부정적 결과나 장애요인 (예: 집중 안됨, 피로함, 계획 미달 등)
+        시간: 숫자 기반 시간 표현 (예: 2시간, 하루 종일, 아침 등)
 
         [예시]
         입력: "3시간 공부했지만 집중력이 떨어졌다"
-        출력: [
-        {{ "category": "행동", "keyword": "공부", "value": "3시간" }},
-        {{ "category": "성과", "keyword": "집중력", "value": "낮음" }}
+        출력:[
+            { "category": "시간", "keyword": "공부", "value": "3시간" },
+            { "category": "행동", "keyword": "공부", "value": "수행" },
+            { "category": "문제", "keyword": "집중력", "value": "떨어짐" }
         ]
+        
+        입력: "아침에 운동하고 오후엔 과제를 제출했다"
 
+        출력:[
+            { "category": "시간", "keyword": "운동", "value": "아침" },
+            { "category": "행동", "keyword": "운동", "value": "수행" },
+            { "category": "시간", "keyword": "과제 제출", "value": "오후" },
+            { "category": "성과", "keyword": "과제", "value": "제출 완료" }
+        ]
+        
         회고 텍스트:
         {text}
 
-        JSON 출력만 하세요.
+        JSON 리스트만 출력하세요. 설명 없이 결과만 출력해야 합니다.
         """
     )
     chain = LLMChain(llm=llm, prompt=prompt)
