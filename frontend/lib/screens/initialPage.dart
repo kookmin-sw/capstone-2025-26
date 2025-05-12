@@ -30,6 +30,7 @@ class _InitialpageState extends State<Initialpage>
 
     tabController!.addListener(() => setState(() {
           scrollController.jumpTo(0);
+          retroTabController!.index = 0;
           _selectIndex = tabController!.index;
         }));
     retroTabController!.addListener(() => setState(() {
