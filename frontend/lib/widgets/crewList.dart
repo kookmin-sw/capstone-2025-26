@@ -40,11 +40,11 @@ class CrewList extends StatelessWidget {
                 width: 253.w,
                 child: Text(
                   crewIntro,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     color: fontColor,
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
-                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ),
