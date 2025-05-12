@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:reme/routes.dart';
 import 'package:posthog_flutter/posthog_flutter.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:reme/themes/color.dart';
 
 Future<void> main() async {
@@ -16,6 +17,7 @@ Future<void> main() async {
   // or EU Host: 'https://eu.i.posthog.com'
   config.host = 'https://us.i.posthog.com';
   await Posthog().setup(config);
+  await initializeDateFormatting();
   runApp(const MyApp());
 }
 
@@ -28,8 +30,10 @@ class MyApp extends StatelessWidget {
     String isLogin; // 로그인 여부에 따라 시작 지점 저장
     const storage = FlutterSecureStorage();
     // FlutterSecureStorage에 AccessToken이 있으면 바로 메인화면으로 이동
-    if(storage.read(key: "AccessToken") != null) isLogin = Routes.splash;
-    else isLogin = Routes.login;
+    if (storage.read(key: "AccessToken") != null)
+      isLogin = Routes.splash;
+    else
+      isLogin = Routes.login;
 
     // 안드로이드 하단바 꾸미기
     SystemChrome.setSystemUIOverlayStyle(

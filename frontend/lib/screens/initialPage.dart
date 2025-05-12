@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:reme/screens/feed.dart';
 import 'package:reme/screens/home.dart';
-import 'package:reme/screens/restroPage.dart';
+import 'package:reme/screens/retrospectPage.dart';
 import 'package:reme/themes/color.dart';
 import 'package:reme/icon/tab_bar_icon_icons.dart';
 
@@ -31,7 +31,7 @@ class _InitialpageState extends State<Initialpage>
           tabController?.index = 2;
         });
       }),
-      const RetroPage(),
+      RetroPage(),
       Container(),
       const Feed(),
     ];
