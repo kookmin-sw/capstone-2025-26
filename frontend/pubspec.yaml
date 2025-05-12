@@ -31,6 +31,8 @@ dependencies:
   flutter:
     sdk: flutter
   posthog_flutter: ^4.0.1
+  flutter_native_splash: ^2.4.6
+  shared_preferences: ^2.5.3
 
 
   # The following adds the Cupertino Icons font to your application.
@@ -39,7 +41,9 @@ dependencies:
   webview_flutter: ^4.10.0
   flutter_secure_storage: ^9.2.4
   flutter_svg_provider: ^1.0.7
+  flutter_svg: ^2.0.0
   flutter_screenutil: ^5.9.3
+  introduction_screen: ^3.1.17
 
 dev_dependencies:
   flutter_test:
@@ -65,7 +69,7 @@ flutter:
 
   # To add assets to your application, add an assets section, like this:
   assets:
-   - assets/img/kakao_login_large_narrow.png
+   - assets/img/kakao_login.svg
    - assets/img/naver_login.png
    - assets/img/plusIcon.png
    - assets/img/account_circle.svg
@@ -74,6 +78,10 @@ flutter:
 
    - assets/img/whitebox.png
    - assets/img/blueBox.png
+   - assets/img/onBoarding_first.png
+   - assets/img/onBoarding_second.png
+   - assets/img/onBoarding_third.png
+   - assets/img/character.png
 
 
 
