@@ -45,4 +45,10 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
+
 /ios/build/ios/XCBuildData
+
+*.cxx
+app/.cxx/*
+web/*
+
