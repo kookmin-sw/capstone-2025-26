@@ -65,18 +65,7 @@ flutter:
 
   # To add assets to your application, add an assets section, like this:
   assets:
-   - assets/img/kakao_login_large_narrow.png
-   - assets/img/naver_login.png
-   - assets/img/plusIcon.png
-   - assets/img/account_circle.svg
-
-   - assets/images/
-   - assets/img/3d_calendar.png
-   - assets/img/3d_fire.png
-   - assets/img/3d_glassMagnifier.png
-
-   - assets/img/whitebox.png
-   - assets/img/blueBox.png
+   - assets/img/
 
 
 
