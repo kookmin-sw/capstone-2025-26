@@ -8,6 +8,7 @@
 .buildlog/
 .history
 .svn/
+frontend/.vscode/
 migrate_working_dir/
 
 # IntelliJ related
@@ -43,3 +44,4 @@ app.*.map.json
 /android/app/release
 
 .env
+frontend/android/app/.cxx/*
