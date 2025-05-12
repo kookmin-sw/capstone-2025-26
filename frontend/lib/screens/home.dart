@@ -43,6 +43,7 @@ class _HomeState extends State<Home> {
     return Container(
       width: 414.w,
       padding: const EdgeInsets.fromLTRB(0, 15, 0, 20),
+      margin: EdgeInsets.only(bottom: 80.h),
       child: Column(
         children: [
           SizedBox(

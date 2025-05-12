@@ -99,11 +99,7 @@ class _InitialpageState extends State<Initialpage>
                 ),
                 SliverList(
                     delegate: SliverChildListDelegate([
-                  Container(
-                    padding: const EdgeInsets.only(bottom: 80),
-                    child: _pageOptions
-                        .elementAt(_selectIndex), // 하단바 height만큼 padding
-                  )
+                  _pageOptions.elementAt(_selectIndex),
                 ]))
               ],
               controller: scrollController,
