@@ -14,32 +14,28 @@ class Initialpage extends StatefulWidget {
 }
 
 class _InitialpageState extends State<Initialpage>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   TabController? tabController;
+  TabController? retroTabController;
   ScrollController scrollController = ScrollController();
   int _selectIndex = 0;
+  int _retroSelectIndex = 0;
   double _opacity = 1.0;
-  late final List<Widget> _pageOptions;
 
   @override
   void initState() {
     super.initState();
-    _pageOptions = [
-      Home(onCrewMoreTap: () {
-        setState(() {
-          _selectIndex = 2;
-          tabController?.index = 2;
-        });
-      }),
-      RetroPage(),
-      Container(),
-      const Feed(),
-    ];
     tabController = TabController(length: 4, vsync: this);
+    retroTabController = TabController(length: 2, vsync: this);
+
     tabController!.addListener(() => setState(() {
           scrollController.jumpTo(0);
           _selectIndex = tabController!.index;
         }));
+    retroTabController!.addListener(() => setState(() {
+          _retroSelectIndex = retroTabController!.index;
+        }));
+
     scrollController.addListener(() {
       setState(() {
         // 스크롤 위치에 따라 opacity 조정
@@ -51,12 +47,25 @@ class _InitialpageState extends State<Initialpage>
   @override
   void dispose() {
     tabController!.dispose();
+    retroTabController!.dispose();
     scrollController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final List<Widget> _pageOptions = [
+      Home(onCrewMoreTap: () {
+        setState(() {
+          _selectIndex = 2;
+          tabController?.index = 2;
+        });
+      }),
+      RetroPage(tabNo: _retroSelectIndex),
+      Container(),
+      const Feed(),
+    ];
+
     return Scaffold(
       backgroundColor: background,
       body: Stack(
@@ -96,6 +105,33 @@ class _InitialpageState extends State<Initialpage>
                   floating: true, // 최상단으로 올리지 않아도 appbar 표시
                   scrolledUnderElevation: 0, // 스크롤시 appbar 색상 변경 안되게
                   snap: true,
+                  bottom: (_selectIndex == 1)
+                      ? TabBar(
+                          controller: retroTabController,
+                          indicatorColor: Colors.white,
+                          unselectedLabelColor: Color(0xFF848484),
+                          labelColor: fontColor,
+                          tabs: [
+                              Tab(
+                                child: Text(
+                                  "회고 목록",
+                                  style: TextStyle(
+                                    fontSize: 16.sp,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                              Tab(
+                                child: Text(
+                                  "챌린지 목록",
+                                  style: TextStyle(
+                                    fontSize: 16.sp,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              )
+                            ])
+                      : null,
                 ),
                 SliverList(
                     delegate: SliverChildListDelegate([
