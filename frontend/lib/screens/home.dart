@@ -52,13 +52,13 @@ class _HomeState extends State<Home> {
               itemCount: 3,
               itemBuilder: (context, index) {
                 return Container(
-                  width: 150.r,
-                  height: 150.r,
+                  width: 150.w,
+                  height: 150.h,
                   margin: EdgeInsets.only(
                     left: index == 0 ? 24.w : 0,
                     right: index == 2 ? 24.w : 10.w,
                   ),
-                  padding: EdgeInsets.fromLTRB(11.w, 8.h, 10.w, 10.h),
+                  padding: EdgeInsets.fromLTRB(9.w, 7.h, 10.w, 10.h),
                   decoration: BoxDecoration(
                     color: boxBackgroundColor,
                     borderRadius: BorderRadius.circular(10.r),

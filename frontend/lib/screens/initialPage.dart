@@ -68,7 +68,7 @@ class _InitialpageState extends State<Initialpage>
               slivers: [
                 SliverAppBar(
                   title: Text(
-                    "To-Go",
+                    "To-GO",
                     style: TextStyle(
                       fontSize: 24.sp,
                       fontWeight: FontWeight.w700,
@@ -85,9 +85,12 @@ class _InitialpageState extends State<Initialpage>
                           color: c700,
                         )),
                     Container(
-                        padding: const EdgeInsets.only(right: 10),
+                        padding: EdgeInsets.only(left: 8.w, right: 19.w),
                         child: GestureDetector(
-                            onTap: () {}, child: const CircleAvatar()))
+                            onTap: () {},
+                            child: CircleAvatar(
+                              radius: 18.5.r,
+                            )))
                   ],
                   toolbarHeight: 55,
                   floating: true, // 최상단으로 올리지 않아도 appbar 표시
