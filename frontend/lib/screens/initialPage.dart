@@ -20,7 +20,6 @@ class _InitialpageState extends State<Initialpage>
   ScrollController scrollController = ScrollController();
   int _selectIndex = 0;
   int _retroSelectIndex = 0;
-  double _opacity = 1.0;
 
   @override
   void initState() {
@@ -36,13 +35,6 @@ class _InitialpageState extends State<Initialpage>
     retroTabController!.addListener(() => setState(() {
           _retroSelectIndex = retroTabController!.index;
         }));
-
-    scrollController.addListener(() {
-      setState(() {
-        // 스크롤 위치에 따라 opacity 조정
-        _opacity = 1 - (scrollController.offset / 200).clamp(0.0, 1.0);
-      });
-    });
   }
 
   @override
