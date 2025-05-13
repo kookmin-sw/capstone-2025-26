@@ -10,6 +10,7 @@ import re
 import json
 import logging
 from typing import List, Dict, Any
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
@@ -129,57 +130,10 @@ def generate_kpis_for_challenge(challenge: Challenge, plan_ids: List[int], user_
     if not plans_data:
         raise ValueError("유효한 계획 데이터가 없습니다. 적어도 하나의 계획이 필요합니다.")
     
+    template_str = (Path(__file__).parent.parent / "templates" / "kpi_generator_prompt.txt").read_text()
     prompt_template = PromptTemplate(
         input_variables=["challenge_name", "challenge_description", "plans", "user_context", "item_count"],
-        template="""
-        당신은 사용자의 챌린지에 대한 핵심성과지표(KPI)를 정의하는 AI 어시스턴트입니다.
-        제공된 챌린지 세부정보, 계획 목록, 사용자 컨텍스트를 바탕으로, 정확히 {item_count}개의 관련 KPI를 생성하세요.
-
-        **챌린지 정보:**
-        이름: {challenge_name}
-        설명: {challenge_description}
-
-        **사용자의 계획 목록:**
-        {plans}
-
-        **추가 사용자 컨텍스트:**
-        {user_context}
-
-       **지시사항:**
-        1. 챌린지 목표, 계획 목록, 컨텍스트를 분석하세요.
-        2. 정확히 {item_count}개의 구체적이고, 측정 가능하며, 달성 가능하고, 관련성 있으며, 시간 제한이 있는(SMART) KPI를 정의하세요.
-        3. 각 KPI에 대해 다음 정보를 제공하세요:
-            * `name`: KPI의 간결한 이름 (예: "일일 학습 시간", "문제 풀이 정확도").
-            * `definition`: KPI가 측정하는 대상에 대한 간략한 설명.
-            * `measurement_unit`: 측정 단위 (예: "시간", "퍼센트", "개수", "점수", "참/거짓"). 완료 여부는 "참/거짓"을 사용하세요.
-            * `data_type`: 기록될 값의 데이터 유형. 다음 중 하나를 선택: {data_type_options}.
-        4. 출력은 반드시 JSON 리스트 형식이어야 합니다. JSON 리스트 외부에는 어떠한 텍스트도 포함하지 마세요(설명, 인사말 등 제외).
-        5. 모든 내용은 한국어로 작성하세요.
-
-        **출력 형식 예시:**
-        [
-          {{
-            "name": "개념 원리 챕터 점수 ",
-            "definition": "'개념 원리' 챕터 끝 퀴즈에서 달성한 점수",
-            "measurement_unit": "점수",
-            "data_type": "INTEGER"
-          }},
-          {{
-            "name": "일일 문제 풀이 수수",
-            "definition": "매일 푼 '쎈' 문제 수.",
-            "measurement_unit": "개수",
-            "data_type": "INTEGER"
-          }},
-          {{
-            "name": "야간 자율 학습 참석석",
-            "definition": "저녁 자습('야자')에 참석했는지 여부.",
-            "measurement_unit": "boolean",
-            "data_type": "BOOLEAN"
-          }}
-        ]
-
-        **Constraint:** The output MUST be only the JSON list.
-        """
+        template=template_str
     )
 
     # 입력 데이터 준비

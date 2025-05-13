@@ -11,6 +11,7 @@ import json
 import logging
 from typing import List, Dict, Any
 from datetime import datetime, timedelta
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
@@ -39,23 +40,10 @@ def extract_meaning_units(text: str) -> List[Dict[str, Any]]:
     회고 텍스트에서 행동/성과/문제 등 의미 단위 추출 (LLM 사용)
     예: [{"category": "행동", "keyword": "공부", "value": "3시간"}, {"category": "성과", "keyword": "몰입", "value": "낮음"}]
     """
+    template_str = (Path(__file__).parent.parent / "templates" / "extract_meaning_units_prompt.txt").read_text()
     prompt = PromptTemplate(
         input_variables=["text"],
-        template="""
-        다음은 사용자의 회고 텍스트입니다. 이 텍스트에서 의미 있는 단위(행동, 성과, 문제, 시간 등)를 JSON 리스트로 추출하세요.
-
-        [예시]
-        입력: "3시간 공부했지만 집중력이 떨어졌다"
-        출력: [
-        {{ "category": "행동", "keyword": "공부", "value": "3시간" }},
-        {{ "category": "성과", "keyword": "집중력", "value": "낮음" }}
-        ]
-
-        회고 텍스트:
-        {text}
-
-        JSON 출력만 하세요.
-        """
+        template=template_str
     )
     chain = LLMChain(llm=llm, prompt=prompt)
     try:
