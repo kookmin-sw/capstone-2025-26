@@ -13,7 +13,7 @@ from pathlib import Path
 load_dotenv()
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
 
-template = (Path(__file__).parent.parent / "templates" / "synthesize_challenge_prompt.txt").read_text()
+template = (Path(__file__).parent.parent.parent / "templates" / "synthesize_challenge_prompt.txt").read_text()
 
 dataset = EvaluationDataset()
 
@@ -26,7 +26,7 @@ model = GeminiModel(
 
 
 dataset.add_test_cases_from_json_file(
-    file_path="ai_manager/evaluation/challenges.json",
+    file_path=str(Path(__file__).parent.parent / "synthesizer" / "challenges.json"),
     input_key_name="input",
     actual_output_key_name="output",
 )

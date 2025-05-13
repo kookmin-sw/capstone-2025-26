@@ -12,7 +12,7 @@ from pathlib import Path
 load_dotenv()
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
 os.environ["DEEPEVAL_RESULTS_DIR"] = "./"
-template = (Path(__file__).parent.parent / "templates" / "plan_from_challenge_prompt.txt").read_text()
+template = (Path(__file__).parent.parent.parent / "templates" / "plan_from_challenge_prompt.txt").read_text()
 
 model = GeminiModel(
     model_name="gemini-2.5-flash-preview-04-17",

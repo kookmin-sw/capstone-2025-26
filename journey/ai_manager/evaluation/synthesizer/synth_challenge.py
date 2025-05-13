@@ -22,7 +22,7 @@ llm = ChatVertexAI(
     temperature=0.7,
 )
 
-template_str = (Path(__file__).parent.parent / "templates" / "synthesize_challenge_prompt.txt").read_text()
+template_str = (Path(__file__).parent.parent.parent / "templates" / "synthesize_challenge_prompt.txt").read_text()
 synthesize_challenge_template = PromptTemplate(
     template=template_str
 )
