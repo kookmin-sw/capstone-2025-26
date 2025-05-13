@@ -48,3 +48,6 @@ app.*.map.json
 *.csv
 frontend/android/app/.cxx/*
 
+# iOS build data
+frontend/ios/build/ios/XCBuildData/
+
