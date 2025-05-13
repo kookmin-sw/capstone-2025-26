@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:reme/icon/tab_bar_icon_icons.dart';
-import 'package:reme/routes.dart';
 import 'package:reme/themes/color.dart';
 
 class ChallengeList extends StatefulWidget {
