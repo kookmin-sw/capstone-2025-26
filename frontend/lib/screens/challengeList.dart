@@ -57,7 +57,7 @@ class _ChallengeListState extends State<ChallengeList> {
               child: Center(
                 child: Container(
                   padding: EdgeInsets.only(bottom: 10.h),
-                  decoration: BoxDecoration(
+                  decoration: const BoxDecoration(
                     color: background,
                   ),
                   child: Container(
@@ -131,7 +131,7 @@ class _ChallengeListState extends State<ChallengeList> {
         ? challenges
         : challenges.where((c) => c['type'] == type).toList();
 
-    return Container(
+    return SizedBox(
       height: 500.h,
       child: SingleChildScrollView(
         child: Column(
