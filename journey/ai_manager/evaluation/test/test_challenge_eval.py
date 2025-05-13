@@ -18,7 +18,7 @@ template = (Path(__file__).parent.parent.parent / "templates" / "synthesize_chal
 dataset = EvaluationDataset()
 
 model = GeminiModel(
-    model_name="gemini-2.5-pro-preview-05-06",
+    model_name="gemini-2.5-flash-preview-04-17",
     project=os.getenv("PROJECT_ID"),
     location="us-central1",
     temperature=0
