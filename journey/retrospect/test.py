@@ -4,9 +4,22 @@ from rest_framework import status
 from django.utils import timezone
 from datetime import timedelta
 from user_manager.models import User 
-from retrospect.models import Challenge, Retrospect, Plan, RetrospectOwnerType, RetrospectVisibility, Kpi, KpiDataEntry, KpiResult, KpiDataType, ChallengeOwnerType
+from retrospect.models import Challenge, Retrospect, Plan, RetrospectOwnerType, RetrospectVisibility, Kpi, KpiResult, KpiDataType, ChallengeOwnerType
 from django.test import TestCase
-from ai_manager.services.kpi_score_generator import score_kpis_from_retrospect, extract_meaning_units, match_meaning_units_to_kpi, score_matched_units
+from ai_manager.services.kpi_score_generator import score_kpis_from_retrospect, extract_meaning_units, match_meaning_units_to_kpi, score_matched_units, generate_feedback
+from unittest.mock import patch
+from django.contrib.auth import get_user_model
+from langchain_google_vertexai.chat_models import ChatVertexAI
+import os
+
+# LangChain LLM 설정
+llm = ChatVertexAI(
+    project=os.getenv("PROJECT_ID"),
+    location="us-central1",
+    model_name="gemini-2.0-flash-lite-001",
+    max_output_tokens=1024,
+    temperature=0.7,
+)
 
 class ChallengeAPITest(APITestCase):
     def setUp(self):
@@ -83,6 +96,22 @@ class ChallengeAPITest(APITestCase):
         challenge.refresh_from_db()
         self.assertEqual(challenge.challenge_name, "Updated Challenge Name")
         print("✅ 챌린지 수정 테스트 통과")
+
+    def test_create_challenge_missing_name(self):
+        bad_data = self.challenge_data.copy()
+        del bad_data["challenge_name"]
+        url = reverse("challenge-list")
+        response = self.client.post(url, bad_data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        print("✅ 필수 필드 누락 시 400 테스트 통과")
+
+    def test_list_challenges(self):
+        Challenge.objects.create(user=self.user, **self.challenge_data)
+        url = reverse("challenge-list")
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(len(response.data) >= 1)
+        print("✅ 챌린지 목록 조회 테스트 통과")
     
     def test_delete_challenge(self):
         """
@@ -234,7 +263,7 @@ class RetrospectAPITest(APITestCase):
         print("✅ 회고 기반 Plan 생성 테스트 통과")
 
 class KpiScoringTestCase(TestCase):
-    def test_score_retrospect_and_weekly_summary(self):
+    def test_score_retrospect(self):
         # 테스트용 사용자 생성
         user = User.objects.create_user(
             username='testuser',
@@ -271,7 +300,7 @@ class KpiScoringTestCase(TestCase):
         )
         
         # KPI 스코어링 실행
-        results = score_kpis_from_retrospect(retrospect)
+        results = score_kpis_from_retrospect(retrospect, llm)   
         
 
         # 결과 검증
@@ -328,48 +357,6 @@ class KpiAPITest(APITestCase):
         self.assertEqual(response.data["name"], "New KPI")
         print("✅ KPI 생성 테스트 통과")
     
-    def test_create_kpi_data_entry(self):
-        """
-        KPI 데이터 엔트리 생성 API 테스트
-        """
-        print("\n=== 테스트: KPI 데이터 엔트리 생성 ===")
-        data = {
-            "kpi": self.kpi.id,
-            "user": self.user.id,  # user 필드 추가
-            "record_date": timezone.now().date().isoformat(),
-            "value_type": KpiDataType.FLOAT,
-            "value_float": 3.5
-        }
-        url = reverse("kpi-entry-list")
-        response = self.client.post(url, data, format="json")
-        print(f"응답 상태 코드: {response.status_code}")
-        print(f"응답 데이터: {response.data}")
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(response.data["value_float"], 3.5)
-        print("✅ KPI 데이터 엔트리 생성 테스트 통과")
-    
-    def test_get_kpi_data_entries(self):
-        """
-        KPI 데이터 엔트리 조회 API 테스트
-        """
-        print("\n=== 테스트: KPI 데이터 엔트리 조회 ===")
-        # 테스트용 데이터 생성
-        KpiDataEntry.objects.create(
-            kpi=self.kpi,
-            user=self.user,
-            record_date=timezone.now().date(),
-            value_type=KpiDataType.FLOAT,
-            value_float=3.5
-        )
-        
-        url = reverse("kpi-entry-list")
-        response = self.client.get(url, format="json")
-        print(f"응답 상태 코드: {response.status_code}")
-        print(f"응답 데이터: {response.data}")
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data["results"]), 1)
-        self.assertEqual(response.data["results"][0]["value_float"], 3.5)
-        print("✅ KPI 데이터 엔트리 조회 테스트 통과")
     
     def test_get_kpi_results(self):
         """
@@ -529,7 +516,7 @@ class KpiScoreGeneratorTest(TestCase):
         회고 기반 KPI 점수 생성 테스트
         """
         print("\n=== 테스트: 회고 기반 KPI 점수 생성 ===")
-        results = score_kpis_from_retrospect(self.retrospect)
+        results = score_kpis_from_retrospect(self.retrospect, llm)
         print(f"생성된 KPI 결과: {results}")
         
         # 결과 검증
@@ -554,7 +541,7 @@ class KpiScoreGeneratorTest(TestCase):
             data_type=KpiDataType.FLOAT
         )
         
-        results = score_kpis_from_retrospect(self.retrospect)
+        results = score_kpis_from_retrospect(self.retrospect, llm)
         print(f"생성된 KPI 결과: {results}")
         
         # 결과 검증
@@ -563,3 +550,73 @@ class KpiScoreGeneratorTest(TestCase):
         self.assertTrue(any(result.kpi == self.kpi for result in results))
         self.assertTrue(any(result.kpi == kpi2 for result in results))
         print("✅ 여러 KPI 점수 생성 테스트 통과")
+
+class GenerateFeedbackTest(TestCase):
+
+    def setUp(self):
+        self.user = User.objects.create_user(email="feedbacktest@example.com", password="1234", username="feedbackuser")
+        self.challenge = Challenge.objects.create(
+            user=self.user,
+            challenge_name="Feedback KPI Challenge",
+            deadline=timezone.now() + timedelta(days=5),
+            owner_type=ChallengeOwnerType.USER,
+            status="LIVE"
+        )
+        self.kpi = Kpi.objects.create(
+            challenge=self.challenge,
+            user=self.user,
+            name="공부 시간",
+            definition="하루 공부 시간 측정",
+            measurement_unit="시간",
+            data_type=KpiDataType.FLOAT
+        )
+
+    @patch("ai_manager.services.kpi_score_generator.LLMChain.invoke")
+    def test_generate_feedback_high_score(self, mock_invoke):
+        """
+        높은 점수일 때 칭찬 위주의 피드백 테스트
+        """
+        mock_invoke.return_value = {"text": "정말 훌륭해요! 오늘 목표를 완벽하게 달성했어요."}
+
+        units = [
+            {"category": "행동", "keyword": "공부", "value": "5시간"},
+        ]
+        score = 1.0  # 높은 점수
+
+        feedback = generate_feedback(self.kpi, units, score)
+        print(f"생성된 피드백: {feedback}")
+
+        self.assertIn("정말 훌륭해요", feedback)
+
+    @patch("ai_manager.services.kpi_score_generator.LLMChain.invoke")
+    def test_generate_feedback_low_score(self, mock_invoke):
+        """
+        낮은 점수일 때 개선 제안 포함 피드백 테스트
+        """
+        mock_invoke.return_value = {"text": "조금 더 노력하면 목표에 도달할 수 있어요. 내일은 더 집중해보세요."}
+
+        units = [
+            {"category": "행동", "keyword": "공부", "value": "1시간"},
+        ]
+        score = 0.2  # 낮은 점수
+
+        feedback = generate_feedback(self.kpi, units, score)
+        print(f"생성된 피드백: {feedback}")
+
+        self.assertIn("노력", feedback)
+
+    @patch("ai_manager.services.kpi_score_generator.LLMChain.invoke", side_effect=Exception("LLM Error"))
+    def test_generate_feedback_on_llm_error(self, mock_invoke):
+        """
+        LLM 에러 발생 시 기본 피드백 반환 테스트
+        """
+        units = [
+            {"category": "행동", "keyword": "공부", "value": "3시간"},
+        ]
+        score = 0.5
+
+        feedback = generate_feedback(self.kpi, units, score)
+        print(f"에러 시 피드백: {feedback}")
+
+        self.assertEqual(feedback, "좋은 시도였어요! 다음에도 도전해보세요.")
+

@@ -10,7 +10,9 @@ import re
 import json
 import logging
 from typing import List, Dict, Any
+import dotenv
 
+dotenv.load_dotenv()
 logger = logging.getLogger(__name__)
 
 # LangChain LLM 설정
@@ -152,7 +154,7 @@ def generate_kpis_for_challenge(challenge: Challenge, plan_ids: List[int], user_
             * `name`: KPI의 간결한 이름 (예: "일일 학습 시간", "문제 풀이 정확도").
             * `definition`: KPI가 측정하는 대상에 대한 간략한 설명.
             * `measurement_unit`: 측정 단위 (예: "시간", "퍼센트", "개수", "점수", "참/거짓"). 완료 여부는 "참/거짓"을 사용하세요.
-            * `data_type`: 기록될 값의 데이터 유형. 다음 중 하나를 선택: {data_type_options}.
+            * `data_type`: 무조건 int
         4. 출력은 반드시 JSON 리스트 형식이어야 합니다. JSON 리스트 외부에는 어떠한 텍스트도 포함하지 마세요(설명, 인사말 등 제외).
         5. 모든 내용은 한국어로 작성하세요.
 
@@ -174,7 +176,7 @@ def generate_kpis_for_challenge(challenge: Challenge, plan_ids: List[int], user_
             "name": "야간 자율 학습 참석석",
             "definition": "저녁 자습('야자')에 참석했는지 여부.",
             "measurement_unit": "boolean",
-            "data_type": "BOOLEAN"
+            "data_type": "INTEGER"
           }}
         ]
 

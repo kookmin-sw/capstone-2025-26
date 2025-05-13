@@ -8,9 +8,9 @@ from rest_framework.decorators import action
 from django.db.models import Q
 from .models import (Retrospect, Template, Challenge, Plan, ChallengeStatus, 
                  RetrospectWeeklyAnalysis, RetrospectVisibility, TemplateOwnerType, 
-                 ChallengeOwnerType, RetrospectOwnerType, RetrospectWeeklyAnalysisOwnerType, Kpi, KpiDataEntry, KpiResult)
+                 ChallengeOwnerType, RetrospectOwnerType, RetrospectWeeklyAnalysisOwnerType, Kpi, KpiResult)
 from .serializers import (RetrospectSerializer, TemplateSerializer, ChallengeSerializer, 
-                      PlanSerializer, PlanResponseSerializer, RetrospectWeeklyAnalysisSerializer, KpiSerializer, KpiDataEntrySerializer, KpiResultSerializer)
+                      PlanSerializer, PlanResponseSerializer, RetrospectWeeklyAnalysisSerializer, KpiSerializer, KpiResultSerializer)
 from crew.models import Crew, CrewMembership, CrewMembershipStatus # Import CrewMembership models
 from .permissions import (IsRetrospectOwnerOrCrewMemberOrReadOnly, # Use the new permission class
                           IsTemplateOwnerOrCrewMemberOrReadOnly, 
@@ -379,32 +379,6 @@ class KpiViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(kpis, many=True)
         return Response(serializer.data)
 
-class KpiDataEntryViewSet(viewsets.ModelViewSet):
-    """
-    KPI 데이터 엔트리를 관리하는 ViewSet
-    """
-    serializer_class = KpiDataEntrySerializer
-    permission_classes = [IsAuthenticated]
-
-    def get_queryset(self):
-        return KpiDataEntry.objects.filter(kpi__user=self.request.user)
-
-    @action(detail=False, methods=['get'])
-    def by_kpi(self, request, pk=None):
-        """
-        특정 KPI의 데이터 엔트리를 조회
-        """
-        kpi_id = request.query_params.get('kpi_id')
-        if not kpi_id:
-            return Response({"error": "kpi_id is required"}, status=status.HTTP_400_BAD_REQUEST)
-        
-        entries = KpiDataEntry.objects.filter(
-            kpi_id=kpi_id,
-            kpi__user=request.user
-        ).order_by('date')
-        
-        serializer = self.get_serializer(entries, many=True)
-        return Response(serializer.data)
 
 class KpiResultViewSet(viewsets.ModelViewSet):
     """
