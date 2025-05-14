@@ -4,6 +4,7 @@ import 'package:reme/screens/animation_test.dart';
 import 'package:reme/themes/color.dart';
 import 'dart:async';
 import 'package:reme/routes.dart';
+import 'package:reme/widgets/challengeTypeItem.dart';
 
 class RetrospectCompletionScreen extends StatefulWidget {
   const RetrospectCompletionScreen({super.key});
@@ -331,21 +332,21 @@ class _ReflectionAnalysisScreenState extends State<ReflectionAnalysisScreen> {
   Widget _buildDailyAnalysis() {
     return Column(
       children: [
-        _buildChallengeTypeItem(
+        ChallengeTypeItem(
           title: "1일 1포스팅 및 핫게 댓글 달기",
           description: "오늘 성공적으로 포스팅을 업로드 했어요! 지금 사회 이슈를 다루어 좋은 반응을 보였다니 축하해요!",
           score: 90,
           hasSuccess: true,
           imagePath: 'assets/img/lightning.png',
         ),
-        _buildChallengeTypeItem(
+        ChallengeTypeItem(
           title: "저속노화 식단하기",
           description: "오늘은 저속노화 식단을 하지 않았어요. 내일은 꼭 한번 도전해 봐요",
           score: 0,
           hasSuccess: false,
           imagePath: 'assets/img/food.png',
         ),
-        _buildChallengeTypeItem(
+        ChallengeTypeItem(
           title: "15분 페이스 3k 달리기",
           description: "오늘은 3k 달리기를 20분 페이스에 달렸어요. 조금만 더 빨리 뛰어봐요",
           score: 60,
@@ -430,91 +431,6 @@ class _ReflectionAnalysisScreenState extends State<ReflectionAnalysisScreen> {
               color: Colors.white,
               fontFamily: 'Pretendard',
               fontSize: 16,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Icon(
-                hasSuccess ? Icons.local_fire_department : Icons.warning,
-                color: hasSuccess ? Colors.orange : Colors.yellow,
-                size: 24,
-              ),
-              const SizedBox(width: 4),
-              Text(
-                "$score/100",
-                style: TextStyle(
-                  color: hasSuccess ? Colors.orange : Colors.yellow,
-                  fontFamily: 'Pretendard',
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildChallengeTypeItem({
-    required String title,
-    required String description,
-    required int score,
-    required bool hasSuccess,
-    required String imagePath,
-  }) {
-    return Container(
-      margin: const EdgeInsets.fromLTRB(21.0, 0.0, 21.0, 0),
-      padding: const EdgeInsets.all(16.0),
-      decoration: const BoxDecoration(
-        color: background,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 40,
-                height: 40,
-                padding: const EdgeInsets.all(4),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF333333),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Image.asset(
-                  imagePath,
-                  width: 32,
-                  height: 32,
-                  errorBuilder: (context, error, stackTrace) => const Icon(
-                    Icons.image_not_supported,
-                    color: Colors.grey,
-                    size: 24,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  title,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontFamily: 'Pretendard',
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Text(
-            description,
-            style: const TextStyle(
-              color: Colors.white,
-              fontFamily: 'Pretendard',
-              fontSize: 15,
             ),
           ),
           const SizedBox(height: 8),

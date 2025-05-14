@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:flutter_svg_provider/flutter_svg_provider.dart';
 import 'package:reme/themes/color.dart';
 
 class StaggeredBoxAnimation extends StatefulWidget {
@@ -27,7 +26,7 @@ class _StaggeredBoxAnimationState extends State<StaggeredBoxAnimation>
 
   final List<Widget> _blocks = [
     Image.asset(
-      'assets/img/whitebox.png',
+      'assets/img/whiteBox.png',
       width: 370.w,
     ),
     Image.asset(
