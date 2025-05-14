@@ -55,6 +55,11 @@ class _InitialpageState extends State<Initialpage>
           _selectIndex = 2;
           tabController?.index = 2;
         });
+      }, switchToRetrospect: () {
+        setState(() {
+          _selectIndex = 1;
+          tabController?.index = 1;
+        });
       }),
       RetroPage(tabNo: _retroSelectIndex),
       const CrewListPage(),
