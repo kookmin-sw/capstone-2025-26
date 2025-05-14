@@ -102,19 +102,27 @@ class _HomeState extends State<Home> {
               },
             ),
           ),
+          SizedBox(
+            height: 15.h,
+          ),
           WidgetBox(
-              title: "오늘 회고할거",
-              isMore: false,
-              marginLTRB: const EdgeInsets.only(top: 15),
-              children: [
-                CustomListitem(height: 50, content: "모두를 위한 머신러닝 읽기"),
-                CustomListitem(height: 50, content: "모두를 위한 머신러닝 읽기"),
-                CustomListitem(height: 50, content: "모두를 위한 머신러닝 읽기"),
-              ]),
+            height: 225.h,
+            title: "오늘의 개인 챌린지",
+            isMore: false,
+            marginLTRB: EdgeInsets.only(left: 24.w, right: 24.w),
+            children: [
+              CustomListitem(height: 46.h, content: "모두를 위한 머신러닝 읽기"),
+              CustomListitem(height: 46.h, content: "모두를 위한 머신러닝 읽기"),
+              CustomListitem(height: 46.h, content: "모두를 위한 머신러닝 읽기"),
+            ],
+          ),
+          SizedBox(
+            height: 15.h,
+          ),
           WidgetBox(
-            title: "크루 목록",
+            title: "내 크루",
             isMore: true,
-            marginLTRB: const EdgeInsets.only(top: 15),
+            marginLTRB: EdgeInsets.only(left: 24.w, right: 24.w),
             onTap: widget.onCrewMoreTap,
             children: [
               SizedBox(
