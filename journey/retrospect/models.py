@@ -152,63 +152,6 @@ class Kpi(models.Model):
     def __str__(self):
         return f"KPI '{self.name}' for {self.user} in {self.challenge}"
 
-class KpiDataEntry(models.Model):
-    """KPI 데이터 기록 모델"""
-    kpi = models.ForeignKey(Kpi, on_delete=models.CASCADE, related_name='data_entries')
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='kpi_data_entries') # 데이터를 기록한 사용자
-    record_date = models.DateField() # 기록 날짜
-
-    # 값 타입별 필드
-    value_type = models.CharField(max_length=10, choices=KpiDataType.choices)
-    value_float = models.FloatField(null=True, blank=True)
-    value_integer = models.IntegerField(null=True, blank=True) # Renamed from value_int
-    value_text = models.TextField(null=True, blank=True)
-    value_boolean = models.BooleanField(null=True, blank=True) # Renamed from value_bool
-
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        ordering = ['-record_date', '-created_at']
-        indexes = [
-            models.Index(fields=['kpi', 'user', 'record_date']),
-        ]
-
-    def clean(self):
-        # 저장 시 value_type에 맞는 필드 외에는 None으로 설정 (선택적이지만 권장)
-        super().clean()
-        if self.value_type == KpiDataType.FLOAT:
-            self.value_integer = None
-            self.value_text = None
-            self.value_boolean = None
-        elif self.value_type == KpiDataType.INTEGER:
-            self.value_float = None
-            self.value_text = None
-            self.value_boolean = None
-        elif self.value_type == KpiDataType.TEXT:
-            self.value_float = None
-            self.value_integer = None
-            self.value_boolean = None
-        elif self.value_type == KpiDataType.BOOLEAN:
-            self.value_float = None
-            self.value_integer = None
-            self.value_text = None
-
-    def get_value(self):
-        """실제 저장된 값을 반환하는 헬퍼 메서드"""
-        if self.value_type == KpiDataType.FLOAT:
-            return self.value_float
-        elif self.value_type == KpiDataType.INTEGER:
-            return self.value_integer
-        elif self.value_type == KpiDataType.TEXT:
-            return self.value_text
-        elif self.value_type == KpiDataType.BOOLEAN:
-            return self.value_boolean
-        return None
-
-    def __str__(self):
-        return f"Data for {self.kpi.name} on {self.record_date}: {self.get_value()}"
-
 class KpiResult(models.Model):
     """
     회고(Retrospect)를 기반으로 KPI별 평가(스코어)를 기록하는 모델

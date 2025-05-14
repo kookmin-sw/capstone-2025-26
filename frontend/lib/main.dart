@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:reme/routes.dart';
 import 'package:posthog_flutter/posthog_flutter.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:reme/themes/color.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -16,7 +17,9 @@ Future<void> main() async {
   // or EU Host: 'https://eu.i.posthog.com'
   config.host = 'https://us.i.posthog.com';
   await Posthog().setup(config);
-
+  // 달력 locale을 위한 초기화
+  await initializeDateFormatting();
+  
   //sharedPreferences 설정
   SharedPreferences prefs = await SharedPreferences.getInstance();
   runApp(MyApp(prefs: prefs));

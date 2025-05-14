@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:reme/models/tokens.dart';
-import 'package:reme/themes/color.dart';
 import 'package:reme/utils/secret.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
@@ -68,7 +66,7 @@ class _WebViewState extends State<SocialLoginWebView>
               access_token =
                   access_token!.replaceAll('\\', "").replaceAll("\"", "");
               String user_name = await parseToken(76);
-              await Future.delayed(Duration(milliseconds: 500));
+              await Future.delayed(const Duration(milliseconds: 500));
               Navigator.pop(
                   context, Tokens(access_token, refresh_token, user_name));
             } catch (e) {
@@ -90,7 +88,7 @@ class _WebViewState extends State<SocialLoginWebView>
           children: [
             if (showWebView) WebViewWidget(controller: _webViewController),
             if (!showWebView || loading < 100.0)
-              Center(
+              const Center(
                 child: CircularProgressIndicator(
                   backgroundColor: Colors.white,
                   strokeWidth: 10,

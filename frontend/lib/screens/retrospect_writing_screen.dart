@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:reme/icon/tab_bar_icon_icons.dart';
 import 'package:reme/screens/retrospect_completion_screen.dart';
-import 'package:reme/routes.dart';
 import 'package:reme/themes/color.dart';
 
 class RetrospectWritingScreen extends StatefulWidget {
@@ -21,7 +20,6 @@ class RetrospectWritingScreen extends StatefulWidget {
 
 class _RetrospectWritingScreenState extends State<RetrospectWritingScreen> {
   int _currentChallengeIndex = 0;
-  final bool _isExpanded = false;
   final List<Map<String, dynamic>> _retrospectEntries = [];
 
   @override
