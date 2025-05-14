@@ -26,7 +26,7 @@ class _StaggeredBoxAnimationState extends State<StaggeredBoxAnimation>
 
   final List<Widget> _blocks = [
     Image.asset(
-      'assets/img/whitebox.png',
+      'assets/img/whiteBox.png',
       width: 370.w,
     ),
     Image.asset(
