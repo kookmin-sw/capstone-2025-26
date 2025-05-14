@@ -1,56 +1,109 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg_provider/flutter_svg_provider.dart';
+import 'package:reme/routes.dart';
 import 'package:reme/themes/color.dart';
 
-class CrewList extends StatelessWidget {
-  ImageProvider? image;
-  String crewName; // 크루 이름
-  String crewIntro; //크루 한줄 소개
-  CrewList(
-      {super.key, this.image, required this.crewName, required this.crewIntro});
+class CrewList extends StatefulWidget {
+  final ImageProvider? image;
+  final int crewId;
+  final String crewName;
+  final String crewIntro;
+  final bool? isJoined;
+  final VoidCallback? onJoinTap;
+
+  const CrewList({
+    super.key,
+    this.image,
+    required this.crewId,
+    required this.crewName,
+    required this.crewIntro,
+    this.isJoined,
+    this.onJoinTap,
+  });
 
   @override
+  State<CrewList> createState() => _CrewListState();
+}
+
+class _CrewListState extends State<CrewList> {
+  bool joinClicked = false;
+  @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 334.w,
-      height: 50.h,
-      child: Row(
-        children: [
-          Image(
-            image: image ?? Svg("assets/img/account_circle.svg"),
-            width: 50.w,
-            height: 50.h,
-          ),
-          SizedBox(
-            width: 10.88.w,
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                crewName,
-                style: const TextStyle(
-                  color: fontColor,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              Container(
-                width: 253.w,
-                child: Text(
-                  crewIntro,
-                  overflow: TextOverflow.ellipsis,
+    return GestureDetector(
+      onTap: () {
+        Navigator.pushNamed(context, Routes.crew, arguments: widget.crewId);
+      },
+      child: Container(
+        width: 334.w,
+        height: 50.h,
+        child: Row(
+          children: [
+            Image(
+              image: widget.image ?? Svg("assets/img/account_circle.svg"),
+              width: 50.w,
+              height: 50.h,
+            ),
+            SizedBox(
+              width: 10.88.w,
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  widget.crewName,
                   style: const TextStyle(
                     color: fontColor,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
-              ),
-            ],
-          )
-        ],
+                Container(
+                  width: (widget.isJoined == null)
+                      ? 253.w
+                      : (widget.isJoined == true)
+                          ? 289.w
+                          : 197.w,
+                  child: Text(
+                    widget.crewIntro,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: fontColor,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            if (widget.isJoined == false)
+              GestureDetector(
+                onTap: () {
+                  setState(() {
+                    joinClicked = true;
+                  });
+                  widget.onJoinTap?.call();
+                },
+                child: Container(
+                  alignment: Alignment.center,
+                  width: 70.w,
+                  margin: EdgeInsets.symmetric(horizontal: 11.w),
+                  decoration: BoxDecoration(
+                    color: (!joinClicked) ? c900 : grey,
+                    borderRadius: BorderRadius.circular(10.r),
+                  ),
+                  child: Text(
+                    (!joinClicked) ? "가입하기" : "승인대기중",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 15.sp,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              )
+          ],
+        ),
       ),
     );
   }

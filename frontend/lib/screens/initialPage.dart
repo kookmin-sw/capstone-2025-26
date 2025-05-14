@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:reme/routes.dart';
+import 'package:reme/screens/crew_list_page.dart';
 import 'package:reme/screens/feed.dart';
 import 'package:reme/screens/home.dart';
 import 'package:reme/screens/retrospectPage.dart';
@@ -55,7 +57,7 @@ class _InitialpageState extends State<Initialpage>
         });
       }),
       RetroPage(tabNo: _retroSelectIndex),
-      Container(),
+      const CrewListPage(),
       const Feed(),
     ];
 
@@ -89,7 +91,10 @@ class _InitialpageState extends State<Initialpage>
                     Container(
                         padding: EdgeInsets.only(left: 8.w, right: 19.w),
                         child: GestureDetector(
-                            onTap: () {},
+                            onTap: () {
+                              Navigator.pushNamed(context, Routes.myPage,
+                                  arguments: "이다현");
+                            },
                             child: CircleAvatar(
                               radius: 18.5.r,
                             )))

@@ -102,61 +102,26 @@ class _HomeState extends State<Home> {
               },
             ),
           ),
-          SizedBox(
-            height: 15.h,
-          ),
-          GestureDetector(
-            child: Container(
-              width: 372.w,
-              height: 65.h,
-              margin: EdgeInsets.only(left: 24.w, right: 24.w),
-              decoration: BoxDecoration(
-                color: c900,
-                borderRadius: BorderRadius.circular(10.r),
-              ),
-              child: Center(
-                child: Text(
-                  "오늘 회고하러 하기",
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: fontColor,
-                    fontSize: 20.sp,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-            ),
-            onTap: () {
-              Navigator.pushNamed(context, Routes.retrospectChallenge);
-            },
-          ),
-          SizedBox(
-            height: 15.h,
-          ),
           WidgetBox(
-            height: 225.h,
-            title: "오늘의 개인 챌린지",
-            isMore: false,
-            marginLTRB: EdgeInsets.only(left: 24.w, right: 24.w),
-            children: [
-              CustomListitem(height: 46.h, content: "모두를 위한 머신러닝 읽기"),
-              CustomListitem(height: 46.h, content: "모두를 위한 머신러닝 읽기"),
-              CustomListitem(height: 46.h, content: "모두를 위한 머신러닝 읽기"),
-            ],
-          ),
-          SizedBox(
-            height: 15.h,
-          ),
+              title: "오늘 회고할거",
+              isMore: false,
+              marginLTRB: const EdgeInsets.only(top: 15),
+              children: [
+                CustomListitem(height: 50, content: "모두를 위한 머신러닝 읽기"),
+                CustomListitem(height: 50, content: "모두를 위한 머신러닝 읽기"),
+                CustomListitem(height: 50, content: "모두를 위한 머신러닝 읽기"),
+              ]),
           WidgetBox(
-            title: "내 크루",
+            title: "크루 목록",
             isMore: true,
-            marginLTRB: EdgeInsets.only(left: 24.w, right: 24.w),
+            marginLTRB: const EdgeInsets.only(top: 15),
             onTap: widget.onCrewMoreTap,
             children: [
               SizedBox(
                 height: 10.h,
               ),
               CrewList(
+                crewId: 0,
                 crewName: "캡스톤 26조 파이팅",
                 crewIntro: "크루에 대한 설명칸. 길어진다면 다음과 같이 마무리 하는게 좋을거 같긴 한데",
               ),
@@ -164,6 +129,7 @@ class _HomeState extends State<Home> {
                 height: 15.h,
               ),
               CrewList(
+                crewId: 1,
                 crewName: "은성 캉의 영어 회화 교실",
                 crewIntro: "크루에 대한 설명칸. 길어진다면 다음과 같이 마무리 하는게 좋을거 같긴 한데",
               ),
@@ -171,6 +137,7 @@ class _HomeState extends State<Home> {
                 height: 15.h,
               ),
               CrewList(
+                crewId: 2,
                 crewName: "정릉동 우주최강 조깅 모임",
                 crewIntro: "크루에 대한 설명칸. 길어진다면 다음과 같이 마무리 하는게 좋을거 같긴 한데",
               ),
