@@ -13,7 +13,6 @@ class RetroPage extends StatefulWidget {
 class _RetroPageState extends State<RetroPage>
     with SingleTickerProviderStateMixin {
   ImageProvider? plusIcon;
-  late TabController _tabController;
 
   final int tapNo;
   _RetroPageState(this.tapNo);
@@ -27,14 +26,12 @@ class _RetroPageState extends State<RetroPage>
   void initState() {
     // TODO: implement initState
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
   }
 
   @override
   void dispose() {
     // TODO: implement dispose
     super.dispose();
-    _tabController.dispose();
   }
 
   @override
