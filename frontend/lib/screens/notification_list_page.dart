@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg_provider/flutter_svg_provider.dart';
@@ -42,6 +41,7 @@ class _NotificationListPageState extends State<NotificationListPage> {
       backgroundColor: background,
       appBar: AppBar(
         elevation: 0,
+        scrolledUnderElevation: 0,
         backgroundColor: background,
         leading: IconButton(
           icon: Icon(Icons.arrow_back_ios_new),
@@ -175,6 +175,7 @@ class _NotificationListPageState extends State<NotificationListPage> {
                                       style: TextStyle(
                                         fontSize: 10.sp,
                                         color: Colors.grey,
+                                        fontWeight: FontWeight.w500,
                                       ),
                                     ),
                                   ],
@@ -183,7 +184,7 @@ class _NotificationListPageState extends State<NotificationListPage> {
                                 Text(
                                   notificationContent[index],
                                   style: TextStyle(
-                                    fontSize: 14.sp,
+                                    fontSize: 16.sp,
                                     fontWeight: FontWeight.w500,
                                     color: fontColor,
                                   ),
