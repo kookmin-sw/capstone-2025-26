@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg_provider/flutter_svg_provider.dart';
+import 'package:reme/screens/account_info_page.dart';
 import 'package:reme/screens/get_info.dart';
 import 'package:reme/screens/guidePage.dart';
 import 'package:reme/screens/retrospect_completion_screen.dart';
@@ -97,7 +98,11 @@ class MyPage extends StatelessWidget {
               ),
               GestureDetector(
                 onTap: () {
-                  print("계정정보 클릭");
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) =>
+                              AccountInfoPage(username: userName.toString())));
                 },
                 child: Container(
                   width: 112.w,

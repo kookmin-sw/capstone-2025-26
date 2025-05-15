@@ -4,7 +4,8 @@ import 'package:reme/themes/color.dart';
 
 class GetInfo extends StatelessWidget {
   final int type; // 정보 입력 타임 (관심사(0), 닉네임(1), 이메일(2), 문의하기(3))
-  const GetInfo({super.key, required this.type});
+  final String? content;
+  const GetInfo({super.key, required this.type, this.content});
 
   @override
   Widget build(BuildContext context) {
@@ -76,6 +77,7 @@ class GetInfo extends StatelessWidget {
             TextFormField(
               minLines: 1,
               maxLines: type == 0 || type == 3 ? 6 : 1,
+              initialValue: content,
               decoration: InputDecoration(
                 labelText: type == 0
                     ? "관심사"
