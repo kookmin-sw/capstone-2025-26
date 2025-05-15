@@ -3,6 +3,7 @@ import 'package:reme/screens/guidePage.dart';
 import 'package:reme/screens/initialPage.dart';
 import 'package:reme/screens/login.dart';
 import 'package:reme/screens/my_page.dart';
+import 'package:reme/screens/notification_list_page.dart';
 import 'package:reme/screens/signupPage.dart';
 import 'package:reme/screens/retrospectChallengeList.dart';
 import 'package:reme/screens/retrospect_completion_screen.dart';
@@ -16,6 +17,7 @@ class Routes {
   static const retrospectCompletion = "/retrospect-completion";
   static const first = "/first";
   static const myPage = "/my-page";
+  static const notificationList = "/notification-list";
 }
 
 var namedRoute = {
@@ -27,4 +29,5 @@ var namedRoute = {
   Routes.retrospectChallenge: (context) => const RetrospectChallengeList(),
   Routes.retrospectCompletion: (context) => const RetrospectCompletionScreen(),
   Routes.myPage: (context) => MyPage(),
+  Routes.notificationList: (context) => NotificationListPage(),
 };

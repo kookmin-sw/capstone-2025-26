@@ -88,7 +88,9 @@ class _InitialpageState extends State<Initialpage>
                   centerTitle: false,
                   actions: [
                     IconButton(
-                        onPressed: () {},
+                        onPressed: () {
+                          Navigator.pushNamed(context, Routes.notificationList);
+                        },
                         icon: const Icon(
                           Icons.notifications_outlined,
                           color: c700,
