@@ -96,19 +96,24 @@ class _CrewListPageState extends State<CrewListPage> {
     super.initState();
     _scrollController = ScrollController();
     _scrollController.addListener(() {
-      if (_scrollController.offset >
-          (50.h +
-              15.h +
-              (50.h + 10.h + 15.h) *
-                  joinedCrewCount)) // 상단 제목 높이 + 하단마진크기 + (박스 크기 + 패딩크기 + 하단마진)* 가입한 크루 갯수
-      {
-        // 크루 찾아보기가 가입한크루까지 올라갔을 때 가입한 크루 고정 해제
+      // 크루 섹션 전환 위치 계산
+      final double headerHeight = 50.h;
+      final double bottomMargin = 15.h;
+      final double boxHeight = 50.h;
+      final double boxPadding = 10.h;
+
+      // 가입한 크루 섹션의 총 높이
+      final double joinedCrewSectionHeight = headerHeight +
+          bottomMargin +
+          (boxHeight + boxPadding + bottomMargin) * joinedCrewCount;
+
+      // 현재 스크롤 위치가 가입한 크루 섹션을 넘어섰는지 확인
+      final bool shouldUnpin =
+          _scrollController.offset > joinedCrewSectionHeight;
+
+      if (shouldUnpin != !joinCrewHeaderPinned) {
         setState(() {
-          joinCrewHeaderPinned = false;
-        });
-      } else {
-        setState(() {
-          joinCrewHeaderPinned = true;
+          joinCrewHeaderPinned = !shouldUnpin;
         });
       }
     });
