@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg_provider/flutter_svg_provider.dart';
+import 'package:reme/screens/get_info.dart';
 import 'package:reme/screens/guidePage.dart';
 import 'package:reme/screens/retrospect_completion_screen.dart';
 import 'package:reme/themes/color.dart';
@@ -54,7 +55,13 @@ class MyPage extends StatelessWidget {
             Row(children: [
               GestureDetector(
                 onTap: () {
-                  print("내 관심사 클릭");
+                  showDialog(
+                      context: context,
+                      builder: (context) {
+                        return Dialog(
+                          child: GetInfo(type: 0),
+                        );
+                      });
                 },
                 child: Container(
                   width: 112.w,
@@ -219,7 +226,13 @@ class MyPage extends StatelessWidget {
               ),
               GestureDetector(
                 onTap: () {
-                  print("문의하기 클릭");
+                  showDialog(
+                      context: context,
+                      builder: (context) {
+                        return Dialog(
+                          child: GetInfo(type: 3),
+                        );
+                      });
                 },
                 child: Container(
                   width: 112.w,
