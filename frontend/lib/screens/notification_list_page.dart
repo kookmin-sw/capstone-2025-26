@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg_provider/flutter_svg_provider.dart';
+import 'package:reme/routes.dart';
+import 'package:reme/screens/retrospect_completion_screen.dart';
 import 'package:reme/themes/color.dart';
 import 'package:reme/widgets/categoryButton.dart';
 
@@ -15,24 +17,32 @@ class _NotificationListPageState extends State<NotificationListPage> {
   int selectedIndex = 0;
 
   // 임시 데이터
-  List<int> notificationCategory = [3, 1, 2, 3];
-  List<String> notificationContent = [
-    "OOO가 팔로우 하기 시작했어요",
-    "오늘 회고 내용 분석이 완료되었어요!",
-    "(크루명)가입이 승인되었어요~",
-    "OOO가 좋아요를 눌렀어요!",
-  ];
-  List<Image?> notificationImage = [
-    Image(image: Svg('assets/img/account_circle.svg')),
-    null,
-    Image.asset('assets/img/running.png'),
-    Image(image: Svg('assets/img/account_circle.svg')),
-  ];
-  List<DateTime> notificationDate = [
-    DateTime.now().subtract(Duration(days: 1)),
-    DateTime.now().subtract(Duration(days: 3)),
-    DateTime.now().subtract(Duration(days: 4)),
-    DateTime.now().subtract(Duration(days: 5)),
+  List<Map<String, dynamic>> notificationList = [
+    {
+      "category": 3,
+      "content": "OOO가 팔로우 하기 시작했어요",
+      "image": Image(image: Svg('assets/img/account_circle.svg')),
+      "date": DateTime.now().subtract(Duration(days: 1)),
+    },
+    {
+      "category": 1,
+      "content": "오늘 회고 내용 분석이 완료되었어요!",
+      "image": null,
+      "date": DateTime.now().subtract(Duration(days: 3)),
+    },
+    {
+      "category": 2,
+      "content": "(크루명)가입이 승인되었어요~",
+      "image": Image.asset('assets/img/running.png'),
+      "date": DateTime.now().subtract(Duration(days: 4)),
+      "crewId": 1,
+    },
+    {
+      "category": 3,
+      "content": "OOO가 좋아요를 눌렀어요!",
+      "image": Image(image: Svg('assets/img/account_circle.svg')),
+      "date": DateTime.now().subtract(Duration(days: 5)),
+    }
   ];
 
   @override
@@ -124,77 +134,103 @@ class _NotificationListPageState extends State<NotificationListPage> {
             SizedBox(height: 15.h),
             Flexible(
               child: ListView.builder(
-                itemCount: notificationCategory.length,
+                itemCount: notificationList.length,
                 itemBuilder: (context, index) {
                   if (selectedIndex == 0 ||
-                      selectedIndex == notificationCategory[index]) {
-                    return Container(
-                      height: 70.h,
-                      margin: EdgeInsets.only(bottom: 10.h),
-                      padding: EdgeInsets.symmetric(
-                          horizontal: 15.w, vertical: 10.h),
-                      decoration: BoxDecoration(
-                        color: boxBackgroundColor,
-                        borderRadius: BorderRadius.circular(10.r),
-                      ),
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 40.w,
-                            height: 40.h,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
+                      selectedIndex == notificationList[index]["category"]) {
+                    return GestureDetector(
+                      onTap: () {
+                        var category = notificationList[index]["category"];
+                        if (category == 1) {
+                          // todo: 오늘 회고 분석 페이지로 이동
+                          Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) =>
+                                      ReflectionAnalysisScreen(
+                                          fromMyPage: true)));
+                        } else if (category == 2) {
+                          // todo: 해당 크루 페이지로 이동
+                          // 크루 아이디 arguments로 전달. 크루 아이디는 어디에 저장하지?
+                          Navigator.pushNamed(context, Routes.crew,
+                              arguments: notificationList[index]["crewId"]);
+                        } else if (category == 3) {
+                          // 해당 커뮤니티 글로 이동.
+                          // TODO: 페이지 구현 후 피드 페이지로 이동 기능 추가 예정
+                        }
+                      },
+                      child: Container(
+                        height: 70.h,
+                        margin: EdgeInsets.only(bottom: 10.h),
+                        padding: EdgeInsets.symmetric(
+                            horizontal: 15.w, vertical: 10.h),
+                        decoration: BoxDecoration(
+                          color: boxBackgroundColor,
+                          borderRadius: BorderRadius.circular(10.r),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 40.w,
+                              height: 40.h,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                              ),
+                              child: (notificationList[index]["category"] == 1)
+                                  ? Icon(Icons.article,
+                                      color: Color(0xFF2196F3))
+                                  : notificationList[index]
+                                      ["image"], // 크루프로필사진 or 상대프로필사진
                             ),
-                            child: (notificationCategory[index] == 1)
-                                ? Icon(Icons.article, color: Color(0xFF2196F3))
-                                : notificationImage[
-                                    index], // 크루프로필사진 or 상대프로필사진
-                          ),
-                          SizedBox(width: 15.w),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Row(
-                                  children: [
-                                    Text(
-                                      notificationCategory[index] == 1
-                                          ? "회고"
-                                          : notificationCategory[index] == 2
-                                              ? "크루"
-                                              : "커뮤니티",
-                                      style: TextStyle(
-                                        fontSize: 12.sp,
-                                        color: fontColor,
+                            SizedBox(width: 15.w),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Text(
+                                        notificationList[index]["category"] == 1
+                                            ? "회고"
+                                            : notificationList[index]
+                                                        ["category"] ==
+                                                    2
+                                                ? "크루"
+                                                : "커뮤니티",
+                                        style: TextStyle(
+                                          fontSize: 12.sp,
+                                          color: fontColor,
+                                        ),
                                       ),
-                                    ),
-                                    SizedBox(width: 10.w),
-                                    Text(
-                                      _getTimeAgo(notificationDate[index]),
-                                      style: TextStyle(
-                                        fontSize: 10.sp,
-                                        color: Colors.grey,
-                                        fontWeight: FontWeight.w500,
+                                      SizedBox(width: 10.w),
+                                      Text(
+                                        _getTimeAgo(
+                                            notificationList[index]["date"]),
+                                        style: TextStyle(
+                                          fontSize: 10.sp,
+                                          color: Colors.grey,
+                                          fontWeight: FontWeight.w500,
+                                        ),
                                       ),
-                                    ),
-                                  ],
-                                ),
-                                SizedBox(height: 4.h),
-                                Text(
-                                  notificationContent[index],
-                                  style: TextStyle(
-                                    fontSize: 16.sp,
-                                    fontWeight: FontWeight.w500,
-                                    color: fontColor,
+                                    ],
                                   ),
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ],
+                                  SizedBox(height: 4.h),
+                                  Text(
+                                    notificationList[index]["content"],
+                                    style: TextStyle(
+                                      fontSize: 16.sp,
+                                      fontWeight: FontWeight.w500,
+                                      color: fontColor,
+                                    ),
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     );
                   }
