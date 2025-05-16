@@ -30,8 +30,7 @@ class RetrospectViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         """
-        Filter retrospects based on user authentication, ownership, crew membership,
-        and visibility settings.
+        Unauthenticated users see PUBLIC retrospects; authenticated users see only retrospects they created (personal and crew).
         """
         user = self.request.user
         base_queryset = Retrospect.objects.select_related(
@@ -42,28 +41,8 @@ class RetrospectViewSet(viewsets.ModelViewSet):
             # Unauthenticated users only see PUBLIC retrospects
             return base_queryset.filter(visibility=RetrospectVisibility.PUBLIC)
         
-        # Authenticated users see:
-        # 1. Their own USER retrospects (regardless of visibility)
-        # 2. CREW retrospects of crews they are members of (if visibility is CREW or PUBLIC)
-        # 3. All PUBLIC retrospects (covered by the first filter if owner or the second if member, or separate Q)
-
-        # Get IDs of crews the user is an accepted member of
-        user_crew_ids = CrewMembership.objects.filter(
-            user=user, 
-            status=CrewMembershipStatus.ACCEPTED
-        ).values_list('crew_id', flat=True)
-
-        queryset = base_queryset.filter(
-            # Own USER retrospects (any visibility)
-            Q(owner_type=RetrospectOwnerType.USER, user=user) |
-            # CREW retrospects for their crews (CREW or PUBLIC visibility)
-            (Q(owner_type=RetrospectOwnerType.CREW, crew_id__in=user_crew_ids) & 
-             Q(visibility__in=[RetrospectVisibility.CREW, RetrospectVisibility.PUBLIC])) |
-            # Other PUBLIC retrospects (might overlap, but ensures all public are included)
-            Q(visibility=RetrospectVisibility.PUBLIC)
-        ).distinct() # Use distinct to avoid duplicates if a user owns a public retrospect
-        
-        return queryset
+        # Authenticated users see only retrospects they created
+        return base_queryset.filter(user=user)
     
     def perform_create(self, serializer):
         user = self.request.user
