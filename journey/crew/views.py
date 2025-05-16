@@ -148,9 +148,13 @@ class CrewViewSet(viewsets.ModelViewSet):
             elif membership.status == CrewMembershipStatus.PENDING:
                 return Response({'detail': 'Join request is already pending.'}, status=status.HTTP_400_BAD_REQUEST)
             elif membership.status == CrewMembershipStatus.REJECTED:
-                 return Response({'detail': 'Your previous join request was rejected. Please contact the crew admin to rejoin.'}, status=status.HTTP_400_BAD_REQUEST)
+                # 이전 조인 요청이 거절된 경우, 새로운 요청을 생성
+                membership.status = CrewMembershipStatus.PENDING
+                membership.save()
+                serializer = CrewMembershipSerializer(membership)
+                return Response(serializer.data, status=status.HTTP_200_OK)
             else:
-                 return Response({'detail': 'Cannot process join request due to existing membership status.'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({'detail': 'Cannot process join request due to existing membership status.'}, status=status.HTTP_400_BAD_REQUEST)
 
         except CrewMembership.DoesNotExist:
             # No existing membership for this user, proceed to create a PENDING request
@@ -173,7 +177,30 @@ class CrewViewSet(viewsets.ModelViewSet):
         serializer = CrewMembershipSerializer(membership)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-    @action(detail=True, methods=['post'], url_path=r'reject_member/(?P<user_pk>\d+)')
+    @action(detail=True, methods=['post'], url_path=r'accept_member/(?P<user_pk>\d+)', permission_classes=[permissions.IsAuthenticated])
+    def accept_request(self, request, pk=None, user_pk=None):
+        """Allows the crew creator to accept a PENDING join request from a specific user."""
+        crew = self.get_object() # Gets the crew instance based on pk
+        
+        try:
+            membership = CrewMembership.objects.get(crew=crew, user_id=user_pk)
+        except CrewMembership.DoesNotExist:
+            return Response({'detail': 'Membership request not found for this user in this crew.'}, status=status.HTTP_404_NOT_FOUND)
+
+        if membership.status != CrewMembershipStatus.PENDING:
+            membership.status = CrewMembershipStatus.ACCEPTED
+            membership.save()
+
+            # Update member count
+            crew.member_count = CrewMembership.objects.filter(crew=crew, status=CrewMembershipStatus.ACCEPTED).count()
+            crew.save(update_fields=['member_count'])
+
+            serializer = CrewMembershipSerializer(membership)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        else:
+            return Response({'detail': 'This membership is not pending.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=True, methods=['post'], url_path=r'reject_member/(?P<user_pk>\d+)', permission_classes=[permissions.IsAuthenticated])
     def reject_request(self, request, pk=None, user_pk=None):
         """Allows the crew creator to reject a PENDING join request from a specific user."""
         crew = self.get_object() # Gets the crew instance based on pk
@@ -197,7 +224,7 @@ class CrewViewSet(viewsets.ModelViewSet):
         return Response(serializer.data, status=status.HTTP_200_OK) # OK, showing the rejected status
 
     @action(detail=True, methods=['get'], url_path='templates')
-    def crew_templates(self, request):
+    def crew_templates(self, request, pk=None):
         """Returns a list of templates for a specific crew."""
         crew = self.get_object()
         templates = Template.objects.filter(crew=crew)
@@ -205,7 +232,7 @@ class CrewViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
     @action(detail=True, methods=['get'], url_path='retrospects')
-    def crew_retrospects(self, request):
+    def crew_retrospects(self, request, pk=None):
         """Returns a list of retrospects for a specific crew."""
         crew = self.get_object()
         retrospects = Retrospect.objects.filter(crew=crew)
