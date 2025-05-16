@@ -10,8 +10,8 @@ from opentelemetry.sdk._logs import LoggerProvider, LoggingHandler
 from opentelemetry.sdk._logs.export import BatchLogRecordProcessor
 from opentelemetry.exporter.otlp.proto.grpc._log_exporter import OTLPLogExporter
 from opentelemetry.sdk.metrics import MeterProvider
-from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
-from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import OTLPMetricExporter
+from opentelemetry.sdk.metrics.export import PrometheusMetricReader
+from opentelemetry.trace import Status, StatusCode
 import logging
 from typing import Optional
 
@@ -34,11 +34,9 @@ def init_telemetry(service_name: str, endpoint: str = "http://34.66.130.204:4317
     logger = logging.getLogger(__name__) # Get logger after configuration
     LoggingInstrumentor().instrument(logger_provider=log_provider) # Use logger_provider argument
     
-    # Metrics
-    metric_reader = PeriodicExportingMetricReader(
-        OTLPMetricExporter(endpoint=endpoint, insecure=True)
-    )
-    metric_provider = MeterProvider(resource=resource, metric_readers=[metric_reader])
+    # Metrics: switch to Prometheus pull
+    prom_reader = PrometheusMetricReader()
+    metric_provider = MeterProvider(resource=resource, metric_readers=[prom_reader])
     metrics.set_meter_provider(metric_provider)
     
     # Traces
@@ -63,12 +61,17 @@ class RequestLoggingMiddleware:
     def __call__(self, request):
         # Log request
         self.logger.info(f"🔹 Request: {request.method} {request.get_full_path()}")
-        
-        # Get response
-        response = self.get_response(request)
-        
-        # Log response
-        self.logger.info(f"🔹 Response: {response.status_code} {request.get_full_path()}")
-        
-        return response
+        try:
+            response = self.get_response(request)
+            # Log response
+            self.logger.info(f"🔹 Response: {response.status_code} {request.get_full_path()}")
+            return response
+        except Exception as e:
+            # Log exception with stacktrace
+            self.logger.exception(f"🔹 Exception during request: {request.method} {request.get_full_path()}")
+            # Record exception and set error status on current span
+            span = trace.get_current_span()
+            span.record_exception(e)
+            span.set_status(Status(StatusCode.ERROR, str(e)))
+            raise
         
