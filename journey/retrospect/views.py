@@ -65,9 +65,28 @@ class RetrospectViewSet(viewsets.ModelViewSet):
         
         return queryset
     
-    # 실제 회고 생성 시 발생하는 NOT NULL constraint 실패(예: user_id가 NULL인 경우) 때문에 추가
     def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
+        user = self.request.user
+        challenge = serializer.validated_data.get('challenge')
+        template = serializer.validated_data.get('template')
+
+        # Only allow retrospects for challenges the user owns or for crews they belong to
+        if challenge.owner_type == ChallengeOwnerType.USER:
+            if challenge.user != user:
+                raise PermissionDenied("You can only create retrospects for challenges you created.")
+            crew_to_save = None
+        elif challenge.owner_type == ChallengeOwnerType.CREW:
+            if not CrewMembership.objects.filter(
+                crew=challenge.crew,
+                user=user,
+                status=CrewMembershipStatus.ACCEPTED
+            ).exists():
+                raise PermissionDenied("You can only create retrospects for challenges of crews you belong to.")
+            crew_to_save = challenge.crew
+        else:
+            raise PermissionDenied("Invalid challenge owner type.")
+
+        serializer.save(user=user, challenge=challenge, template=template, crew=crew_to_save)
 
     # 분리하는게 좋을 것 같아서 일단 주석처리
     # def perform_create(self, serializer):
@@ -326,6 +345,26 @@ class PlanViewSet(viewsets.ModelViewSet):
         if self.action in ['list', 'retrieve']:
             return PlanResponseSerializer
         return PlanSerializer
+
+    def perform_create(self, serializer):
+        user = self.request.user
+        challenge = serializer.validated_data.get('challenge')
+        if challenge.owner_type == ChallengeOwnerType.USER:
+            if challenge.user != user:
+                raise PermissionDenied("You can only create KPI for challenges you created.")
+        # Or for crew members of a crew-owned challenge
+        elif challenge.owner_type == ChallengeOwnerType.CREW:
+            if not CrewMembership.objects.filter(
+                crew=challenge.crew,
+                user=user,
+                status=CrewMembershipStatus.ACCEPTED
+            ).exists():
+                raise PermissionDenied("You can only create KPI for challenges of crews you belong to.")
+        else:
+            raise PermissionDenied("Invalid challenge owner type.")
+
+        # Save with the requesting user as the KPI owner
+        serializer.save(user=user, challenge=challenge)
     
     def list(self, request, *args, **kwargs):
         """
@@ -362,15 +401,36 @@ class KpiViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         return Kpi.objects.filter(user=self.request.user)
 
-    @action(detail=False, methods=['get'])
-    def by_challenge(self, request, pk=None):
+    def perform_create(self, serializer):
+        """
+        Allow KPI creation only for challenges the user owns or for crews they belong to.
+        """
+        challenge = serializer.validated_data.get('challenge')
+        user = self.request.user
+
+        # Only allow KPI creation for the challenge owner
+        if challenge.owner_type == ChallengeOwnerType.USER:
+            if challenge.user != user:
+                raise PermissionDenied("You can only create KPI for challenges you created.")
+        # Or for crew members of a crew-owned challenge
+        elif challenge.owner_type == ChallengeOwnerType.CREW:
+            if not CrewMembership.objects.filter(
+                crew=challenge.crew,
+                user=user,
+                status=CrewMembershipStatus.ACCEPTED
+            ).exists():
+                raise PermissionDenied("You can only create KPI for challenges of crews you belong to.")
+        else:
+            raise PermissionDenied("Invalid challenge owner type.")
+
+        # Save with the requesting user as the KPI owner
+        serializer.save(user=user, challenge=challenge)
+
+    @action(detail=False, methods=['get'], url_path='by-challenge/(?P<challenge_id>[^/.]+)')
+    def by_challenge(self, request, challenge_id=None, pk=None):
         """
         특정 챌린지의 KPI를 조회
         """
-        challenge_id = request.query_params.get('challenge_id')
-        if not challenge_id:
-            return Response({"error": "challenge_id is required"}, status=status.HTTP_400_BAD_REQUEST)
-        
         kpis = Kpi.objects.filter(
             user=request.user,
             challenge_id=challenge_id
@@ -390,15 +450,18 @@ class KpiResultViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         return KpiResult.objects.filter(user=self.request.user)
 
-    @action(detail=False, methods=['get'])
-    def by_challenge(self, request, pk=None):
+    def perform_create(self, serializer):
+        user = self.request.user
+        challenge = serializer.validated_data.get('challenge')
+        kpi = serializer.validated_data.get('kpi')
+        retrospect = serializer.validated_data.get('retrospect')
+        serializer.save(user=user, challenge=challenge, kpi=kpi, retrospect=retrospect)
+
+    @action(detail=False, methods=['get'], url_path='by-challenge/(?P<challenge_id>[^/.]+)')
+    def by_challenge(self, request, challenge_id=None):
         """
         특정 챌린지의 KPI 결과를 조회
         """
-        challenge_id = request.query_params.get('challenge_id')
-        if not challenge_id:
-            return Response({"error": "challenge_id is required"}, status=status.HTTP_400_BAD_REQUEST)
-        
         results = KpiResult.objects.filter(
             user=request.user,
             challenge_id=challenge_id

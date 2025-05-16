@@ -88,27 +88,21 @@ class TemplateSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         """
-        Ensure either user or crew is set based on owner_type,
+        Ensure crew is set based on owner_type,
         but not both (unless owner_type is COMMON, adjust if needed).
         """
         owner_type = data.get('owner_type')
-        user = data.get('user')
         crew = data.get('crew')
 
         if owner_type == Template.TemplateOwnerType.USER:
-            if not user:
-                raise serializers.ValidationError("User must be provided for USER owner_type.")
             if crew:
                 raise serializers.ValidationError("Crew must not be provided for USER owner_type.")
         elif owner_type == Template.TemplateOwnerType.CREW:
             if not crew:
                 raise serializers.ValidationError("Crew must be provided for CREW owner_type.")
-            if user:
-                raise serializers.ValidationError("User must not be provided for CREW owner_type.")
         elif owner_type == Template.TemplateOwnerType.COMMON:
             # Common templates might not have a user or crew owner.
-            if user or crew:
-                raise serializers.ValidationError("User or Crew must not be provided for COMMON owner_type.")
+            pass
         else:
             # Handle potential future owner types or raise an error
             raise serializers.ValidationError(f"Invalid owner_type: {owner_type}")
@@ -220,19 +214,14 @@ class RetrospectWeeklyAnalysisSerializer(serializers.ModelSerializer):
         but not both (unless owner_type is COMMON, adjust if needed).
         """
         owner_type = data.get('owner_type')
-        user = data.get('user')
         crew = data.get('crew')
 
         if owner_type == RetrospectWeeklyAnalysis.RetrospectWeeklyAnalysisOwnerType.USER:
-            if not user:
-                raise serializers.ValidationError("User must be provided for USER owner_type.")
             if crew:
                 raise serializers.ValidationError("Crew must not be provided for USER owner_type.")
         elif owner_type == RetrospectWeeklyAnalysis.RetrospectWeeklyAnalysisOwnerType.CREW:
             if not crew:
                 raise serializers.ValidationError("Crew must be provided for CREW owner_type.")
-            if user:
-                raise serializers.ValidationError("User must not be provided for CREW owner_type.")
         else:
             # Handle potential future owner types or raise an error
             raise serializers.ValidationError(f"Invalid owner_type: {owner_type}")
