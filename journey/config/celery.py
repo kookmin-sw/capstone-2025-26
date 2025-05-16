@@ -26,20 +26,20 @@ app.conf.timezone = 'Asia/Seoul'
 app.conf.beat_schedule = {
     "weekly-analyses": {
         "task": "ai_manager.trigger_chunked_finalize_weekly_analyses",
-        # "schedule": crontab(
-        #     # every sunday 00:00
-        #     minute=0,
-        #     hour=0,
-        #     day_of_week='sun'
-        # )
+        "schedule": crontab(
+            # every sunday 00:00
+            minute=0,
+            hour=0,
+            day_of_week='sun'
+        )
 
         # 매일 1분마다 실행 for test
-        "schedule": crontab(
-            minute='*/1',  # 매 1분마다 실행
-            hour='*',      # 매 시간
-            day_of_week='*',  # 매일
-            day_of_month='*',  # 매월
-            month_of_year='*'   # 매년
-        ),
+        # "schedule": crontab(
+        #     minute='*/1',  # 매 1분마다 실행
+        #     hour='*',      # 매 시간
+        #     day_of_week='*',  # 매일
+        #     day_of_month='*',  # 매월
+        #     month_of_year='*'   # 매년
+        # ),
     }
 }
