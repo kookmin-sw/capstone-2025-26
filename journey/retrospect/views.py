@@ -18,6 +18,7 @@ from .permissions import (IsRetrospectOwnerOrCrewMemberOrReadOnly, # Use the new
                           IsRetrospectWeeklyAnalysisOwnerOrCrewMemberOrReadOnly)
 from django.utils import timezone
 from datetime import timedelta
+# from django_filters.rest_framework import DjangoFilterBackend # If you want filtering
 
 # Create your views here.
 
@@ -248,70 +249,6 @@ class ChallengeViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
 
-class RetrospectWeeklyAnalysisViewSet(viewsets.ModelViewSet):
-    """ViewSet for the RetrospectWeeklyAnalysis model."""
-    serializer_class = RetrospectWeeklyAnalysisSerializer
-    permission_classes = [IsAuthenticatedOrReadOnly, IsRetrospectWeeklyAnalysisOwnerOrCrewMemberOrReadOnly]
-
-    def get_queryset(self):
-        """Filter weekly analyses:
-        - Authenticated users see their own USER analyses and analyses
-          belonging to Crews they are members of.
-        - Unauthenticated users see nothing (or maybe public ones if that becomes a feature).
-        """
-        user = self.request.user
-        if not user.is_authenticated:
-            return RetrospectWeeklyAnalysis.objects.none()
-
-        base_queryset = RetrospectWeeklyAnalysis.objects.select_related('user', 'crew').all()
-
-        # Get IDs of crews the user is an accepted member of
-        user_crew_ids = CrewMembership.objects.filter(
-            user=user,
-            status=CrewMembershipStatus.ACCEPTED
-        ).values_list('crew_id', flat=True)
-
-        queryset = base_queryset.filter(
-            Q(owner_type=RetrospectWeeklyAnalysisOwnerType.USER, user=user) |
-            Q(owner_type=RetrospectWeeklyAnalysisOwnerType.CREW, crew_id__in=user_crew_ids)
-        ).distinct()
-
-        # Add filtering by date range, etc., if needed via query params
-        start_date = self.request.query_params.get('start_date')
-        end_date = self.request.query_params.get('end_date')
-        if start_date:
-            queryset = queryset.filter(start_date__gte=start_date)
-        if end_date:
-            queryset = queryset.filter(end_date__lte=end_date)
-
-        return queryset
-
-    def perform_create(self, serializer):
-        """Set user or crew based on owner_type.
-           Validate that the user can create the specified type.
-        """
-        owner_type = serializer.validated_data.get('owner_type')
-        user = self.request.user
-
-        if owner_type == RetrospectWeeklyAnalysisOwnerType.USER:
-            # Assign the current user if creating a USER analysis
-            serializer.save(user=user, crew=None)
-        elif owner_type == RetrospectWeeklyAnalysisOwnerType.CREW:
-            # Crew must be provided in the request data for CREW type
-            # The serializer validates its presence.
-            # Validate if the user is part of the specified crew.
-            crew = serializer.validated_data.get('crew')
-            if not CrewMembership.objects.filter(
-                crew=crew,
-                user=user,
-                status=CrewMembershipStatus.ACCEPTED
-            ).exists():
-                 raise permissions.PermissionDenied("You do not have permission to create an analysis for this crew.")
-            serializer.save(user=None, crew=crew)
-        else:
-            # Should be caught by serializer validation, but as a safeguard:
-            super().perform_create(serializer)
-        
 class PlanViewSet(viewsets.ModelViewSet):
     queryset = Plan.objects.all()
     serializer_class = PlanSerializer

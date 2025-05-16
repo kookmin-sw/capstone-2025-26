@@ -3,6 +3,7 @@ from .models import Retrospect, Challenge, Template, Plan, RetrospectWeeklyAnaly
 from user_manager.models import User
 from crew.models import Crew
 import json
+from django.conf import settings
 
 class RetrospectSerializer(serializers.ModelSerializer):
     """Serializer for the Retrospect model."""
@@ -192,54 +193,51 @@ class ChallengeSerializer(serializers.ModelSerializer):
 
 
 class RetrospectWeeklyAnalysisSerializer(serializers.ModelSerializer):
-    """Serializer for the RetrospectWeeklyAnalysis model."""
-    # Decide if user/crew should be read_only or set based on context
-    # If a template is created in a user context, user is set.
-    # If created in a crew context, crew is set.
-    user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all(), allow_null=True, required=False)
-    crew = serializers.PrimaryKeyRelatedField(queryset=Crew.objects.all(), allow_null=True, required=False)
+    user_id = serializers.PrimaryKeyRelatedField(
+        source='user',
+        queryset=User.objects.all(),
+        required=False, allow_null=True
+    )
+    crew_id = serializers.PrimaryKeyRelatedField(
+        source='crew',
+        queryset=Crew.objects.all(),
+        required=False, allow_null=True
+    )
+    challenge_id = serializers.PrimaryKeyRelatedField(
+        source='challenge',
+        queryset=Challenge.objects.all(),
+        required=False, allow_null=True
+    )
+    owner_type_display = serializers.CharField(source='get_owner_type_display', read_only=True)
+    challenge_name = serializers.SerializerMethodField()
 
     class Meta:
         model = RetrospectWeeklyAnalysis
         fields = [
             'id',
-            'user',
-            'crew',
+            'user_id',
+            'crew_id',
+            'challenge_id',
+            'challenge_name',
             'summary',
-            'weekly_kpi',
+            'comment',
+            'assessment',
+            'avg_score',
+            'min_score',
+            'max_score',
             'start_date',
             'end_date',
             'owner_type',
-            'created_at',
+            'owner_type_display',
+            'created_at'
         ]
-        read_only_fields = ['id', 'created_at']
-
-    def validate(self, data):
-        """
-        Ensure either user or crew is set based on owner_type,
-        but not both (unless owner_type is COMMON, adjust if needed).
-        """
-        owner_type = data.get('owner_type')
-        user = data.get('user')
-        crew = data.get('crew')
-
-        if owner_type == RetrospectWeeklyAnalysis.RetrospectWeeklyAnalysisOwnerType.USER:
-            if not user:
-                raise serializers.ValidationError("User must be provided for USER owner_type.")
-            if crew:
-                raise serializers.ValidationError("Crew must not be provided for USER owner_type.")
-        elif owner_type == RetrospectWeeklyAnalysis.RetrospectWeeklyAnalysisOwnerType.CREW:
-            if not crew:
-                raise serializers.ValidationError("Crew must be provided for CREW owner_type.")
-            if user:
-                raise serializers.ValidationError("User must not be provided for CREW owner_type.")
-        else:
-            # Handle potential future owner types or raise an error
-            raise serializers.ValidationError(f"Invalid owner_type: {owner_type}")
-
-        # Add more specific step validation if needed
-
-        return data
+        read_only_fields = ('created_at', 'owner_type_display', 'challenge_name')
+        
+    def get_challenge_name(self, obj):
+        """챌린지 이름을 반환합니다."""
+        if obj.challenge:
+            return obj.challenge.challenge_name
+        return None
 
 class KpiSerializer(serializers.ModelSerializer):
     class Meta:
@@ -257,8 +255,9 @@ class KpiResultSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = KpiResult
-        fields = ['id', 'user', 'challenge', 'kpi', 'retrospect', 'score', 'comment', 'created_at']
-        read_only_fields = ['id', 'created_at']
+        fields = '__all__' # Or list specific fields
+        # Add llm_feedback to fields if not using __all__
+        # fields = ['id', 'user', 'challenge', 'kpi', 'retrospect', 'score', 'comment', 'llm_feedback', 'created_at']
 
     def validate_score(self, value):
         if not 0 <= value <= 1:

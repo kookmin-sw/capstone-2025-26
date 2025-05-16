@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from retrospect.models import Challenge, Kpi, Plan, Retrospect
 import json
+from datetime import date
 
 class LLMRequestSerializer(serializers.Serializer):
     query = serializers.CharField(required=True)
@@ -93,5 +94,45 @@ class GenerateNextPlanSerializer(serializers.Serializer):
             if not retrospect:
                 raise serializers.ValidationError("해당 회고는 제공된 챌린지에 속하지 않습니다.")
                 
+        return data
+
+class TriggerWeeklyAnalysisSerializer(serializers.Serializer):
+    challenge_ids = serializers.ListField(
+        child=serializers.IntegerField(),
+        required=False, # challenge_ids가 없으면 모든 활성 챌린지 대상
+        allow_empty=True, # 빈 리스트도 허용 (명시적으로 모든 활성 챌린지를 의미)
+        help_text="분석을 실행할 챌린지 ID 리스트. 비어 있거나 제공되지 않으면 모든 활성 챌린지를 대상으로 지난주 분석을 실행합니다."
+    )
+    week_start_date = serializers.DateField(
+        required=False,
+        help_text="분석 시작일 (YYYY-MM-DD 형식). challenge_ids와 함께 제공될 때 사용됩니다. 없으면 지난주 월요일로 자동 계산됩니다."
+    )
+    week_end_date = serializers.DateField(
+        required=False,
+        help_text="분석 종료일 (YYYY-MM-DD 형식). challenge_ids와 함께 제공될 때 사용됩니다. 없으면 지난주 일요일로 자동 계산됩니다."
+    )
+
+    def validate(self, data):
+        """
+        week_start_date와 week_end_date의 유효성을 검사합니다.
+        - 둘 다 제공되거나, 둘 다 제공되지 않아야 합니다.
+        - week_start_date는 week_end_date보다 이전이어야 합니다.
+        - challenge_ids가 제공되지 않은 경우, 날짜 필드는 무시되므로 유효성 검사를 건너뜁니다.
+        """
+        week_start = data.get('week_start_date')
+        week_end = data.get('week_end_date')
+        challenge_ids = data.get('challenge_ids')
+
+        # challenge_ids가 명시적으로 제공되었을 때만 날짜 유효성 검사
+        if challenge_ids is not None and len(challenge_ids) > 0: # None이거나 빈 리스트가 아닐 때
+            if (week_start and not week_end) or (not week_start and week_end):
+                raise serializers.ValidationError("week_start_date와 week_end_date는 함께 제공되거나 둘 다 제공되지 않아야 합니다.")
+            
+            if week_start and week_end and week_start > week_end:
+                raise serializers.ValidationError("week_start_date는 week_end_date보다 이전이거나 같아야 합니다.")
+        
+        # challenge_ids가 None (제공되지 않음)이거나 빈 리스트일 경우, 날짜 필드는 사용되지 않으므로 특정 유효성 검사가 필요 없음.
+        # 이 경우, tasks.py의 trigger_chunked_finalize_weekly_analyses 가 호출되어 자체적으로 날짜를 결정함.
+
         return data
 

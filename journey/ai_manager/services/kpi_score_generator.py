@@ -13,10 +13,11 @@ from typing import List, Dict, Any
 from datetime import datetime, timedelta
 from pathlib import Path
 from datetime import timedelta
+from dotenv import load_dotenv
 
-import dotenv
+load_dotenv()
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
 
-dotenv.load_dotenv()
 logger = logging.getLogger(__name__)
 
 # LangChain LLM 설정
@@ -62,7 +63,6 @@ def match_meaning_units_to_kpi(kpi: Kpi, units: List[Dict[str, Any]]) -> List[Di
     """
     KPI와 의미 단위를 매핑 (직접/간접/의미 기반)
     """
-    # 유사도 계산 .... 
     matched = []
     kpi_keywords = [kpi.name, kpi.definition]
     for unit in units:
@@ -71,7 +71,6 @@ def match_meaning_units_to_kpi(kpi: Kpi, units: List[Dict[str, Any]]) -> List[Di
                 matched.append(unit)
                 
     return matched
-
 
 def score_matched_units(units: List[Dict[str, Any]]) -> float:
     """
