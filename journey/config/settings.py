@@ -187,11 +187,11 @@ langfuse = Langfuse(
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# temp api key
-KAKAO_REST_API_KEY = "29da5b5ee2999f173be0ce8443322289"
-KAKAO_REDIRECT_URI = "http://13.125.14.13:8000/api/kakao/callback"
+# Load API keys and URIs from environment variables
+KAKAO_REST_API_KEY = os.getenv('KAKAO_REST_API_KEY', '')
+KAKAO_REDIRECT_URI = os.getenv('KAKAO_REDIRECT_URI', '')
 
-NAVER_REST_API_KEY = "y8aLqw6Aa8x6ASMEEpqc"
-NAVER_SECRET_API_KEY = "dA3n3zJdkA"
-NAVER_REDIRECT_URI = "http://13.125.14.13:8000/api/naver/callback"
+NAVER_REST_API_KEY = os.getenv('NAVER_REST_API_KEY', '')
+NAVER_SECRET_API_KEY = os.getenv('NAVER_SECRET_API_KEY', '')
+NAVER_REDIRECT_URI = os.getenv('NAVER_REDIRECT_URI', '')
 
