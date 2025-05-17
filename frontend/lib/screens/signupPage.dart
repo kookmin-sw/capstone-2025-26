@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:reme/routes.dart';
-import 'package:reme/services/mydio.dart';
+import 'package:reme/services/user_update.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../models/signup_step.dart';
 import '../../utils/passwordValidator.dart';
@@ -28,7 +28,6 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
 
   var userInfo;
 
-  MyDio _dio = MyDio();
   final storage = const FlutterSecureStorage();
   @override
   void initState() {
@@ -193,11 +192,13 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
             String email = userInfo.email;
             String id = userInfo.id;
 
-            _dio.put('/users/${id}/', {
-              'email': email,
-              'password': password,
-              'username': username
-            }).then((value) async {
+            // updateUser(id, email, password, username, profielImage)
+            updateUser(
+                    id: id,
+                    email: email,
+                    password: password,
+                    username: username)
+                .then((value) async {
               SharedPreferences prefs = await SharedPreferences.getInstance();
               await storage.write(
                   key: 'UserName', value: value.data['username']);
