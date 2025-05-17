@@ -10,7 +10,7 @@ from opentelemetry.sdk._logs import LoggerProvider, LoggingHandler
 from opentelemetry.sdk._logs.export import BatchLogRecordProcessor
 from opentelemetry.exporter.otlp.proto.grpc._log_exporter import OTLPLogExporter
 from opentelemetry.sdk.metrics import MeterProvider
-from opentelemetry.sdk.metrics.export import PrometheusMetricReader
+from opentelemetry.exporter.prometheus import PrometheusMetricReader
 from opentelemetry.trace import Status, StatusCode
 import logging
 from typing import Optional
