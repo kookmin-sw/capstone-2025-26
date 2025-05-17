@@ -105,7 +105,7 @@ class _GuidePageState extends State<GuidePage> {
                                   onTap: () async {
                                     SharedPreferences prefs =
                                         await SharedPreferences.getInstance();
-                                    prefs.setBool("logined", true);
+                                    prefs.setBool("first_install", false);
                                     Navigator.pushReplacementNamed(
                                         context, Routes.login);
                                   },
