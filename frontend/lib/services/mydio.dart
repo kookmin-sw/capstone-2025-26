@@ -102,4 +102,23 @@ class MyDio {
       rethrow;
     }
   }
+
+  Future<dynamic> patch(String path, dynamic data) async {
+    try {
+      var response = await _dio.patch(path, data: data);
+      return response;
+    } on DioException catch (e) {
+      if (e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.receiveTimeout ||
+          e.type == DioExceptionType.sendTimeout) {
+        print('Timeout Error: ${e.message}');
+      } else if (e.type == DioExceptionType.connectionError) {
+        print('Connection Error: ${e.message}');
+      } else {
+        print('DELETE Error: ${e.message}');
+        print('Response: ${e.response?.data}');
+      }
+      rethrow;
+    }
+  }
 }
