@@ -20,6 +20,7 @@ from django.contrib.auth.hashers import make_password
 User = get_user_model()
 
 class UserViewSet(viewsets.ModelViewSet):
+    lookup_value_regex = r'\d+'
     queryset = User.objects.all()
     serializer_class = UserSerializer
     authentication_classes = [JWTAuthentication]
@@ -114,8 +115,6 @@ class NotificationViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        # 현재 로그인한 사용자의 알림만 반환 (GET 요청 시)
-        # 생성(POST)은 permission_classes에서 제어
         return Notification.objects.filter(user=self.request.user).order_by('-created_at')
 
     @action(detail=True, methods=['patch'], url_path='mark-as-read')

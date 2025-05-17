@@ -112,6 +112,8 @@ class Retrospect(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    RetrospectOwnerType = RetrospectOwnerType
+
 class RetrospectWeeklyAnalysis(models.Model):
     """주간 회고 분석"""
     user = models.ForeignKey('user_manager.User', on_delete=models.CASCADE, related_name='weekly_analyses', null=True, blank=True) # 개인 분석일 경우
@@ -161,6 +163,8 @@ class Kpi(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    KpiDataType = KpiDataType
+
     class Meta:
         unique_together = ('challenge', 'user', 'name') # 사용자, 챌린지별 KPI 이름은 고유해야 함
         indexes = [
@@ -182,6 +186,8 @@ class KpiResult(models.Model):
     score = models.FloatField()  # 0 ~ 1 범위 권장
     comment = models.TextField(blank=True, null=True)  # llm 피드백
     created_at = models.DateTimeField(auto_now_add=True)
+
+    KpiResultOwnerType = RetrospectOwnerType
 
     class Meta:
         verbose_name = "KPI Result"
