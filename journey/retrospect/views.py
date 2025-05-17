@@ -18,6 +18,7 @@ from .permissions import (IsRetrospectOwnerOrCrewMemberOrReadOnly,  # 인증 읽
                           IsRetrospectWeeklyAnalysisOwnerOrCrewMemberOrReadOnly)
 from django.utils import timezone
 from datetime import timedelta
+# from django_filters.rest_framework import DjangoFilterBackend # If you want filtering
 
 # Create your views here.
 
@@ -283,6 +284,7 @@ class RetrospectWeeklyAnalysisViewSet(viewsets.ModelViewSet):
         else:
             # (안전장치) serializer 검증 후 호출됩니다.
             super().perform_create(serializer)
+        
         
 class PlanViewSet(viewsets.ModelViewSet):
     queryset = Plan.objects.all()
