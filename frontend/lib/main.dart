@@ -19,7 +19,7 @@ Future<void> main() async {
   await Posthog().setup(config);
   // 달력 locale을 위한 초기화
   await initializeDateFormatting();
-  
+
   //sharedPreferences 설정
   SharedPreferences prefs = await SharedPreferences.getInstance();
   runApp(MyApp(prefs: prefs));
@@ -38,7 +38,7 @@ class MyApp extends StatelessWidget {
 
     if (isFirstInstall == null) {
       initialRoute = Routes.first;
-    } else if (isAccessToken == null) {
+    } else if (isAccessToken == null || isAccessToken == false) {
       initialRoute = Routes.login;
     } else {
       initialRoute = Routes.splash;
