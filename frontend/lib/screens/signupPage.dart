@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:reme/routes.dart';
+import 'package:reme/services/mydio.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../models/signup_step.dart';
 import '../../utils/passwordValidator.dart';
 import '../../widgets/passwordChecklist.dart';
@@ -22,6 +26,10 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
   late Animation<Offset> _slideAnimation;
   int _currentStep = 0;
 
+  var userInfo;
+
+  MyDio _dio = MyDio();
+  final storage = const FlutterSecureStorage();
   @override
   void initState() {
     super.initState();
@@ -149,8 +157,7 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
           _buildInputField(_currentStep),
           if (_currentStep == 1)
             PasswordChecklist(validator: _passwordValidator),
-          if (_currentStep == 2)
-            _buildPasswordMatchIndicator(),
+          if (_currentStep == 2) _buildPasswordMatchIndicator(),
         ],
       ),
     );
@@ -181,6 +188,29 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
             _nextStep();
           } else if (step == 2 && _isPasswordMatch) {
             // TODO: 회원가입 완료 처리
+            String username = _controllers[0].text;
+            String password = _controllers[2].text;
+            String email = userInfo.email;
+            String id = userInfo.id;
+
+            _dio.put('/users/${id}/', {
+              'email': email,
+              'password': password,
+              'username': username
+            }).then((value) async {
+              SharedPreferences prefs = await SharedPreferences.getInstance();
+              await storage.write(
+                  key: 'UserName', value: value.data['username']);
+
+              await Future.delayed(const Duration(milliseconds: 500));
+              prefs.setBool('${email}Signup',
+                  false); // 같은 계정으로 로그인시 다시 회원가입 페이지로 못 돌아오게 하기
+              Navigator.pushNamedAndRemoveUntil(
+                  context, Routes.splash, (route) => false);
+            }).catchError((error) {
+              print('Error updating user: $error');
+            });
+
             print('회원가입 정보:');
             print('닉네임: ${_controllers[0].text}');
             print('비밀번호: ${_controllers[1].text}');
@@ -251,6 +281,7 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
+    userInfo = ModalRoute.of(context)!.settings.arguments;
     return Scaffold(
       backgroundColor: const Color(0xFF111111),
       appBar: AppBar(
