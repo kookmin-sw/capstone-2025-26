@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:reme/models/tokens.dart';
+import 'package:reme/models/user_info.dart';
 import 'package:reme/utils/secret.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
@@ -66,9 +66,20 @@ class _WebViewState extends State<SocialLoginWebView>
               access_token =
                   access_token!.replaceAll('\\', "").replaceAll("\"", "");
               String user_name = await parseToken(76);
+              String id = await parseToken(14);
+              String email = await parseToken(69);
+              String profile_image = await parseToken(88);
               await Future.delayed(const Duration(milliseconds: 500));
               Navigator.pop(
-                  context, Tokens(access_token, refresh_token, user_name));
+                  context,
+                  UserInfo(
+                    access_token,
+                    refresh_token,
+                    user_name,
+                    email,
+                    id,
+                    profile_image,
+                  ));
             } catch (e) {
               print(e is Error);
               Navigator.pop(context, e);

@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:reme/models/tokens.dart';
+import 'package:reme/models/user_info.dart';
 import 'package:reme/routes.dart';
 import 'package:reme/screens/socialLoginWebView.dart';
 import 'package:reme/themes/color.dart';
@@ -131,7 +131,7 @@ class LoginPage extends StatelessWidget {
                 builder: (context) => SocialLoginWebView(social: provider)))
         .then((data) async {
       // 데이터가 넘어오지 않을 때 1초간 SnackBar 띄움.
-      if (data != null && data.runtimeType == Tokens) {
+      if (data != null && data.runtimeType == UserInfo) {
         // data가 null이 아니고 Tokens 타입일 때
         final prefs = await SharedPreferences.getInstance();
         prefs.setBool("logined", true);
