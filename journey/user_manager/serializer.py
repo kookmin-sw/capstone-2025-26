@@ -11,10 +11,21 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = '__all__'
         read_only_fields = ['id']
+        extra_kwargs = {'password': {'write_only': True}}
 
     def create(self, validated_data):
         validated_data['password'] = make_password(validated_data['password'])
         return super().create(validated_data)
+
+    def update(self, instance, validated_data):
+        password = validated_data.pop('password', None)
+        # Update other fields normally
+        instance = super().update(instance, validated_data)
+        # If password provided, hash it
+        if password:
+            instance.set_password(password)
+            instance.save()
+        return instance
     
 class LoginSerializer(serializers.ModelSerializer):
     class Meta:

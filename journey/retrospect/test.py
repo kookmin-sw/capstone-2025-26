@@ -4,7 +4,7 @@ from rest_framework import status
 from django.utils import timezone
 from datetime import timedelta
 from user_manager.models import User 
-from retrospect.models import Challenge, Retrospect, Plan, RetrospectOwnerType, RetrospectVisibility, Kpi, KpiResult, KpiDataType, ChallengeOwnerType
+from retrospect.models import Challenge, Retrospect, Plan, RetrospectOwnerType, RetrospectVisibility, Template, TemplateOwnerType, RetrospectWeeklyAnalysis, RetrospectWeeklyAnalysisOwnerType, Kpi, KpiResult, KpiDataType, ChallengeOwnerType
 from django.test import TestCase
 from ai_manager.services.kpi_score_generator import score_kpis_from_retrospect, extract_meaning_units, match_meaning_units_to_kpi, score_matched_units, generate_feedback
 from unittest.mock import patch
@@ -619,4 +619,123 @@ class GenerateFeedbackTest(TestCase):
         print(f"에러 시 피드백: {feedback}")
 
         self.assertEqual(feedback, "좋은 시도였어요! 다음에도 도전해보세요.")
+
+# Additional Model and Serializer Tests
+
+class TemplateModelTest(TestCase):
+    def setUp(self):
+        self.common_template = Template.objects.create(owner_type=TemplateOwnerType.COMMON, name='Common', steps=[])
+    def test_str_representation(self):
+        self.assertEqual(str(self.common_template), 'Common')
+
+class TemplateSerializerTest(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(email='t@example.com', username='tu', password='pass')
+        self.crew = Crew.objects.create(crew_name='CrewT', crew_description='', crew_image='')
+        self.valid_common = {'owner_type': TemplateOwnerType.COMMON, 'name': 'C', 'steps': []}
+        self.valid_user = {'owner_type': TemplateOwnerType.USER, 'name': 'U', 'steps': [], 'user': self.user.id}
+        self.valid_crew = {'owner_type': TemplateOwnerType.CREW, 'name': 'CR', 'steps': [], 'crew': self.crew.id}
+
+    def test_common_template_valid(self):
+        serializer = TemplateSerializer(data=self.valid_common)
+        self.assertTrue(serializer.is_valid(), serializer.errors)
+        instance = serializer.save()
+        self.assertEqual(instance.owner_type, TemplateOwnerType.COMMON)
+
+    def test_user_template_invalid_with_crew(self):
+        data = self.valid_user.copy(); data['crew'] = self.crew.id
+        serializer = TemplateSerializer(data=data)
+        self.assertFalse(serializer.is_valid())
+        self.assertIn('Crew must not be provided', str(serializer.errors))
+
+    def test_crew_template_invalid_without_crew(self):
+        data = {'owner_type': TemplateOwnerType.CREW, 'name': 'Bad', 'steps': []}
+        serializer = TemplateSerializer(data=data)
+        self.assertFalse(serializer.is_valid())
+        self.assertIn('Crew must be provided', str(serializer.errors))
+
+class ChallengeSerializerTest(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(email='c@example.com', username='cu', password='pass')
+        self.crew = Crew.objects.create(crew_name='CrewC', crew_description='', crew_image='')
+        self.deadline = timezone.now() + timedelta(days=1)
+        self.valid_user = {'owner_type': ChallengeOwnerType.USER, 'challenge_name': 'Ch1', 'deadline': self.deadline.isoformat()}
+        self.valid_crew = {'owner_type': ChallengeOwnerType.CREW, 'challenge_name': 'Ch2', 'deadline': self.deadline.isoformat(), 'crew': self.crew.id}
+
+    def test_user_challenge_valid(self):
+        serializer = ChallengeSerializer(data=self.valid_user)
+        self.assertTrue(serializer.is_valid(), serializer.errors)
+
+    def test_user_challenge_invalid_with_crew(self):
+        data = self.valid_user.copy(); data['crew'] = self.crew.id
+        serializer = ChallengeSerializer(data=data)
+        self.assertFalse(serializer.is_valid())
+        self.assertIn('Crew must not be provided', str(serializer.errors))
+
+    def test_crew_challenge_invalid_without_crew(self):
+        data = {'owner_type': ChallengeOwnerType.CREW, 'challenge_name': 'Ch3', 'deadline': self.deadline.isoformat()}
+        serializer = ChallengeSerializer(data=data)
+        self.assertFalse(serializer.is_valid())
+        self.assertIn('Crew must be provided', str(serializer.errors))
+
+class PlanResponseSerializerTest(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(email='p@example.com', username='pu', password='pass')
+        self.challenge = Challenge.objects.create(user=self.user, owner_type=ChallengeOwnerType.USER, challenge_name='ChP', description='', deadline=timezone.now()+timedelta(days=1))
+        self.plan1 = Plan.objects.create(user=self.user, challenge=self.challenge, plan_text='A')
+        self.plan2 = Plan.objects.create(user=self.user, challenge=self.challenge, plan_text='B')
+
+    def test_get_plans_list(self):
+        serializer = PlanResponseSerializer([self.plan1, self.plan2])
+        result = serializer.data['plans']
+        self.assertEqual(len(result), 2)
+        self.assertEqual(result['1']['plan_text'], 'A')
+
+    def test_get_plans_single(self):
+        serializer = PlanResponseSerializer(self.plan1)
+        result = serializer.data['plans']
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result['1']['plan_text'], 'A')
+
+class RetrospectSerializerTest(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(email='r@example.com', username='ru', password='pass')
+        self.challenge = Challenge.objects.create(user=self.user, owner_type=ChallengeOwnerType.USER, challenge_name='ChR', description='', deadline=timezone.now()+timedelta(days=1))
+        self.valid = {'challenge': self.challenge.id, 'content': {'step':'c'}, 'visibility': RetrospectVisibility.PUBLIC, 'owner_type': RetrospectOwnerType.USER, 'initial_plan_description':'desc'}
+        self.context = {'request': type('r', (), {'method':'POST'})()}
+
+    def test_missing_initial_plan_description(self):
+        data = self.valid.copy(); data.pop('initial_plan_description')
+        serializer = RetrospectSerializer(data=data, context=self.context)
+        self.assertFalse(serializer.is_valid())
+        self.assertIn('initial_plan_description', str(serializer.errors))
+
+    def test_owner_type_mismatch(self):
+        data = self.valid.copy(); data['owner_type'] = RetrospectOwnerType.CREW
+        serializer = RetrospectSerializer(data=data, context=self.context)
+        self.assertFalse(serializer.is_valid())
+        self.assertIn('owner_type', str(serializer.errors))
+
+class RetrospectWeeklyAnalysisSerializerTest(TestCase):
+    def setUp(self):
+        self.crew = Crew.objects.create(crew_name='WAcrew', crew_description='', crew_image='')
+        self.start = timezone.now().date()
+        self.end = self.start
+        self.valid_user = {'owner_type': RetrospectWeeklyAnalysisOwnerType.USER, 'summary':{}, 'weekly_kpi':1, 'start_date':self.start, 'end_date':self.end}
+
+    def test_user_owner_valid(self):
+        serializer = RetrospectWeeklyAnalysisSerializer(data=self.valid_user)
+        self.assertTrue(serializer.is_valid(), serializer.errors)
+
+    def test_user_owner_invalid_with_crew(self):
+        data = self.valid_user.copy(); data['crew'] = self.crew.id
+        serializer = RetrospectWeeklyAnalysisSerializer(data=data)
+        self.assertFalse(serializer.is_valid())
+        self.assertIn('Crew must not be provided', str(serializer.errors))
+
+    def test_crew_owner_invalid_without_crew(self):
+        data = self.valid_user.copy(); data['owner_type'] = RetrospectWeeklyAnalysisOwnerType.CREW
+        serializer = RetrospectWeeklyAnalysisSerializer(data=data)
+        self.assertFalse(serializer.is_valid())
+        self.assertIn('Crew must be provided', str(serializer.errors))
 
