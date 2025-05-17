@@ -114,7 +114,7 @@ class CrewViewSet(viewsets.ModelViewSet):
         """특정 크루의 승인된 멤버 목록을 반환합니다."""
         crew = self.get_object() # Gets the crew instance based on pk
         # 승인된 멤버십을 조회합니다.
-        memberships = CrewMembership.objects.filter(crew=crew, status=CrewMembershipStatus.ACCEPTED)
+        memberships = CrewMembership.objects.filter(crew=crew)
         # 직렬화하여 응답합니다.
         serializer = CrewMembershipSerializer(memberships, many=True, context={'request': request})
         return Response(serializer.data)
