@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:reme/models/user_info.dart';
 import 'package:reme/utils/secret.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 class SocialLoginWebView extends StatefulWidget {
@@ -57,6 +58,7 @@ class _WebViewState extends State<SocialLoginWebView>
           });
         },
         onPageFinished: (String url) async {
+          SharedPreferences prefs = await SharedPreferences.getInstance();
           if (url.contains("/callback/")) {
             try {
               access_token = await parseToken(118);
@@ -69,6 +71,7 @@ class _WebViewState extends State<SocialLoginWebView>
               String id = await parseToken(14);
               String email = await parseToken(69);
               String profile_image = await parseToken(88);
+              bool needSignup = await prefs.getBool('${email}Signup') ?? true;
               await Future.delayed(const Duration(milliseconds: 500));
               Navigator.pop(
                   context,
@@ -79,6 +82,7 @@ class _WebViewState extends State<SocialLoginWebView>
                     email,
                     id,
                     profile_image,
+                    needSignup,
                   ));
             } catch (e) {
               print(e is Error);

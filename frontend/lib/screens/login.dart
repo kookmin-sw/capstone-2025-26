@@ -10,8 +10,6 @@ import 'package:reme/themes/color.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginPage extends StatelessWidget {
-  const LoginPage({super.key});
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -139,10 +137,16 @@ class LoginPage extends StatelessWidget {
             FlutterSecureStorage(); // accessToken과 refreshToken을 저장하는 SecrueStorage
         await storage.write(key: 'AccessToken', value: data.accessToken);
         await storage.write(key: 'RefreshToken', value: data.refreshToken);
+        await storage.write(key: 'Email', value: data.email);
+        await storage.write(key: 'Id', value: data.id);
+        await storage.write(key: 'ProfileImage', value: data.profileImage);
 
-        if (data.userName == 'null') {
-          Navigator.pushNamed(context, Routes.signup);
+        if (data.needSignup == true) {
+          // 사용자 명이 없을 때 회원가입 페이지로 이동.
+          Navigator.pushNamed(context, Routes.signup, arguments: data);
         } else {
+          // username이 있으면 flutter_secure_storage에 저장 후 메인페이지로 이동.
+          await storage.write(key: 'UserName', value: data.userName);
           Navigator.pushNamedAndRemoveUntil(
               context, Routes.splash, (route) => false);
         }
