@@ -12,7 +12,7 @@ class MyPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    var userName = ModalRoute.of(context)!.settings.arguments;
+    dynamic userInfo = ModalRoute.of(context)!.settings.arguments;
     return Scaffold(
       backgroundColor: background,
       appBar: AppBar(
@@ -38,7 +38,7 @@ class MyPage extends StatelessWidget {
                 ),
                 children: [
                   TextSpan(
-                    text: userName.toString(),
+                    text: userInfo['username'],
                     style: TextStyle(
                       color: c600,
                     ),
@@ -102,8 +102,10 @@ class MyPage extends StatelessWidget {
                   Navigator.push(
                       context,
                       MaterialPageRoute(
-                          builder: (context) =>
-                              AccountInfoPage(username: userName.toString())));
+                          builder: (context) => AccountInfoPage(
+                              username: userInfo['username'],
+                              email: userInfo['email'],
+                              profile_image: userInfo['profile_image'])));
                 },
                 child: Container(
                   width: 112.w,

@@ -107,8 +107,14 @@ class _InitialpageState extends State<Initialpage>
                         padding: EdgeInsets.only(left: 8.w, right: 19.w),
                         child: GestureDetector(
                             onTap: () {
-                              Navigator.pushNamed(context, Routes.myPage,
-                                  arguments: "이다현");
+                              if (userInfo != null) {
+                                Navigator.pushNamed(context, Routes.myPage,
+                                    arguments: {
+                                      'username': userInfo['username'] ?? '',
+                                      'email': userInfo['email'] ?? '',
+                                      'profile_image': userInfo['profile_image']
+                                    });
+                              }
                             },
                             child: CircleAvatar(
                               radius: 18.5.r,

@@ -1,11 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_svg_provider/flutter_svg_provider.dart';
 import 'package:reme/screens/get_info.dart';
 import 'package:reme/themes/color.dart';
 
 class AccountInfoPage extends StatefulWidget {
   final String username;
-  AccountInfoPage({super.key, required this.username});
+  final String email;
+  final String? profile_image;
+  AccountInfoPage(
+      {super.key,
+      required this.username,
+      required this.email,
+      required this.profile_image});
 
   @override
   State<AccountInfoPage> createState() => _AccountInfoPageState();
@@ -66,8 +73,10 @@ class _AccountInfoPageState extends State<AccountInfoPage> {
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(10.r),
                 ),
-                child: Image.asset(
-                  'assets/img/food.png',
+                child: Image(
+                  image: widget.profile_image != null
+                      ? NetworkImage(widget.profile_image.toString())
+                      : Svg('assets/img/account_circle.svg'),
                   fit: BoxFit.fill,
                 ),
               ),
@@ -92,12 +101,12 @@ class _AccountInfoPageState extends State<AccountInfoPage> {
                 showDialog(
                     context: context,
                     builder: (context) => Dialog(
-                          child: GetInfo(type: 2, content: "email@example.com"),
+                          child: GetInfo(type: 2, content: widget.email),
                         ));
               },
               child: Padding(
                 padding: EdgeInsets.only(left: 21.w, right: 21.w),
-                child: _buildInfo("이메일", "email@example.com"),
+                child: _buildInfo("이메일", widget.email),
               ),
             ),
           ],
