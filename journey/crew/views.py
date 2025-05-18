@@ -4,81 +4,74 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from .models import Crew, CrewMembership, CrewMembershipStatus, CrewMembershipRole
 from .serializers import CrewSerializer, CrewMembershipSerializer
-from .permissions import IsCrewCreatorOrReadOnly # Import the custom permission
+from .permissions import IsCrewCreatorOrReadOnly  # 커스텀 권한 클래스를 가져옵니다.
 from retrospect.models import Template, Retrospect, Challenge, ChallengeStatus
 from retrospect.serializers import TemplateSerializer, RetrospectSerializer, ChallengeSerializer
 # Create your views here.
 
 class CrewViewSet(viewsets.ModelViewSet):
     """
-    API endpoint that allows crews to be viewed or edited.
-    Also handles joining a crew.
+    크루 조회·수정 및 참여 처리 기능을 제공하는 API 엔드포인트입니다.
     """
     queryset = Crew.objects.all()
     serializer_class = CrewSerializer
-    # Require authentication for all crew actions
+    # 모든 요청은 인증이 필요합니다.
     permission_classes = [permissions.IsAuthenticated]
 
     @action(detail=False, methods=['get'], url_path='my-crews')
     def my_crews(self, request):
-        """Returns a list of crews the current user is a member of."""
+        """현재 사용자가 속한 크루 목록을 반환합니다."""
         user = request.user
-        # Find memberships where the user is accepted
         memberships = CrewMembership.objects.filter(user=user, status=CrewMembershipStatus.ACCEPTED)
-        # Get the crew objects from these memberships
         crews = [membership.crew for membership in memberships]
-        # Serialize the crew data
-        serializer = CrewSerializer(crews, many=True, context={'request': request}) # Pass request context for potential hyperlinked fields
+        serializer = CrewSerializer(crews, many=True, context={'request': request})
         return Response(serializer.data)
 
     @action(detail=True, methods=['post'], url_path='join', permission_classes=[permissions.IsAuthenticated])
     def join_crew(self, request, pk=None):
-        """Allows an authenticated user to join a specific crew.
-        If the user has a PENDING request, it accepts it.
-        If the user has no request, it creates an ACCEPTED membership.
-        The first user to be ACCEPTED becomes the CREATOR.
-        """
+        """인증된 사용자가 특정 크루에 참여하도록 처리합니다.
+        PENDING 요청이 있으면 승인, 없으면 ACCEPTED 멤버십을 생성합니다.
+        첫 승인된 사용자는 CREATOR 역할을 부여받습니다."""
         crew = self.get_object()
         user = request.user
 
         try:
             membership = CrewMembership.objects.get(user=user, crew=crew)
-            # Membership exists, handle based on status
+            # 기존 멤버십 상태에 따라 처리합니다.
             if membership.status == CrewMembershipStatus.ACCEPTED:
-                return Response({'detail': 'User is already a member of this crew.'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({'detail': '이미 크루 멤버입니다.'}, status=status.HTTP_400_BAD_REQUEST)
 
             elif membership.status == CrewMembershipStatus.PENDING:
-                # Accept the pending request
+                # 대기 중인 요청을 승인합니다.
                 membership.status = CrewMembershipStatus.ACCEPTED
-                # Check if this user is now the first accepted member
+                # 첫 승인된 멤버인지 확인합니다.
                 is_first_accepted = not CrewMembership.objects.filter(
                     crew=crew, 
                     status=CrewMembershipStatus.ACCEPTED
-                ).exclude(pk=membership.pk).exists() # Exclude self if checking before save
+                ).exclude(pk=membership.pk).exists()
                 
                 if is_first_accepted:
                     membership.role = CrewMembershipRole.CREATOR
                 else:
-                    # Ensure role is participant if not the first (might have been wrongly assigned CREATOR on request)
+                    # 첫 번째가 아니면 PARTICIPANT 역할로 설정합니다.
                     membership.role = CrewMembershipRole.PARTICIPANT
                 
                 membership.save()
                 
-                # Update member count
+                # 멤버 수를 갱신합니다.
                 crew.member_count = CrewMembership.objects.filter(crew=crew, status=CrewMembershipStatus.ACCEPTED).count()
                 crew.save(update_fields=['member_count'])
                 
                 serializer = CrewMembershipSerializer(membership)
-                return Response(serializer.data, status=status.HTTP_200_OK) # OK, as we updated existing
+                return Response(serializer.data, status=status.HTTP_200_OK)
 
             elif membership.status == CrewMembershipStatus.REJECTED:
-                 return Response({'detail': 'Your previous join request was rejected. Please contact the crew admin.'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({'detail': '이전 조인 요청이 거절되었습니다. 관리자에게 문의하세요.'}, status=status.HTTP_400_BAD_REQUEST)
             else:
-                 return Response({'detail': 'Cannot process join request due to existing membership status.'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({'detail': '현재 상태로 요청을 처리할 수 없습니다.'}, status=status.HTTP_400_BAD_REQUEST)
 
         except CrewMembership.DoesNotExist:
-            # No existing membership, create a new ACCEPTED one
-            # Determine role based on whether the crew has accepted members *before* creating
+            # 기존 멤버십이 없으면 ACCEPTED 멤버십을 생성합니다.
             is_first_member = not CrewMembership.objects.filter(crew=crew, status=CrewMembershipStatus.ACCEPTED).exists()
             default_role = CrewMembershipRole.CREATOR if is_first_member else CrewMembershipRole.PARTICIPANT
 
@@ -89,53 +82,46 @@ class CrewViewSet(viewsets.ModelViewSet):
                 status=CrewMembershipStatus.ACCEPTED
             )
 
-            # Update member_count
+            # 멤버 수를 갱신합니다.
             crew.member_count = CrewMembership.objects.filter(crew=crew, status=CrewMembershipStatus.ACCEPTED).count()
             crew.save(update_fields=['member_count'])
 
             serializer = CrewMembershipSerializer(membership)
-            return Response(serializer.data, status=status.HTTP_201_CREATED) # CREATED, as it's new
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     @action(detail=True, methods=['delete'], url_path='leave', permission_classes=[permissions.IsAuthenticated])
     def leave_crew(self, request, pk=None):
-        """Allows an authenticated user to leave a specific crew."""
+        """인증된 사용자가 특정 크루에서 탈퇴하도록 처리합니다."""
         crew = self.get_object() # Gets the crew instance based on pk
         user = request.user
 
         try:
             membership = CrewMembership.objects.get(user=user, crew=crew)
         except CrewMembership.DoesNotExist:
-            return Response({'detail': 'You are not a member of this crew.'}, status=status.HTTP_404_NOT_FOUND)
-
-        # Optional: Prevent creator from leaving?
-        # if membership.role == CrewMembershipRole.CREATOR:
-        #     return Response({'detail': 'Crew creator cannot leave the crew. You may need to delete the crew or transfer ownership first.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'detail': '크루 멤버가 아닙니다.'}, status=status.HTTP_404_NOT_FOUND)
 
         # Delete the membership
         membership.delete()
 
-        # Optional: Update member_count. Consider using signals for robustness.
-        crew.member_count = CrewMembership.objects.filter(crew=crew, status=CrewMembershipStatus.ACCEPTED).count() # Recalculate or decrement
+        # 멤버 수를 갱신합니다.
+        crew.member_count = CrewMembership.objects.filter(crew=crew, status=CrewMembershipStatus.ACCEPTED).count()
         crew.save(update_fields=['member_count'])
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=True, methods=['get'], url_path='members')
     def list_members(self, request, pk=None):
-        """Returns a list of accepted members for a specific crew."""
+        """특정 크루의 승인된 멤버 목록을 반환합니다."""
         crew = self.get_object() # Gets the crew instance based on pk
-        # Find accepted memberships for this crew
-        memberships = CrewMembership.objects.filter(crew=crew, status=CrewMembershipStatus.ACCEPTED)
-        # Serialize the membership data (which includes user details)
-        # Use CrewMembershipSerializer as it's designed to show membership details including the user
+        # 승인된 멤버십을 조회합니다.
+        memberships = CrewMembership.objects.filter(crew=crew)
+        # 직렬화하여 응답합니다.
         serializer = CrewMembershipSerializer(memberships, many=True, context={'request': request})
         return Response(serializer.data)
 
     @action(detail=True, methods=['post'], url_path='request-join', permission_classes=[permissions.IsAuthenticated])
     def request_join(self, request, pk=None):
-        """Allows an authenticated user to request joining a specific crew.
-        Creates a membership record with PENDING status.
-        """
+        """인증된 사용자가 특정 크루 참여 요청을 생성합니다. (상태: PENDING)"""
         crew = self.get_object()
         user = request.user
 
@@ -144,19 +130,23 @@ class CrewViewSet(viewsets.ModelViewSet):
             membership = CrewMembership.objects.get(user=user, crew=crew)
             # Handle existing membership statuses
             if membership.status == CrewMembershipStatus.ACCEPTED:
-                return Response({'detail': 'User is already a member of this crew.'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({'detail': '이미 크루 멤버입니다.'}, status=status.HTTP_400_BAD_REQUEST)
             elif membership.status == CrewMembershipStatus.PENDING:
-                return Response({'detail': 'Join request is already pending.'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({'detail': '이미 참여 요청이 대기 중입니다.'}, status=status.HTTP_400_BAD_REQUEST)
             elif membership.status == CrewMembershipStatus.REJECTED:
-                 return Response({'detail': 'Your previous join request was rejected. Please contact the crew admin to rejoin.'}, status=status.HTTP_400_BAD_REQUEST)
+                # 이전 요청이 거절된 경우, 상태를 PENDING으로 변경합니다.
+                membership.status = CrewMembershipStatus.PENDING
+                membership.save()
+                serializer = CrewMembershipSerializer(membership)
+                return Response(serializer.data, status=status.HTTP_200_OK)
             else:
-                 return Response({'detail': 'Cannot process join request due to existing membership status.'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({'detail': '현재 상태로 요청을 처리할 수 없습니다.'}, status=status.HTTP_400_BAD_REQUEST)
 
         except CrewMembership.DoesNotExist:
-            # No existing membership for this user, proceed to create a PENDING request
+            # 기존 멤버십이 없으면 PENDING 멤버십을 생성합니다.
             pass
 
-        # Determine potential role if approved (first requester might become creator)
+        # 첫 참여 요청인지 확인하여 잠재적 역할을 결정합니다.
         is_first_member_request = not CrewMembership.objects.filter(crew=crew).exists()
         potential_role = CrewMembershipRole.CREATOR if is_first_member_request else CrewMembershipRole.PARTICIPANT
 
@@ -164,28 +154,51 @@ class CrewViewSet(viewsets.ModelViewSet):
         membership = CrewMembership.objects.create(
             user=user,
             crew=crew,
-            role=potential_role, # Assign potential role, can be confirmed/changed on approval
+            role=potential_role,
             status=CrewMembershipStatus.PENDING # Set status to PENDING
         )
 
-        # Note: Member count is NOT updated here.
+        # 주의: 멤버 수는 갱신하지 않습니다.
 
         serializer = CrewMembershipSerializer(membership)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-    @action(detail=True, methods=['post'], url_path=r'reject_member/(?P<user_pk>\d+)')
+    @action(detail=True, methods=['post'], url_path=r'accept_member/(?P<user_pk>\d+)', permission_classes=[permissions.IsAuthenticated])
+    def accept_request(self, request, pk=None, user_pk=None):
+        """크루 생성자가 특정 사용자의 PENDING 요청을 승인합니다."""
+        crew = self.get_object() # Gets the crew instance based on pk
+        
+        try:
+            membership = CrewMembership.objects.get(crew=crew, user_id=user_pk)
+        except CrewMembership.DoesNotExist:
+            return Response({'detail': '해당 사용자의 멤버십 요청을 찾을 수 없습니다.'}, status=status.HTTP_404_NOT_FOUND)
+
+        if membership.status != CrewMembershipStatus.PENDING:
+            membership.status = CrewMembershipStatus.ACCEPTED
+            membership.save()
+
+            # 멤버 수를 갱신합니다.
+            crew.member_count = CrewMembership.objects.filter(crew=crew, status=CrewMembershipStatus.ACCEPTED).count()
+            crew.save(update_fields=['member_count'])
+
+            serializer = CrewMembershipSerializer(membership)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        else:
+            return Response({'detail': '해당 멤버십은 PENDING 상태가 아닙니다.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=True, methods=['post'], url_path=r'reject_member/(?P<user_pk>\d+)', permission_classes=[permissions.IsAuthenticated])
     def reject_request(self, request, pk=None, user_pk=None):
-        """Allows the crew creator to reject a PENDING join request from a specific user."""
+        """크루 생성자가 특정 사용자의 PENDING 요청을 거절합니다."""
         crew = self.get_object() # Gets the crew instance based on pk
         # Permission check (IsCrewCreatorOrReadOnly) is handled automatically by the viewset
 
         try:
             membership = CrewMembership.objects.get(crew=crew, user_id=user_pk)
         except CrewMembership.DoesNotExist:
-            return Response({'detail': 'Membership request not found for this user in this crew.'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'detail': '해당 사용자의 멤버십 요청을 찾을 수 없습니다.'}, status=status.HTTP_404_NOT_FOUND)
 
         if membership.status != CrewMembershipStatus.PENDING:
-            return Response({'detail': f'This membership is not pending (status: {membership.status}). Cannot reject.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'detail': f'해당 멤버십은 PENDING 상태가 아닙니다 (현재 상태: {membership.status}).'}, status=status.HTTP_400_BAD_REQUEST)
 
         # Change status to REJECTED
         membership.status = CrewMembershipStatus.REJECTED
@@ -194,19 +207,19 @@ class CrewViewSet(viewsets.ModelViewSet):
         # Member count does not change as they were never accepted.
 
         serializer = CrewMembershipSerializer(membership)
-        return Response(serializer.data, status=status.HTTP_200_OK) # OK, showing the rejected status
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=['get'], url_path='templates')
-    def crew_templates(self, request):
-        """Returns a list of templates for a specific crew."""
+    def crew_templates(self, request, pk=None):
+        """특정 크루의 템플릿 목록을 반환합니다."""
         crew = self.get_object()
         templates = Template.objects.filter(crew=crew)
         serializer = TemplateSerializer(templates, many=True, context={'request': request})
         return Response(serializer.data)
 
     @action(detail=True, methods=['get'], url_path='retrospects')
-    def crew_retrospects(self, request):
-        """Returns a list of retrospects for a specific crew."""
+    def crew_retrospects(self, request, pk=None):
+        """특정 크루의 회고 목록을 반환합니다."""
         crew = self.get_object()
         retrospects = Retrospect.objects.filter(crew=crew)
         serializer = RetrospectSerializer(retrospects, many=True, context={'request': request})
@@ -214,18 +227,13 @@ class CrewViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['get'], url_path='challenges')
     def crew_challenges(self, request, pk=None):
-        """Returns a list of challenges for a specific crew, optionally filtered by status.
-
-        Checks if the user is a member of the crew.
-        Filters by status query param: ?status=LIVE / SUCCESS / FAIL
-        """
+        """특정 크루의 챌린지 목록을 반환하며, 상태(status) 필터링을 지원합니다."""
         crew = self.get_object()
         user = request.user
 
-        # Check if user is an accepted member of the crew
+        # 사용자가 해당 크루의 승인된 멤버인지 확인합니다.
         if not CrewMembership.objects.filter(crew=crew, user=user, status=CrewMembershipStatus.ACCEPTED).exists():
-            # Optionally, allow public viewing or creator override depending on deeper permission logic
-            return Response({'detail': 'You must be a member of this crew to view its challenges.'}, 
+            return Response({'detail': '크루 멤버만 챌린지를 조회할 수 있습니다.'}, 
                             status=status.HTTP_403_FORBIDDEN)
 
         # Base queryset for the crew's challenges
@@ -238,12 +246,11 @@ class CrewViewSet(viewsets.ModelViewSet):
         if status_filter and status_filter in valid_statuses:
             queryset = queryset.filter(status=status_filter)
         elif status_filter:
-             # Optional: Return error for invalid status, or just ignore it and return all
-             # For now, ignore invalid status and return all challenges for the crew
-             pass 
+            # 유효하지 않은 상태 필터는 무시하고 전체를 반환합니다.
+            pass 
 
         # Serialize the (potentially filtered) challenges
         serializer = ChallengeSerializer(queryset, many=True, context={'request': request})
         return Response(serializer.data)
 
-    # Standard ModelViewSet actions (list, create, retrieve, update, destroy) are still available
+    # 기본 list, create, retrieve, update, destroy 액션을 지원합니다.

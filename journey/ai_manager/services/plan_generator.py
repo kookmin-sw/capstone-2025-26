@@ -15,6 +15,8 @@ import dotenv
 dotenv.load_dotenv()
 logger = logging.getLogger(__name__)
 
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
+
 # LangChain LLM 설정
 llm = ChatVertexAI(
     project=os.getenv("PROJECT_ID"),
@@ -81,13 +83,13 @@ def generate_plan_from_retrospect(challenge, retrospect):
     
     # 프롬프트 - JSON 형식 출력을 요청하도록 수정
     template_str = (Path(__file__).parent.parent / "templates" / "plan_from_retrospect_prompt.txt").read_text()
-    prompt_template = PromptTemplate(
+    prompt = PromptTemplate(
         input_variables=["challenge_name", "kpi_info", "retrospect_content"],
         template=template_str
     )
 
     # 🔹 2. LLMChain 생성
-    chain = LLMChain(llm=llm, prompt=prompt_template)
+    chain = prompt | llm
 
     # 🔹 3. 입력값 구성
     input_data = {

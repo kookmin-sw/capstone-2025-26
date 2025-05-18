@@ -11,9 +11,11 @@ import json
 import logging
 from typing import List, Dict, Any
 from pathlib import Path
-import dotenv
+from dotenv import load_dotenv
 
-dotenv.load_dotenv()
+load_dotenv()
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
+
 logger = logging.getLogger(__name__)
 
 # LangChain LLM 설정
@@ -133,7 +135,7 @@ def generate_kpis_for_challenge(challenge: Challenge, plan_ids: List[int], user_
         raise ValueError("유효한 계획 데이터가 없습니다. 적어도 하나의 계획이 필요합니다.")
     
     template_str = (Path(__file__).parent.parent / "templates" / "kpi_generator_prompt.txt").read_text()
-    prompt_template = PromptTemplate(
+    prompt = PromptTemplate(
         input_variables=["challenge_name", "challenge_description", "plans", "user_context", "item_count"],
         template=template_str
     )
@@ -155,7 +157,7 @@ def generate_kpis_for_challenge(challenge: Challenge, plan_ids: List[int], user_
     }
 
     # LLM 체인 생성 및 실행
-    chain = LLMChain(llm=llm, prompt=prompt_template)
+    chain = prompt | llm
     
     try:
         # LLM 호출 및 응답 처리

@@ -112,22 +112,42 @@ class Retrospect(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    RetrospectOwnerType = RetrospectOwnerType
+
 class RetrospectWeeklyAnalysis(models.Model):
     """주간 회고 분석"""
     user = models.ForeignKey('user_manager.User', on_delete=models.CASCADE, related_name='weekly_analyses', null=True, blank=True) # 개인 분석일 경우
     crew = models.ForeignKey('crew.Crew', on_delete=models.CASCADE, related_name='weekly_analyses', null=True, blank=True) # 크루 분석일 경우
-    summary = models.JSONField() # 주간 분석 요약
-    weekly_kpi = models.IntegerField(null=True, blank=True)
+    challenge = models.ForeignKey(Challenge, on_delete=models.CASCADE, related_name='weekly_analyses', null=True, blank=True) # 어떤 챌린지에 대한 분석인지 명시
+    summary = models.TextField(null=True, blank=True) # LLM이 생성한 주간 한줄 요약
+    comment = models.TextField(null=True, blank=True) # LLM이 생성한 주간 피드백 (3~4줄)
+    assessment = models.TextField(null=True, blank=True) # LLM이 생성한 주간 질적 평가 (예: "훌륭한 진전", "꾸준한 노력 필요", "목표 초과 달성").
+    avg_score = models.FloatField(null=True, blank=True) # 주간 KPI 평균 점수
+    min_score = models.FloatField(null=True, blank=True) # 주간 KPI 최소 점수
+    max_score = models.FloatField(null=True, blank=True) # 주간 KPI 최대 점수
     start_date = models.DateField() # 주 시작일
-    end_date = models.DateField() # 주 종료일 (week_end -> end_date)
+    end_date = models.DateField() # 주 종료일
     owner_type = models.CharField(max_length=10, choices=RetrospectWeeklyAnalysisOwnerType.choices)
     created_at = models.DateTimeField(auto_now_add=True)
 
     RetrospectWeeklyAnalysisOwnerType = RetrospectWeeklyAnalysisOwnerType
+    
+    class Meta:
+        unique_together = ('challenge', 'owner_type', 'user', 'start_date', 'end_date') # 유저/크루별, 챌린지별 주간 분석은 유일해야 함
+        indexes = [
+            models.Index(fields=['challenge', 'owner_type', 'user', 'start_date']),
+            models.Index(fields=['challenge', 'owner_type', 'crew', 'start_date']),
+        ]
 
     def __str__(self):
-        owner = self.user if self.owner_type == RetrospectWeeklyAnalysisOwnerType.USER else self.crew
-        return f"Weekly Analysis for {owner} ({self.start_date} - {self.end_date})"
+        owner_identifier = ""
+        if self.owner_type == RetrospectWeeklyAnalysisOwnerType.USER and self.user:
+            owner_identifier = f"User {self.user.id}"
+        elif self.owner_type == RetrospectWeeklyAnalysisOwnerType.CREW and self.crew:
+            owner_identifier = f"Crew {self.crew.id}"
+        
+        challenge_name = self.challenge.challenge_name if self.challenge else "N/A"
+        return f"Weekly Analysis for {owner_identifier} on Challenge '{challenge_name}' ({self.start_date} - {self.end_date})"
 
 # --- New Models ---
 
@@ -142,6 +162,8 @@ class Kpi(models.Model):
     measurement_method = models.TextField(blank=True, default='') # 측정 방법 (선택적)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    KpiDataType = KpiDataType
 
     class Meta:
         unique_together = ('challenge', 'user', 'name') # 사용자, 챌린지별 KPI 이름은 고유해야 함
@@ -162,8 +184,10 @@ class KpiResult(models.Model):
     retrospect = models.ForeignKey(Retrospect, on_delete=models.CASCADE, related_name='kpi_results')
 
     score = models.FloatField()  # 0 ~ 1 범위 권장
-    comment = models.TextField(blank=True, null=True)  # 추가 설명
+    comment = models.TextField(blank=True, null=True)  # llm 피드백
     created_at = models.DateTimeField(auto_now_add=True)
+
+    KpiResultOwnerType = RetrospectOwnerType
 
     class Meta:
         verbose_name = "KPI Result"

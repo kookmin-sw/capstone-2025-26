@@ -6,7 +6,8 @@ import 'package:reme/themes/color.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class GuidePage extends StatefulWidget {
-  const GuidePage({super.key});
+  bool fromMyPage;
+  GuidePage({super.key, this.fromMyPage = false});
 
   @override
   State<GuidePage> createState() => _GuidePageState();
@@ -75,10 +76,14 @@ class _GuidePageState extends State<GuidePage> {
                       style: TextButton.styleFrom(
                           padding: EdgeInsets.only(bottom: 10.h)),
                       onPressed: () async {
-                        SharedPreferences prefs =
-                            await SharedPreferences.getInstance();
-                        prefs.setBool("first_install", false);
-                        Navigator.pushReplacementNamed(context, Routes.login);
+                        if (widget.fromMyPage) {
+                          Navigator.pop(context);
+                        } else {
+                          SharedPreferences prefs =
+                              await SharedPreferences.getInstance();
+                          prefs.setBool("first_install", false);
+                          Navigator.pushReplacementNamed(context, Routes.login);
+                        }
                       },
                       child: Text("시작하기",
                           style: TextStyle(
@@ -103,11 +108,15 @@ class _GuidePageState extends State<GuidePage> {
                                     EdgeInsets.fromLTRB(8.r, 8.r, 10.r, 12.r),
                                 child: GestureDetector(
                                   onTap: () async {
-                                    SharedPreferences prefs =
-                                        await SharedPreferences.getInstance();
-                                    prefs.setBool("first_install", false);
-                                    Navigator.pushReplacementNamed(
-                                        context, Routes.login);
+                                    if (widget.fromMyPage) {
+                                      Navigator.pop(context);
+                                    } else {
+                                      SharedPreferences prefs =
+                                          await SharedPreferences.getInstance();
+                                      prefs.setBool("first_install", false);
+                                      Navigator.pushReplacementNamed(
+                                          context, Routes.login);
+                                    }
                                   },
                                   child: Text("건너뛰기",
                                       style: TextStyle(
