@@ -78,6 +78,7 @@ class MyPage extends StatelessWidget {
                       Center(
                         child: Image(
                           image: Svg('assets/img/my_interest.svg'),
+                          color: c100,
                           width: 64.w,
                           height: 64.h,
                         ),
@@ -118,6 +119,7 @@ class MyPage extends StatelessWidget {
                       Center(
                         child: Image(
                           image: Svg('assets/img/account_info.svg'),
+                          color: c100,
                           width: 64.w,
                           height: 64.h,
                         ),
@@ -168,7 +170,7 @@ class MyPage extends StatelessWidget {
                             size: Size(60.w, 60.h),
                             scale: 6,
                           ),
-                          color: c600,
+                          color: c100,
                         ),
                       ),
                       Center(
@@ -212,7 +214,7 @@ class MyPage extends StatelessWidget {
                             size: Size(60.w, 60.h),
                             scale: 6,
                           ),
-                          color: c600,
+                          color: c100,
                         ),
                       ),
                       Center(
@@ -257,7 +259,7 @@ class MyPage extends StatelessWidget {
                             size: Size(58.w, 58.h),
                             scale: 6,
                           ),
-                          color: c600,
+                          color: c100,
                         ),
                       ),
                       Center(
