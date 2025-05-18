@@ -17,10 +17,10 @@ class MyDio {
         'Content-Type': 'application/json',
       },
     ));
-    _initializeToken();
+    initializeToken();
   }
 
-  Future<void> _initializeToken() async {
+  Future<void> initializeToken() async {
     token = await storage.read(key: 'AccessToken');
     if (token != null) {
       _dio.options.headers['Authorization'] = 'Bearer $token';
@@ -28,6 +28,7 @@ class MyDio {
   }
 
   Future<dynamic> get(String path) async {
+    await initializeToken();
     try {
       var response = await _dio.get(path);
       return response;

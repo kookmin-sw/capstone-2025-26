@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:reme/screens/feed.dart';
 import 'package:reme/screens/home.dart';
 import 'package:reme/screens/retrospectPage.dart';
+import 'package:reme/services/user_update.dart';
 import 'package:reme/themes/color.dart';
 import 'package:reme/icon/tab_bar_icon_icons.dart';
 
@@ -20,6 +21,7 @@ class _InitialpageState extends State<Initialpage>
   ScrollController scrollController = ScrollController();
   int _selectIndex = 0;
   int _retroSelectIndex = 0;
+  dynamic userInfo;
 
   @override
   void initState() {
@@ -35,6 +37,12 @@ class _InitialpageState extends State<Initialpage>
     retroTabController!.addListener(() => setState(() {
           _retroSelectIndex = retroTabController!.index;
         }));
+
+    getUserInfo().then((value) {
+      setState(() {
+        userInfo = value;
+      });
+    });
   }
 
   @override
@@ -92,6 +100,10 @@ class _InitialpageState extends State<Initialpage>
                             onTap: () {},
                             child: CircleAvatar(
                               radius: 18.5.r,
+                              backgroundImage: userInfo != null &&
+                                      userInfo['profile_image'] != null
+                                  ? NetworkImage(userInfo['profile_image'])
+                                  : null,
                             )))
                   ],
                   toolbarHeight: 55,

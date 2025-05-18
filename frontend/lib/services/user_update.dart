@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:reme/services/mydio.dart';
 
-final MyDio dio = MyDio();
+MyDio dio = MyDio();
 
 Future<dynamic> updateUser(
     {required String id,
@@ -31,4 +31,17 @@ Future<dynamic> updateUser(
 
 Future<dynamic> _uploadProfileImage(File image) async {
   // TODO: 프로필 이미지 업로드 작업
+}
+
+Future<dynamic> getUserInfo() async {
+  // TODO: 유저 정보 가져오기
+  final response = await dio.get('/users/user_info/');
+  return response.data;
+}
+
+Future<dynamic> getChallengeList({required int filter}) async {
+  // filter 0: 개인, 1: 크루
+  // TODO: 챌린지 목록 가져오기
+  final response = await dio.get('/retrospect/challenges/');
+  return response.data;
 }
