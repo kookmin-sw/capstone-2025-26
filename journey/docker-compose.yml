@@ -27,7 +27,7 @@ services:
 
   celery_worker:
     build: .
-    command: celery -A config worker -l info -c 4 # concurrency of 4
+    command: celery -A config worker -l info
     volumes:
       - .:/app
       - ./vertex-ai-sa.json:/app/vertex-ai-sa.json:ro
