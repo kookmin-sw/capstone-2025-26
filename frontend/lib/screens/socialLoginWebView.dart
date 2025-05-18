@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:reme/models/user_info.dart';
 import 'package:reme/utils/secret.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 class SocialLoginWebView extends StatefulWidget {
