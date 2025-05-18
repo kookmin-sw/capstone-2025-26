@@ -47,7 +47,7 @@ class _RetrospectCompletionScreenState
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
-        builder: (context) => const ReflectionAnalysisScreen(),
+        builder: (context) => ReflectionAnalysisScreen(),
       ),
     );
   }
@@ -129,7 +129,8 @@ class _RetrospectCompletionScreenState
 // This is a temporary implementation based on the image
 // Replace this with your actual reflection analysis screen implementation
 class ReflectionAnalysisScreen extends StatefulWidget {
-  const ReflectionAnalysisScreen({super.key});
+  bool fromMyPage;
+  ReflectionAnalysisScreen({super.key, this.fromMyPage = false});
 
   @override
   State<ReflectionAnalysisScreen> createState() =>
@@ -152,8 +153,12 @@ class _ReflectionAnalysisScreenState extends State<ReflectionAnalysisScreen> {
               left: 13,
               child: GestureDetector(
                 onTap: () {
-                  Navigator.pushNamedAndRemoveUntil(
-                      context, Routes.splash, (route) => false);
+                  if (widget.fromMyPage) {
+                    Navigator.pop(context);
+                  } else {
+                    Navigator.pushNamedAndRemoveUntil(
+                        context, Routes.splash, (route) => false);
+                  }
                 },
                 child: Container(
                     margin: const EdgeInsets.only(left: 16),

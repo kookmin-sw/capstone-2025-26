@@ -8,7 +8,8 @@ import 'package:reme/widgets/widgetBox.dart';
 
 class Home extends StatefulWidget {
   final VoidCallback? onCrewMoreTap;
-  const Home({super.key, this.onCrewMoreTap});
+  final VoidCallback? switchToRetrospect;
+  const Home({super.key, this.onCrewMoreTap, this.switchToRetrospect});
 
   @override
   State<Home> createState() => _HomeState();
@@ -38,6 +39,20 @@ class _HomeState extends State<Home> {
       height: 57.h,
     ),
   ];
+  late List<VoidCallback?> topBoxTap;
+
+  @override
+  void initState() {
+    super.initState();
+    topBoxTap = [
+      widget.switchToRetrospect, // 회고 목록 보는 페이지로 이동
+      () {
+        Navigator.pushNamed(context, Routes.retrospectChallenge);
+      },
+      widget.onCrewMoreTap, // 크루 페이지로 이동
+    ];
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -52,83 +67,58 @@ class _HomeState extends State<Home> {
               scrollDirection: Axis.horizontal,
               itemCount: 3,
               itemBuilder: (context, index) {
-                return Container(
-                  width: 150.w,
-                  height: 150.h,
-                  margin: EdgeInsets.only(
-                    left: index == 0 ? 24.w : 0,
-                    right: index == 2 ? 24.w : 10.w,
-                  ),
-                  padding: EdgeInsets.fromLTRB(9.w, 7.h, 10.w, 10.h),
-                  decoration: BoxDecoration(
-                    color: boxBackgroundColor,
-                    borderRadius: BorderRadius.circular(10.r),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        topBoxTitle[index],
-                        style: TextStyle(
-                          fontSize: 20.sp,
-                          fontWeight: FontWeight.w700,
-                          color: fontColor,
+                return GestureDetector(
+                  onTap: topBoxTap[index],
+                  child: Container(
+                    width: 150.w,
+                    height: 150.h,
+                    margin: EdgeInsets.only(
+                      left: index == 0 ? 24.w : 0,
+                      right: index == 2 ? 24.w : 10.w,
+                    ),
+                    padding: EdgeInsets.fromLTRB(9.w, 7.h, 10.w, 10.h),
+                    decoration: BoxDecoration(
+                      color: boxBackgroundColor,
+                      borderRadius: BorderRadius.circular(10.r),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          topBoxTitle[index],
+                          style: TextStyle(
+                            fontSize: 20.sp,
+                            fontWeight: FontWeight.w700,
+                            color: fontColor,
+                          ),
                         ),
-                      ),
-                      SizedBox(
-                        width: double.maxFinite,
-                        height: 100.h,
-                        child: Stack(
-                          children: [
-                            Text(
-                              topBoxContent[index],
-                              style: TextStyle(
-                                fontSize: 16.sp,
-                                fontWeight: FontWeight.w600,
-                                color: fontColor,
+                        SizedBox(
+                          width: double.maxFinite,
+                          height: 100.h,
+                          child: Stack(
+                            children: [
+                              Text(
+                                topBoxContent[index],
+                                style: TextStyle(
+                                  fontSize: 16.sp,
+                                  fontWeight: FontWeight.w600,
+                                  color: fontColor,
+                                ),
                               ),
-                            ),
-                            Positioned(
-                              bottom: 0,
-                              right: 0,
-                              child: topBoxImage[index],
-                            ),
-                          ],
+                              Positioned(
+                                bottom: 0,
+                                right: 0,
+                                child: topBoxImage[index],
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 );
               },
             ),
-          ),
-          SizedBox(
-            height: 15.h,
-          ),
-          GestureDetector(
-            child: Container(
-              width: 372.w,
-              height: 65.h,
-              margin: EdgeInsets.only(left: 24.w, right: 24.w),
-              decoration: BoxDecoration(
-                color: c900,
-                borderRadius: BorderRadius.circular(10.r),
-              ),
-              child: Center(
-                child: Text(
-                  "오늘 회고하러 하기",
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: fontColor,
-                    fontSize: 20.sp,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-            ),
-            onTap: () {
-              Navigator.pushNamed(context, Routes.retrospectChallenge);
-            },
           ),
           SizedBox(
             height: 15.h,
@@ -157,6 +147,7 @@ class _HomeState extends State<Home> {
                 height: 10.h,
               ),
               CrewList(
+                crewId: 0,
                 crewName: "캡스톤 26조 파이팅",
                 crewIntro: "크루에 대한 설명칸. 길어진다면 다음과 같이 마무리 하는게 좋을거 같긴 한데",
               ),
@@ -164,6 +155,7 @@ class _HomeState extends State<Home> {
                 height: 15.h,
               ),
               CrewList(
+                crewId: 1,
                 crewName: "은성 캉의 영어 회화 교실",
                 crewIntro: "크루에 대한 설명칸. 길어진다면 다음과 같이 마무리 하는게 좋을거 같긴 한데",
               ),
@@ -171,6 +163,7 @@ class _HomeState extends State<Home> {
                 height: 15.h,
               ),
               CrewList(
+                crewId: 2,
                 crewName: "정릉동 우주최강 조깅 모임",
                 crewIntro: "크루에 대한 설명칸. 길어진다면 다음과 같이 마무리 하는게 좋을거 같긴 한데",
               ),
