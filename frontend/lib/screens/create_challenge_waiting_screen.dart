@@ -81,7 +81,7 @@ class _CreateChallengeWaitingScreenState
                   Text(
                     challengeName,
                     style: TextStyle(
-                      color: textPrimary,
+                      color: fontColor,
                       fontSize: 26.sp,
                       fontWeight: FontWeight.w800,
                       fontFamily: 'Pretendard',
@@ -91,7 +91,7 @@ class _CreateChallengeWaitingScreenState
                   Text(
                     '챌린지의 플랜 생성 중이에요!',
                     style: TextStyle(
-                      color: textPrimary,
+                      color: fontColor,
                       fontSize: 22.sp,
                       fontWeight: FontWeight.w800,
                       fontFamily: 'Pretendard',
