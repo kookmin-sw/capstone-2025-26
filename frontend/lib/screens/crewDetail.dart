@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg_provider/flutter_svg_provider.dart';
+import 'package:reme/screens/comment_dialog.dart';
 import 'package:reme/themes/color.dart';
 import 'package:reme/icon/tab_bar_icon_icons.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -601,6 +602,7 @@ class PostCard extends StatelessWidget {
   final bool? isRetrospect;
   final String? score;
   final bool hasSuccess;
+  final bool isComment;
   const PostCard({
     super.key,
     required this.nickname,
@@ -610,6 +612,7 @@ class PostCard extends StatelessWidget {
     this.isRetrospect = false,
     this.score,
     this.hasSuccess = false,
+    this.isComment = false,
   });
 
   @override
@@ -680,7 +683,17 @@ class PostCard extends StatelessWidget {
                   ),
                   Icon(TabBarIcon.heart, color: Colors.white, size: 16.sp),
                   SizedBox(width: 19.w),
-                  Icon(TabBarIcon.comment, color: Colors.white, size: 19.sp),
+                  if (isComment == false)
+                    GestureDetector(
+                        onTap: () {
+                          showDialog(
+                              context: context,
+                              builder: (context) => Dialog(
+                                    child: CommentDialog(postId: '1'),
+                                  ));
+                        },
+                        child: Icon(TabBarIcon.comment,
+                            color: Colors.white, size: 19.sp)),
                 ],
               ),
             if (isRetrospect == true)
