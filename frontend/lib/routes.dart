@@ -6,6 +6,7 @@ import 'package:reme/screens/initialPage.dart';
 import 'package:reme/screens/login.dart';
 import 'package:reme/screens/my_page.dart';
 import 'package:reme/screens/notification_list_page.dart';
+import 'package:reme/screens/retrospect_detail.dart';
 import 'package:reme/screens/signupPage.dart';
 import 'package:reme/screens/retrospectChallengeList.dart';
 import 'package:reme/screens/retrospect_completion_screen.dart';
@@ -22,6 +23,7 @@ class Routes {
   static const notificationList = "/notification-list";
   static const addPost = "/add-post";
   static const crewAdmin = "/crew-admin";
+  static const retrospectDetail = "/retrospect-detail";
 }
 
 var namedRoute = {
@@ -36,4 +38,5 @@ var namedRoute = {
   Routes.notificationList: (context) => NotificationListPage(),
   Routes.addPost: (context) => AddPost(),
   Routes.crewAdmin: (context) => CrewAdminPage(),
+  Routes.retrospectDetail: (context) => RetrospectDetail(),
 };
