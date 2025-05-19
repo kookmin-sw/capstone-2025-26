@@ -2,19 +2,53 @@
 CSV 파일에서 회고 데이터를 읽어 Django Retrospect 테이블에 저장하는 스크립트
 GTPAR (Goal, Try, Problem, Achievement) 형식으로 된 회고를 처리합니다.
 """
-
 import os
-import csv
 import sys
-import datetime
-import json
+
+# 1. 경로 설정
+current_dir = os.path.dirname(os.path.abspath(__file__))
+journey_root = os.path.abspath(os.path.join(current_dir, '..'))
+project_root = os.path.abspath(os.path.join(journey_root, '..'))
+sys.path.insert(0, project_root)
+sys.path.insert(0, journey_root)
+
+# 2. Django 설정 초기화
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
+
+import django
+django.setup()  # ⬅️ 반드시 import 전 실행해야 함
+
+# 3. 이제 import 가능 (이후에 models, services 등)
+from langchain_google_vertexai.chat_models import ChatVertexAI
+from ai_manager.services.kpi_score_generator import score_kpis_from_retrospect
+from langfuse.callback import CallbackHandler
 from django.utils import timezone
 from django.db import transaction
+import datetime
+import csv
+from uuid import uuid4
+
+# Langfuse 핸들러 초기화
+langfuse_handler = None
+langfuse_handler = CallbackHandler(
+    secret_key=os.getenv("LANGFUSE_SECRET_KEY"),
+    public_key=os.getenv("LANGFUSE_PUBLIC_KEY"),
+    host=os.getenv("LANGFUSE_HOST"),
+)
+# LangChain LLM 설정
+llm = ChatVertexAI(
+    project=os.getenv("PROJECT_ID"),
+    location="us-central1",
+    model_name="gemini-2.0-flash-lite-001",
+    max_output_tokens=1024,
+    temperature=0.7,
+    callbacks=[langfuse_handler] if langfuse_handler else None,
+)
+
+
 
 # 프로젝트 루트 디렉토리를 Python 경로에 추가
-current_dir = os.path.dirname(os.path.abspath(__file__))
-project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.append(project_root)
+
 
 # Django 설정 초기화
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
@@ -28,7 +62,7 @@ from retrospect.models import Retrospect, Challenge, Template, RetrospectOwnerTy
 from user_manager.models import User
 
 # CSV 파일이 있는 디렉토리 경로 설정
-CSV_DIR = os.path.join(project_root, 'retrospect', 'dummy_csv')
+CSV_DIR = os.path.join(journey_root, 'retrospect', 'dummy_csv')
 
 def get_or_create_template():
     """GTPAR 형식의 템플릿이 없으면 생성"""
@@ -57,10 +91,12 @@ def get_or_create_template():
     return template
 
 def get_or_create_user(username, email=None):
-    """사용자 이름으로 사용자를 찾거나 생성"""
     if not email:
-        email = f"{username.replace(' ', '_').lower()}@example.com"
-    
+        # UUID 일부를 붙여서 고유성 확보
+        uid = str(uuid4())[:8]
+        base_email = username.replace(' ', '_').lower()
+        email = f"{base_email}_{uid}@example.com"
+
     try:
         user = User.objects.get(username=username)
         print(f"기존 사용자를 사용합니다: {username}")
@@ -68,10 +104,10 @@ def get_or_create_user(username, email=None):
         user = User.objects.create_user(
             username=username,
             email=email,
-            password='password123'  # 테스트용 기본 비밀번호
+            password='password123'
         )
         print(f"새로운 사용자를 생성했습니다: {username}")
-    
+
     return user
 
 def get_or_create_challenge(challenge_name, user):
@@ -186,12 +222,8 @@ def parse_csv_file(file_path):
     return user_name, retrospects
 
 @transaction.atomic
-def create_retrospect_from_csv_data(user, challenge, template, title, content, created_date):
-    """CSV 데이터로부터 회고 생성"""
-    
-
-    
-    # Retrospect 생성
+def create_retrospect_from_csv_data(user, challenge, template, title, content, created_date, llm):
+    """CSV 데이터로부터 회고 생성 및 KPI 평가"""
     retrospect = Retrospect.objects.create(
         challenge=challenge,
         template=template,
@@ -201,9 +233,10 @@ def create_retrospect_from_csv_data(user, challenge, template, title, content, c
         created_at=created_date,
         updated_at=created_date,
         user=user,
-        crew=None,  # 크루 회고가 아닐 경우 None
+        crew=None,
     )
-    
+    results = score_kpis_from_retrospect(retrospect, llm)
+    print(f"    → KPI {len(results)}개 평가 완료")
     return retrospect
 
 def import_csv_files():
@@ -245,7 +278,8 @@ def import_csv_files():
                     template=template,
                     title='', 
                     content=retro_data['content'],
-                    created_date=created_date
+                    created_date=created_date,
+                    llm=llm  
                 )
                 
                 retrospect_count += 1

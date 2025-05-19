@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:reme/routes.dart';
+import 'package:reme/screens/crew_list_page.dart';
 import 'package:reme/screens/feed.dart';
 import 'package:reme/screens/home.dart';
-import 'package:reme/screens/restroPage.dart';
+import 'package:reme/screens/retrospectPage.dart';
 import 'package:reme/themes/color.dart';
 import 'package:reme/icon/tab_bar_icon_icons.dart';
 
@@ -13,45 +16,56 @@ class Initialpage extends StatefulWidget {
 }
 
 class _InitialpageState extends State<Initialpage>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   TabController? tabController;
+  TabController? retroTabController;
   ScrollController scrollController = ScrollController();
   int _selectIndex = 0;
-  double _opacity = 1.0;
-
-  final List<Widget> _pageOptions = [
-    const Home(),
-    const RetroPage(), // Retrospect
-    Container(), //dummy Widget - crew
-    Container(), //dummy Widget - challenge
-    const Feed(), // Feed
-  ];
+  int _retroSelectIndex = 0;
 
   @override
   void initState() {
     super.initState();
-    tabController = TabController(length: 5, vsync: this);
+    tabController = TabController(length: 4, vsync: this);
+    retroTabController = TabController(length: 2, vsync: this);
+
     tabController!.addListener(() => setState(() {
           scrollController.jumpTo(0);
+          retroTabController!.index = 0;
           _selectIndex = tabController!.index;
         }));
-    scrollController.addListener(() {
-      setState(() {
-        // 스크롤 위치에 따라 opacity 조정
-        _opacity = 1 - (scrollController.offset / 200).clamp(0.0, 1.0);
-      });
-    });
+    retroTabController!.addListener(() => setState(() {
+          _retroSelectIndex = retroTabController!.index;
+        }));
   }
 
   @override
   void dispose() {
     tabController!.dispose();
+    retroTabController!.dispose();
     scrollController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final List<Widget> pageOptions = [
+      Home(onCrewMoreTap: () {
+        setState(() {
+          _selectIndex = 2;
+          tabController?.index = 2;
+        });
+      }, switchToRetrospect: () {
+        setState(() {
+          _selectIndex = 1;
+          tabController?.index = 1;
+        });
+      }),
+      RetroPage(tabNo: _retroSelectIndex),
+      const CrewListPage(),
+      const Feed(),
+    ];
+
     return Scaffold(
       backgroundColor: background,
       body: Stack(
@@ -62,36 +76,71 @@ class _InitialpageState extends State<Initialpage>
               physics: const BouncingScrollPhysics(),
               slivers: [
                 SliverAppBar(
-                  title: const Text(
-                    "Re:Me",
-                    style: TextStyle(fontWeight: FontWeight.bold, color: c700),
+                  title: Text(
+                    "To-GO",
+                    style: TextStyle(
+                      fontSize: 24.sp,
+                      fontWeight: FontWeight.w700,
+                      color: c700,
+                    ),
                   ),
                   backgroundColor: background,
                   centerTitle: false,
                   actions: [
                     IconButton(
-                        onPressed: () {},
+                        onPressed: () {
+                          Navigator.pushNamed(context, Routes.notificationList);
+                        },
                         icon: const Icon(
                           Icons.notifications_outlined,
                           color: c700,
                         )),
                     Container(
-                        padding: const EdgeInsets.only(right: 10),
+                        padding: EdgeInsets.only(left: 8.w, right: 19.w),
                         child: GestureDetector(
-                            onTap: () {}, child: const CircleAvatar()))
+                            onTap: () {
+                              Navigator.pushNamed(context, Routes.myPage,
+                                  arguments: "이다현");
+                            },
+                            child: CircleAvatar(
+                              radius: 18.5.r,
+                            )))
                   ],
                   toolbarHeight: 55,
                   floating: true, // 최상단으로 올리지 않아도 appbar 표시
                   scrolledUnderElevation: 0, // 스크롤시 appbar 색상 변경 안되게
                   snap: true,
+                  bottom: (_selectIndex == 1)
+                      ? TabBar(
+                          controller: retroTabController,
+                          indicatorColor: Colors.white,
+                          unselectedLabelColor: Color(0xFF848484),
+                          labelColor: fontColor,
+                          tabs: [
+                              Tab(
+                                child: Text(
+                                  "회고 목록",
+                                  style: TextStyle(
+                                    fontSize: 16.sp,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                              Tab(
+                                child: Text(
+                                  "챌린지 목록",
+                                  style: TextStyle(
+                                    fontSize: 16.sp,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              )
+                            ])
+                      : null,
                 ),
                 SliverList(
                     delegate: SliverChildListDelegate([
-                  Container(
-                    padding: const EdgeInsets.only(bottom: 80),
-                    child: _pageOptions
-                        .elementAt(_selectIndex), // 하단바 height만큼 padding
-                  )
+                  pageOptions.elementAt(_selectIndex),
                 ]))
               ],
               controller: scrollController,
@@ -150,10 +199,6 @@ class _InitialpageState extends State<Initialpage>
                           TabBarIcon.award,
                         ),
                         text: "크루",
-                      ),
-                      Tab(
-                        icon: Icon(TabBarIcon.command),
-                        text: "목표",
                       ),
                       Tab(
                         icon: Icon(TabBarIcon.files),

@@ -20,6 +20,7 @@ jobs:
         run: |
           mkdir -p jour # Ensure journey directory exists in the runner workspace
           echo "${{ secrets.MAP }}" > jour/.env
+          echo "${{ secrets.MAPG }}" > jour/vertex-ai-sa.json
         shell: bash
         
       - name: Set up Python
@@ -34,6 +35,15 @@ jobs:
           username: ${{ secrets.USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           source: "jour/.env"
+          target: "serv/" # Target directory on the server
+
+      - name: Copy vertex-ai-sa.json file to server
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: "jour/vertex-ai-sa.json"
           target: "serv/" # Target directory on the server
           
       - name: Deploy to server
@@ -51,6 +61,7 @@ jobs:
             # Navigate to the directory with docker-compose.yml
             cd journey 
             cp ~/serv/jour/.env .
+            cp ~/serv/jour/vertex-ai-sa.json .
             # .env file is copied via scp in the previous step
             
             # Build and restart containers using Docker Compose

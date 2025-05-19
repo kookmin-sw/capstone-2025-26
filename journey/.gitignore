@@ -163,3 +163,5 @@ cython_debug/
 journey/erd.png
 
 dummy_csv/
+
+vertex-ai-sa.json

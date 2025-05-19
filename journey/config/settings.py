@@ -57,6 +57,8 @@ INSTALLED_APPS = [
     'community', 
     'crew',
     'retrospect',
+    "django_celery_beat",
+    "django_celery_results"
 ]
 
 MIDDLEWARE = [
@@ -106,8 +108,12 @@ WSGI_APPLICATION = 'config.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': os.getenv('DB_MYSQL_ENGINE', 'django.db.backends.sqlite3'),
+        'NAME': os.getenv('DB_MYSQL_NAME', BASE_DIR / 'db.sqlite3'),
+        'USER': os.getenv('DB_MYSQL_USER', ''),
+        'PASSWORD': os.getenv('DB_MYSQL_PASSWORD', ''),
+        'HOST': os.getenv('DB_MYSQL_HOST', 'localhost'),
+        'PORT': os.getenv('DB_MYSQL_PORT', ''),
     }
 }
 
@@ -183,11 +189,32 @@ langfuse = Langfuse(
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# temp api key
-KAKAO_REST_API_KEY = "29da5b5ee2999f173be0ce8443322289"
-KAKAO_REDIRECT_URI = "http://13.125.14.13:8000/api/kakao/callback"
+# Load API keys and URIs from environment variables
+KAKAO_REST_API_KEY = os.getenv('KAKAO_REST_API_KEY', '')
+KAKAO_REDIRECT_URI = os.getenv('KAKAO_REDIRECT_URI', '')
 
-NAVER_REST_API_KEY = "y8aLqw6Aa8x6ASMEEpqc"
-NAVER_SECRET_API_KEY = "dA3n3zJdkA"
-NAVER_REDIRECT_URI = "http://13.125.14.13:8000/api/naver/callback"
+NAVER_REST_API_KEY = os.getenv('NAVER_REST_API_KEY', '')
+NAVER_SECRET_API_KEY = os.getenv('NAVER_SECRET_API_KEY', '')
+NAVER_REDIRECT_URI = os.getenv('NAVER_REDIRECT_URI', '')
+
+REDIS_HOST = os.getenv('REDIS_HOST', 'redis') # 기본 호스트명을 'redis' (Docker Compose용) 또는 'localhost' 등으로 설정
+REDIS_PORT = os.getenv('REDIS_PORT', '6379')
+REDIS_PORT_SYSTEM = os.getenv('REDIS_PORT_SYSTEM') # Celery 브로커에는 직접 사용되지 않을 수 있음
+REDIS_PW = os.getenv('REDIS_PW')
+
+# Celery
+# CELERY_BROKER_URL 환경 변수가 있으면 그 값을 사용하고,
+# 없으면 REDIS_HOST, REDIS_PORT, REDIS_PW를 조합하여 생성
+_celery_broker_db = '0' # Celery 브로커용 Redis DB 번호
+
+if REDIS_PW:
+    _constructed_broker_url = f"redis://:{REDIS_PW}@{REDIS_HOST}:{REDIS_PORT}/{_celery_broker_db}"
+else:
+    _constructed_broker_url = f"redis://{REDIS_HOST}:{REDIS_PORT}/{_celery_broker_db}"
+
+CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL', _constructed_broker_url)
+CELERY_RESULT_BACKEND = CELERY_BROKER_URL
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
 

@@ -1,11 +1,75 @@
 version: '3.8'
 
 services:
+  redis:
+    image: "redis:alpine"
+    ports:
+      - "6379:6379"
+
   web:
     build: .
     volumes:
       - .:/app
+      - ./vertex-ai-sa.json:/app/vertex-ai-sa.json:ro
       # Add more volumes if needed, e.g., for static files
       # - static_volume:/app/static
     ports:
       - "8000:8000"
+    depends_on:
+      - redis
+    environment:
+      - DJANGO_SETTINGS_MODULE=config.settings
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - REDIS_HOST=redis
+      - GOOGLE_APPLICATION_CREDENTIALS=/app/vertex-ai-sa.json
+      # Add other environment variables your Django app needs
+
+  celery_worker:
+    build: .
+    command: celery -A config worker -l info
+    volumes:
+      - .:/app
+      - ./vertex-ai-sa.json:/app/vertex-ai-sa.json:ro
+    depends_on:
+      - redis
+      - web
+    environment:
+      - DJANGO_SETTINGS_MODULE=config.settings
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - REDIS_HOST=redis
+      - GOOGLE_APPLICATION_CREDENTIALS=/app/vertex-ai-sa.json
+      - PROJECT_ID=${PROJECT_ID}
+      - LANGFUSE_SECRET_KEY=${LANGFUSE_SECRET_KEY}
+      - LANGFUSE_PUBLIC_KEY=${LANGFUSE_PUBLIC_KEY}
+      - LANGFUSE_HOST=${LANGFUSE_HOST}
+
+  celery_beat:
+    build: .
+    command: celery -A config beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    volumes:
+      - .:/app
+      - ./vertex-ai-sa.json:/app/vertex-ai-sa.json:ro
+    depends_on:
+      - redis
+      - web # Or at least until migrations are done
+    environment:
+      - DJANGO_SETTINGS_MODULE=config.settings
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - REDIS_HOST=redis
+      - GOOGLE_APPLICATION_CREDENTIALS=/app/vertex-ai-sa.json
+      # Add other environment variables your Django app needs
+
+  flower:
+    image: mher/flower
+    ports:
+      - "5555:5555"
+    depends_on:
+      - redis
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      # If your Redis has a password:
+      # - CELERY_BROKER_URL=redis://:your_redis_password@redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0

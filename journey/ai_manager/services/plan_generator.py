@@ -9,8 +9,13 @@ import re
 import json
 import logging
 from typing import Dict, Any, List
+from pathlib import Path
+import dotenv
 
+dotenv.load_dotenv()
 logger = logging.getLogger(__name__)
+
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
 
 # LangChain LLM 설정
 llm = ChatVertexAI(
@@ -77,37 +82,14 @@ def generate_plan_from_retrospect(challenge, retrospect):
         })
     
     # 프롬프트 - JSON 형식 출력을 요청하도록 수정
-    prompt_template = PromptTemplate(
-    input_variables=["challenge_name", "kpi_info", "retrospect_content"],
-    template="""
-        아래는 사용자의 회고 챌린지 정보입니다.
-
-        [챌린지명]
-        {challenge_name}
-
-        [KPI 기준]
-        {kpi_info}
-
-        [최근 회고 내용]
-        {retrospect_content}
-
-        위 정보를 기반으로, 사용자가 내일 실천할 수 있는 **간단하고 구체적인 행동 계획**을 2~3개 작성해주세요.
-        
-        반드시 아래와 같은 JSON 형식으로 출력해주세요. 키는 계획 번호(숫자), 값은 계획 내용이어야 합니다.
-        
-        예시:
-        {{
-          "1": "아침에 10분간 KPI 점검하기",
-          "2": "퇴근 후 오늘의 회고 작성",
-          "3": "회고한 내용을 메모 앱에 기록"
-        }}
-        
-        출력은 반드시 위와 같은 JSON 형식이어야 합니다. JSON 외의 추가 텍스트는 포함하지 마세요.
-    """
+    template_str = (Path(__file__).parent.parent / "templates" / "plan_from_retrospect_prompt.txt").read_text()
+    prompt = PromptTemplate(
+        input_variables=["challenge_name", "kpi_info", "retrospect_content"],
+        template=template_str
     )
 
     # 🔹 2. LLMChain 생성
-    chain = LLMChain(llm=llm, prompt=prompt_template)
+    chain = prompt | llm
 
     # 🔹 3. 입력값 구성
     input_data = {
@@ -168,35 +150,10 @@ def generate_plan_from_challenge(challenge, user_context="", item_count=3):
     item_count = max(1, min(item_count, 5))  # 1-5 사이의 값으로 제한
     
     # JSON 형식 프롬프트로 수정
+    template_str = (Path(__file__).parent.parent / "templates" / "plan_from_challenge_prompt.txt").read_text()
     prompt_template = PromptTemplate(
         input_variables=["challenge_name", "challenge_description", "user_context", "item_count"],
-        template="""
-        다음은 사용자의 챌린지 정보입니다.
-
-        [챌린지명]
-        {challenge_name}
-
-        [챌린지 설명]
-        {challenge_description}
-
-        [추가 컨텍스트]
-        {user_context}
-
-        위 정보를 바탕으로, 사용자가 챌린지를 성공적으로 달성하기 위한 구체적인 실행 계획을 정확히 {item_count}개 작성해 주세요.
-        
-        각 행동 계획은 구체적이고 실행 가능해야 하며, 한국어로 작성해야 합니다.
-        
-        반드시 아래와 같은 JSON 형식으로 출력해주세요. 키는 계획 번호(숫자), 값은 간결하고 구체적인 계획 내용이어야 합니다.
-        
-        예시:
-        {{
-          "1": "매일 아침 6시에 기상하여 30분간 개념 복습하기",
-          "2": "방과 후 2시간 동안 '쎈' 교재 문제 풀이 집중하기",  
-          "3": "일주일에 3회, 1시간씩 오답노트 정리 및 복습하기"
-        }}
-        
-        출력은 반드시 위와 같은 JSON 형식이어야 합니다. JSON 외의 추가 텍스트는 포함하지 마세요.
-        """
+        template=template_str
     )
 
     # LLMChain 생성

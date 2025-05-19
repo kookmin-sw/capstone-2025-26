@@ -112,22 +112,42 @@ class Retrospect(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    RetrospectOwnerType = RetrospectOwnerType
+
 class RetrospectWeeklyAnalysis(models.Model):
     """주간 회고 분석"""
     user = models.ForeignKey('user_manager.User', on_delete=models.CASCADE, related_name='weekly_analyses', null=True, blank=True) # 개인 분석일 경우
     crew = models.ForeignKey('crew.Crew', on_delete=models.CASCADE, related_name='weekly_analyses', null=True, blank=True) # 크루 분석일 경우
-    summary = models.JSONField() # 주간 분석 요약
-    weekly_kpi = models.IntegerField(null=True, blank=True)
+    challenge = models.ForeignKey(Challenge, on_delete=models.CASCADE, related_name='weekly_analyses', null=True, blank=True) # 어떤 챌린지에 대한 분석인지 명시
+    summary = models.TextField(null=True, blank=True) # LLM이 생성한 주간 한줄 요약
+    comment = models.TextField(null=True, blank=True) # LLM이 생성한 주간 피드백 (3~4줄)
+    assessment = models.TextField(null=True, blank=True) # LLM이 생성한 주간 질적 평가 (예: "훌륭한 진전", "꾸준한 노력 필요", "목표 초과 달성").
+    avg_score = models.FloatField(null=True, blank=True) # 주간 KPI 평균 점수
+    min_score = models.FloatField(null=True, blank=True) # 주간 KPI 최소 점수
+    max_score = models.FloatField(null=True, blank=True) # 주간 KPI 최대 점수
     start_date = models.DateField() # 주 시작일
-    end_date = models.DateField() # 주 종료일 (week_end -> end_date)
+    end_date = models.DateField() # 주 종료일
     owner_type = models.CharField(max_length=10, choices=RetrospectWeeklyAnalysisOwnerType.choices)
     created_at = models.DateTimeField(auto_now_add=True)
 
     RetrospectWeeklyAnalysisOwnerType = RetrospectWeeklyAnalysisOwnerType
+    
+    class Meta:
+        unique_together = ('challenge', 'owner_type', 'user', 'start_date', 'end_date') # 유저/크루별, 챌린지별 주간 분석은 유일해야 함
+        indexes = [
+            models.Index(fields=['challenge', 'owner_type', 'user', 'start_date']),
+            models.Index(fields=['challenge', 'owner_type', 'crew', 'start_date']),
+        ]
 
     def __str__(self):
-        owner = self.user if self.owner_type == RetrospectWeeklyAnalysisOwnerType.USER else self.crew
-        return f"Weekly Analysis for {owner} ({self.start_date} - {self.end_date})"
+        owner_identifier = ""
+        if self.owner_type == RetrospectWeeklyAnalysisOwnerType.USER and self.user:
+            owner_identifier = f"User {self.user.id}"
+        elif self.owner_type == RetrospectWeeklyAnalysisOwnerType.CREW and self.crew:
+            owner_identifier = f"Crew {self.crew.id}"
+        
+        challenge_name = self.challenge.challenge_name if self.challenge else "N/A"
+        return f"Weekly Analysis for {owner_identifier} on Challenge '{challenge_name}' ({self.start_date} - {self.end_date})"
 
 # --- New Models ---
 
@@ -143,6 +163,8 @@ class Kpi(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    KpiDataType = KpiDataType
+
     class Meta:
         unique_together = ('challenge', 'user', 'name') # 사용자, 챌린지별 KPI 이름은 고유해야 함
         indexes = [
@@ -151,63 +173,6 @@ class Kpi(models.Model):
 
     def __str__(self):
         return f"KPI '{self.name}' for {self.user} in {self.challenge}"
-
-class KpiDataEntry(models.Model):
-    """KPI 데이터 기록 모델"""
-    kpi = models.ForeignKey(Kpi, on_delete=models.CASCADE, related_name='data_entries')
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='kpi_data_entries') # 데이터를 기록한 사용자
-    record_date = models.DateField() # 기록 날짜
-
-    # 값 타입별 필드
-    value_type = models.CharField(max_length=10, choices=KpiDataType.choices)
-    value_float = models.FloatField(null=True, blank=True)
-    value_integer = models.IntegerField(null=True, blank=True) # Renamed from value_int
-    value_text = models.TextField(null=True, blank=True)
-    value_boolean = models.BooleanField(null=True, blank=True) # Renamed from value_bool
-
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        ordering = ['-record_date', '-created_at']
-        indexes = [
-            models.Index(fields=['kpi', 'user', 'record_date']),
-        ]
-
-    def clean(self):
-        # 저장 시 value_type에 맞는 필드 외에는 None으로 설정 (선택적이지만 권장)
-        super().clean()
-        if self.value_type == KpiDataType.FLOAT:
-            self.value_integer = None
-            self.value_text = None
-            self.value_boolean = None
-        elif self.value_type == KpiDataType.INTEGER:
-            self.value_float = None
-            self.value_text = None
-            self.value_boolean = None
-        elif self.value_type == KpiDataType.TEXT:
-            self.value_float = None
-            self.value_integer = None
-            self.value_boolean = None
-        elif self.value_type == KpiDataType.BOOLEAN:
-            self.value_float = None
-            self.value_integer = None
-            self.value_text = None
-
-    def get_value(self):
-        """실제 저장된 값을 반환하는 헬퍼 메서드"""
-        if self.value_type == KpiDataType.FLOAT:
-            return self.value_float
-        elif self.value_type == KpiDataType.INTEGER:
-            return self.value_integer
-        elif self.value_type == KpiDataType.TEXT:
-            return self.value_text
-        elif self.value_type == KpiDataType.BOOLEAN:
-            return self.value_boolean
-        return None
-
-    def __str__(self):
-        return f"Data for {self.kpi.name} on {self.record_date}: {self.get_value()}"
 
 class KpiResult(models.Model):
     """
@@ -219,8 +184,10 @@ class KpiResult(models.Model):
     retrospect = models.ForeignKey(Retrospect, on_delete=models.CASCADE, related_name='kpi_results')
 
     score = models.FloatField()  # 0 ~ 1 범위 권장
-    comment = models.TextField(blank=True, null=True)  # 추가 설명
+    comment = models.TextField(blank=True, null=True)  # llm 피드백
     created_at = models.DateTimeField(auto_now_add=True)
+
+    KpiResultOwnerType = RetrospectOwnerType
 
     class Meta:
         verbose_name = "KPI Result"

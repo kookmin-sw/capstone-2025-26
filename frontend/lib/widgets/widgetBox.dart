@@ -1,22 +1,26 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:reme/themes/color.dart';
 
 class WidgetBox extends StatelessWidget {
-  double? width, height;
-  List<Widget> children;
-  String title;
-  bool isMore;
-  EdgeInsets marginLTRB;
-  Function()? onTap;
-  WidgetBox(
-      {super.key,
-      this.width = double.maxFinite,
-      this.height,
-      required this.children,
-      this.title = '',
-      required this.isMore,
-      required this.marginLTRB,
-      this.onTap});
+  final double? width;
+  final double? height;
+  final List<Widget> children;
+  final String title;
+  final bool isMore;
+  final EdgeInsets marginLTRB;
+  final Function()? onTap;
+
+  const WidgetBox({
+    super.key,
+    this.width = double.maxFinite,
+    this.height,
+    required this.children,
+    this.title = '',
+    required this.isMore,
+    required this.marginLTRB,
+    this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -34,7 +38,7 @@ class WidgetBox extends StatelessWidget {
           children: [
             if (title != '')
               Container(
-                padding: const EdgeInsets.fromLTRB(28, 24, 0, 0),
+                padding: EdgeInsets.fromLTRB(24.w, 24.h, 0, 0),
                 child: Text(
                   title,
                   style: const TextStyle(

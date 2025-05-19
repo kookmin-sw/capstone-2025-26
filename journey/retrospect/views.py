@@ -8,85 +8,65 @@ from rest_framework.decorators import action
 from django.db.models import Q
 from .models import (Retrospect, Template, Challenge, Plan, ChallengeStatus, 
                  RetrospectWeeklyAnalysis, RetrospectVisibility, TemplateOwnerType, 
-                 ChallengeOwnerType, RetrospectOwnerType, RetrospectWeeklyAnalysisOwnerType, Kpi, KpiDataEntry, KpiResult)
+                 ChallengeOwnerType, RetrospectOwnerType, RetrospectWeeklyAnalysisOwnerType, Kpi, KpiResult)
 from .serializers import (RetrospectSerializer, TemplateSerializer, ChallengeSerializer, 
-                      PlanSerializer, PlanResponseSerializer, RetrospectWeeklyAnalysisSerializer, KpiSerializer, KpiDataEntrySerializer, KpiResultSerializer)
-from crew.models import Crew, CrewMembership, CrewMembershipStatus # Import CrewMembership models
-from .permissions import (IsRetrospectOwnerOrCrewMemberOrReadOnly, # Use the new permission class
+                      PlanSerializer, PlanResponseSerializer, RetrospectWeeklyAnalysisSerializer, KpiSerializer, KpiResultSerializer)
+from crew.models import Crew, CrewMembership, CrewMembershipStatus  # CrewMembership 관련 모델을 임포트합니다.
+from .permissions import (IsRetrospectOwnerOrCrewMemberOrReadOnly,  # 인증 읽기 허용, 소유자·크루 멤버만 수정 가능
                           IsTemplateOwnerOrCrewMemberOrReadOnly, 
                           IsChallengeOwnerOrCrewMemberOrReadOnly, 
                           IsRetrospectWeeklyAnalysisOwnerOrCrewMemberOrReadOnly)
 from django.utils import timezone
 from datetime import timedelta
+# from django_filters.rest_framework import DjangoFilterBackend # If you want filtering
 
 # Create your views here.
 
 
 class RetrospectViewSet(viewsets.ModelViewSet):
-    """ViewSet for the Retrospect model."""
+    """Retrospect 모델을 처리하는 ViewSet"""
     serializer_class = RetrospectSerializer
-    # Updated permission class
+    # 비인증 사용자는 읽기만, 소유자·크루 멤버만 수정 가능
     permission_classes = [IsAuthenticatedOrReadOnly, IsRetrospectOwnerOrCrewMemberOrReadOnly]
 
     def get_queryset(self):
-        """
-        Filter retrospects based on user authentication, ownership, crew membership,
-        and visibility settings.
-        """
+        """비인증 사용자는 공개 회고만, 인증된 사용자는 본인이 작성한 회고만 조회합니다."""
         user = self.request.user
         base_queryset = Retrospect.objects.select_related(
             'user', 'crew', 'challenge', 'template'
         ).all()
 
         if not user.is_authenticated:
-            # Unauthenticated users only see PUBLIC retrospects
+            # 비인증 사용자는 공개 회고만 조회합니다.
             return base_queryset.filter(visibility=RetrospectVisibility.PUBLIC)
         
-        # Authenticated users see:
-        # 1. Their own USER retrospects (regardless of visibility)
-        # 2. CREW retrospects of crews they are members of (if visibility is CREW or PUBLIC)
-        # 3. All PUBLIC retrospects (covered by the first filter if owner or the second if member, or separate Q)
-
-        # Get IDs of crews the user is an accepted member of
-        user_crew_ids = CrewMembership.objects.filter(
-            user=user, 
-            status=CrewMembershipStatus.ACCEPTED
-        ).values_list('crew_id', flat=True)
-
-        queryset = base_queryset.filter(
-            # Own USER retrospects (any visibility)
-            Q(owner_type=RetrospectOwnerType.USER, user=user) |
-            # CREW retrospects for their crews (CREW or PUBLIC visibility)
-            (Q(owner_type=RetrospectOwnerType.CREW, crew_id__in=user_crew_ids) & 
-             Q(visibility__in=[RetrospectVisibility.CREW, RetrospectVisibility.PUBLIC])) |
-            # Other PUBLIC retrospects (might overlap, but ensures all public are included)
-            Q(visibility=RetrospectVisibility.PUBLIC)
-        ).distinct() # Use distinct to avoid duplicates if a user owns a public retrospect
-        
-        return queryset
+        # 인증된 사용자는 본인이 작성한 회고만 조회합니다.
+        return base_queryset.filter(user=user)
     
-    # 실제 회고 생성 시 발생하는 NOT NULL constraint 실패(예: user_id가 NULL인 경우) 때문에 추가
     def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
+        user = self.request.user
+        challenge = serializer.validated_data.get('challenge')
+        template = serializer.validated_data.get('template')
 
-    # 분리하는게 좋을 것 같아서 일단 주석처리
-    # def perform_create(self, serializer):
-    #     """회고 생성 시 Plan을 자동 생성하고 연결"""
+        # Only allow retrospects for challenges the user owns or for crews they belong to
+        if challenge.owner_type == ChallengeOwnerType.USER:
+            if challenge.user != user:
+                raise PermissionDenied("You can only create retrospects for challenges you created.")
+            crew_to_save = None
+        elif challenge.owner_type == ChallengeOwnerType.CREW:
+            if not CrewMembership.objects.filter(
+                crew=challenge.crew,
+                user=user,
+                status=CrewMembershipStatus.ACCEPTED
+            ).exists():
+                raise PermissionDenied("You can only create retrospects for challenges of crews you belong to.")
+            crew_to_save = challenge.crew
+        else:
+            raise PermissionDenied("Invalid challenge owner type.")
 
-    #     user = self.request.user
-    #     retrospect = serializer.save(user=user)
+        serializer.save(user=user, challenge=challenge, template=template, crew=crew_to_save)
 
-    #     try:
-    #         #회고 기반 Plan 생성
-    #         plan = generate_plan_from_retrospect(retrospect.challenge, retrospect)
-
-    #         #회고에 Plan 연결 후 저장
-    #         retrospect.plan = plan
-    #         retrospect.save(update_fields=['plan'])
-        
-    #     except Exception as e:
-    #         # 회고는 저장됐지만 Plan 생성 실패
-    #         print(f"[ERROR] 회고 기반 Plan 생성 실패: {e}")
+    # 사용하지 않는 Plan 자동 생성 로직 및 예시 액션 주석을 제거했습니다.
 
 
     # Add specific actions if needed, e.g., linking to crew, etc.
@@ -100,21 +80,21 @@ class RetrospectViewSet(viewsets.ModelViewSet):
     #    ...
 
 class TemplateViewSet(viewsets.ModelViewSet):
-    """ViewSet for the Template model."""
+    """Template 모델을 처리하는 ViewSet"""
     serializer_class = TemplateSerializer
     permission_classes = [IsAuthenticatedOrReadOnly, IsTemplateOwnerOrCrewMemberOrReadOnly]
 
     def get_queryset(self):
-        """Filter templates:
-        - Authenticated users see COMMON templates, their own USER templates,
-          and templates belonging to Crews they are members of.
-        - Unauthenticated users see only COMMON templates.
+        """
+        템플릿을 필터링합니다.
+        - 인증된 사용자는 COMMON, 본인 USER, 소속 CREW 템플릿을 조회합니다.
+        - 비인증 사용자는 COMMON 템플릿만 조회합니다.
         """
         user = self.request.user
         base_queryset = Template.objects.select_related('user', 'crew').all()
 
         if user.is_authenticated:
-            # Corrected: Get crew IDs via CrewMembership
+            # 사용자가 속한 크루 ID 목록을 조회합니다.
             user_crew_ids = CrewMembership.objects.filter(
                 user=user,
                 status=CrewMembershipStatus.ACCEPTED
@@ -126,13 +106,11 @@ class TemplateViewSet(viewsets.ModelViewSet):
                 Q(owner_type=TemplateOwnerType.CREW, crew_id__in=user_crew_ids)
             ).distinct()
         else:
-            # Unauthenticated users only see common templates
+            # 비인증 사용자는 COMMON 템플릿만 조회합니다.
             return base_queryset.filter(owner_type=TemplateOwnerType.COMMON)
 
     def perform_create(self, serializer):
-        """Set user or crew based on owner_type if not provided.
-           Validate that the user can create the specified type.
-        """
+        """owner_type에 따라 user 또는 crew를 설정하고, 생성 권한을 검증합니다."""
         owner_type = serializer.validated_data.get('owner_type')
         user = self.request.user
 
@@ -140,7 +118,7 @@ class TemplateViewSet(viewsets.ModelViewSet):
             serializer.save(user=user, crew=None)
         elif owner_type == TemplateOwnerType.CREW:
             crew = serializer.validated_data.get('crew')
-            # Corrected: Check membership using CrewMembership
+            # CrewMembership을 사용해 멤버십 여부를 확인합니다.
             if not CrewMembership.objects.filter(
                 crew=crew, 
                 user=user, 
@@ -149,21 +127,22 @@ class TemplateViewSet(viewsets.ModelViewSet):
                  raise permissions.PermissionDenied("You do not have permission to create a template for this crew.")
             serializer.save(user=None, crew=crew)
         elif owner_type == TemplateOwnerType.COMMON:
-            # Add permission check here if needed: if not user.is_staff: raise ...
+            # COMMON 템플릿 생성 시 추가 권한 검증이 필요할 수 있습니다.
             serializer.save(user=None, crew=None)
         else:
             super().perform_create(serializer)
 
 class ChallengeViewSet(viewsets.ModelViewSet):
-    """ViewSet for the Challenge model."""
+    """Challenge 모델을 처리하는 ViewSet"""
     serializer_class = ChallengeSerializer
     permission_classes = [IsAuthenticatedOrReadOnly, IsChallengeOwnerOrCrewMemberOrReadOnly]
 
     def get_queryset(self):
-        """Filter Challenges:
-        - By default, show challenges of all statuses (for user or their crews).
-        - Add query params to filter by status (e.g., ?status=SUCCESS, ?status=FAIL, ?status=LIVE)
-        - Unauthenticated users see nothing.
+        """
+        챌린지를 필터링합니다.
+        - 기본: 사용자 또는 소속 크루의 모든 상태 챌린지를 조회합니다.
+        - ?status=SUCCESS/FAIL/LIVE로 상태 필터링을 지원합니다.
+        - 비인증 사용자는 결과가 없습니다.
         """
         user = self.request.user
         if not user.is_authenticated:
@@ -171,7 +150,7 @@ class ChallengeViewSet(viewsets.ModelViewSet):
 
         queryset = Challenge.objects.select_related('user', 'crew').all()
 
-        # Corrected: Get crew IDs via CrewMembership
+        # 사용자가 속한 크루 ID 목록을 조회합니다.
         user_crew_ids = CrewMembership.objects.filter(
             user=user,
             status=CrewMembershipStatus.ACCEPTED
@@ -182,23 +161,19 @@ class ChallengeViewSet(viewsets.ModelViewSet):
             Q(owner_type=ChallengeOwnerType.CREW, crew_id__in=user_crew_ids)
         ).distinct()
 
-        # Filter by status query parameter
+        # 상태(status) 쿼리 파라미터로 필터링합니다.
         status_filter = self.request.query_params.get('status', None)
         valid_statuses = [choice[0] for choice in ChallengeStatus.choices]
 
         if status_filter and status_filter in valid_statuses:
             queryset = queryset.filter(status=status_filter)
         elif status_filter:
-            pass # Ignore invalid status
+            pass  # 유효하지 않은 상태는 무시합니다.
 
         return queryset
 
     def perform_create(self, serializer):
-        """Handle Challenge creation:
-        - Set user or crew based on owner_type.
-        - Generate KPI via LLM.
-        - Assign Plan and KPI results to the challenge instance.
-        """
+        """Challenge 생성 시 owner_type에 따라 user 또는 crew를 설정하고, KPI 및 Plan/KPI 결과를 할당합니다."""
         owner_type = serializer.validated_data.get('owner_type')
         user = self.request.user
         crew = serializer.validated_data.get('crew')
@@ -210,18 +185,18 @@ class ChallengeViewSet(viewsets.ModelViewSet):
         if owner_type == ChallengeOwnerType.USER:
             challenge_owner_user = user
             if crew:
-                raise permissions.PermissionDenied("Cannot assign crew to a USER challenge.")
+                raise permissions.PermissionDenied("USER 챌린지에 crew를 지정할 수 없습니다.")
         elif owner_type == ChallengeOwnerType.CREW:
             challenge_owner_crew = crew
             if not crew:
-                 raise permissions.PermissionDenied("Crew is required for CREW challenge.")
-            # Corrected: Check membership using CrewMembership
+                raise permissions.PermissionDenied("CREW 챌린지에는 crew가 필요합니다.")
+            # CrewMembership을 사용해 멤버십 여부를 확인합니다.
             if not CrewMembership.objects.filter(
                 crew=crew,
                 user=user,
                 status=CrewMembershipStatus.ACCEPTED
             ).exists():
-                 raise permissions.PermissionDenied("You are not a member of this crew.")
+                raise permissions.PermissionDenied("크루 멤버만 생성할 수 있습니다.")
 
         serializer.save(
             user=challenge_owner_user,
@@ -231,7 +206,7 @@ class ChallengeViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['patch'], url_path='update-status')
     def update_status(self, request, pk=None):
-        """Allows updating the status of a challenge."""
+        """챌린지 상태를 업데이트합니다."""
         challenge = self.get_object()
         new_status = request.data.get('status')
 
@@ -249,15 +224,15 @@ class ChallengeViewSet(viewsets.ModelViewSet):
 
 
 class RetrospectWeeklyAnalysisViewSet(viewsets.ModelViewSet):
-    """ViewSet for the RetrospectWeeklyAnalysis model."""
+    """주간 회고 분석 모델(RetrospectWeeklyAnalysis)을 처리하는 ViewSet"""
     serializer_class = RetrospectWeeklyAnalysisSerializer
     permission_classes = [IsAuthenticatedOrReadOnly, IsRetrospectWeeklyAnalysisOwnerOrCrewMemberOrReadOnly]
 
     def get_queryset(self):
-        """Filter weekly analyses:
-        - Authenticated users see their own USER analyses and analyses
-          belonging to Crews they are members of.
-        - Unauthenticated users see nothing (or maybe public ones if that becomes a feature).
+        """
+        주간 분석을 필터링합니다.
+        - 인증된 사용자는 본인 USER 분석 및 소속 CREW 분석을 조회합니다.
+        - 비인증 사용자는 결과가 없습니다.
         """
         user = self.request.user
         if not user.is_authenticated:
@@ -265,7 +240,7 @@ class RetrospectWeeklyAnalysisViewSet(viewsets.ModelViewSet):
 
         base_queryset = RetrospectWeeklyAnalysis.objects.select_related('user', 'crew').all()
 
-        # Get IDs of crews the user is an accepted member of
+        # 사용자가 속한 크루 ID 목록을 조회합니다.
         user_crew_ids = CrewMembership.objects.filter(
             user=user,
             status=CrewMembershipStatus.ACCEPTED
@@ -276,7 +251,7 @@ class RetrospectWeeklyAnalysisViewSet(viewsets.ModelViewSet):
             Q(owner_type=RetrospectWeeklyAnalysisOwnerType.CREW, crew_id__in=user_crew_ids)
         ).distinct()
 
-        # Add filtering by date range, etc., if needed via query params
+        # 필요 시 query params로 날짜 범위 필터링을 추가합니다.
         start_date = self.request.query_params.get('start_date')
         end_date = self.request.query_params.get('end_date')
         if start_date:
@@ -287,19 +262,17 @@ class RetrospectWeeklyAnalysisViewSet(viewsets.ModelViewSet):
         return queryset
 
     def perform_create(self, serializer):
-        """Set user or crew based on owner_type.
-           Validate that the user can create the specified type.
+        """
+        owner_type에 따라 user 또는 crew를 설정하고, 생성 권한을 검증합니다.
         """
         owner_type = serializer.validated_data.get('owner_type')
         user = self.request.user
 
         if owner_type == RetrospectWeeklyAnalysisOwnerType.USER:
-            # Assign the current user if creating a USER analysis
+            # USER 분석인 경우 현재 사용자를 할당합니다.
             serializer.save(user=user, crew=None)
         elif owner_type == RetrospectWeeklyAnalysisOwnerType.CREW:
-            # Crew must be provided in the request data for CREW type
-            # The serializer validates its presence.
-            # Validate if the user is part of the specified crew.
+            # CREW 분석인 경우 request에 전달된 crew를 사용하고, 멤버십을 확인합니다.
             crew = serializer.validated_data.get('crew')
             if not CrewMembership.objects.filter(
                 crew=crew,
@@ -309,8 +282,9 @@ class RetrospectWeeklyAnalysisViewSet(viewsets.ModelViewSet):
                  raise permissions.PermissionDenied("You do not have permission to create an analysis for this crew.")
             serializer.save(user=None, crew=crew)
         else:
-            # Should be caught by serializer validation, but as a safeguard:
+            # (안전장치) serializer 검증 후 호출됩니다.
             super().perform_create(serializer)
+        
         
 class PlanViewSet(viewsets.ModelViewSet):
     queryset = Plan.objects.all()
@@ -319,18 +293,36 @@ class PlanViewSet(viewsets.ModelViewSet):
     
     def get_serializer_class(self):
         """
-        Return different serializers for different actions:
-        - Use PlanResponseSerializer for list and retrieve actions
-        - Use PlanSerializer for all other actions
+        요청된 액션에 따라 시리얼라이저를 반환합니다:
+        - list, retrieve: PlanResponseSerializer
+        - 그 외: PlanSerializer
         """
         if self.action in ['list', 'retrieve']:
             return PlanResponseSerializer
         return PlanSerializer
+
+    def perform_create(self, serializer):
+        user = self.request.user
+        challenge = serializer.validated_data.get('challenge')
+        if challenge.owner_type == ChallengeOwnerType.USER:
+            if challenge.user != user:
+                raise PermissionDenied("You can only create KPI for challenges you created.")
+        # CREW 소유 챌린지의 크루 멤버 여부를 확인합니다
+        elif challenge.owner_type == ChallengeOwnerType.CREW:
+            if not CrewMembership.objects.filter(
+                crew=challenge.crew,
+                user=user,
+                status=CrewMembershipStatus.ACCEPTED
+            ).exists():
+                raise PermissionDenied("You can only create KPI for challenges of crews you belong to.")
+        else:
+            raise PermissionDenied("Invalid challenge owner type.")
+
+        # Save with the requesting user as the KPI owner
+        serializer.save(user=user, challenge=challenge)
     
     def list(self, request, *args, **kwargs):
-        """
-        Override list method to return plans in the requested format
-        """
+        """list 메서드를 재정의하여 요청 형식에 맞게 Plan 목록을 반환합니다."""
         queryset = self.filter_queryset(self.get_queryset())
         
         # 챌린지로 필터링 (선택적)
@@ -345,9 +337,7 @@ class PlanViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
     
     def retrieve(self, request, *args, **kwargs):
-        """
-        Override retrieve method to return a single plan in the requested format
-        """
+        """retrieve 메서드를 재정의하여 요청 형식에 맞게 단일 Plan을 반환합니다."""
         instance = self.get_object()
         serializer = self.get_serializer(instance)
         return Response(serializer.data)
@@ -362,15 +352,36 @@ class KpiViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         return Kpi.objects.filter(user=self.request.user)
 
-    @action(detail=False, methods=['get'])
-    def by_challenge(self, request, pk=None):
+    def perform_create(self, serializer):
+        """
+        사용자가 소유하거나 속한 크루의 챌린지에 대해서만 KPI를 생성할 수 있습니다.
+        """
+        challenge = serializer.validated_data.get('challenge')
+        user = self.request.user
+
+        # 챌린지 소유자인 경우만 KPI 생성이 가능합니다.
+        if challenge.owner_type == ChallengeOwnerType.USER:
+            if challenge.user != user:
+                raise PermissionDenied("You can only create KPI for challenges you created.")
+        # CREW 소유 챌린지의 경우 소속 크루 멤버만 생성할 수 있습니다.
+        elif challenge.owner_type == ChallengeOwnerType.CREW:
+            if not CrewMembership.objects.filter(
+                crew=challenge.crew,
+                user=user,
+                status=CrewMembershipStatus.ACCEPTED
+            ).exists():
+                raise PermissionDenied("You can only create KPI for challenges of crews you belong to.")
+        else:
+            raise PermissionDenied("Invalid challenge owner type.")
+
+        # Save with the requesting user as the KPI owner
+        serializer.save(user=user, challenge=challenge)
+
+    @action(detail=False, methods=['get'], url_path='by-challenge/(?P<challenge_id>[^/.]+)')
+    def by_challenge(self, request, challenge_id=None, pk=None):
         """
         특정 챌린지의 KPI를 조회
         """
-        challenge_id = request.query_params.get('challenge_id')
-        if not challenge_id:
-            return Response({"error": "challenge_id is required"}, status=status.HTTP_400_BAD_REQUEST)
-        
         kpis = Kpi.objects.filter(
             user=request.user,
             challenge_id=challenge_id
@@ -379,32 +390,6 @@ class KpiViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(kpis, many=True)
         return Response(serializer.data)
 
-class KpiDataEntryViewSet(viewsets.ModelViewSet):
-    """
-    KPI 데이터 엔트리를 관리하는 ViewSet
-    """
-    serializer_class = KpiDataEntrySerializer
-    permission_classes = [IsAuthenticated]
-
-    def get_queryset(self):
-        return KpiDataEntry.objects.filter(kpi__user=self.request.user)
-
-    @action(detail=False, methods=['get'])
-    def by_kpi(self, request, pk=None):
-        """
-        특정 KPI의 데이터 엔트리를 조회
-        """
-        kpi_id = request.query_params.get('kpi_id')
-        if not kpi_id:
-            return Response({"error": "kpi_id is required"}, status=status.HTTP_400_BAD_REQUEST)
-        
-        entries = KpiDataEntry.objects.filter(
-            kpi_id=kpi_id,
-            kpi__user=request.user
-        ).order_by('date')
-        
-        serializer = self.get_serializer(entries, many=True)
-        return Response(serializer.data)
 
 class KpiResultViewSet(viewsets.ModelViewSet):
     """
@@ -416,15 +401,18 @@ class KpiResultViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         return KpiResult.objects.filter(user=self.request.user)
 
-    @action(detail=False, methods=['get'])
-    def by_challenge(self, request, pk=None):
+    def perform_create(self, serializer):
+        user = self.request.user
+        challenge = serializer.validated_data.get('challenge')
+        kpi = serializer.validated_data.get('kpi')
+        retrospect = serializer.validated_data.get('retrospect')
+        serializer.save(user=user, challenge=challenge, kpi=kpi, retrospect=retrospect)
+
+    @action(detail=False, methods=['get'], url_path='by-challenge/(?P<challenge_id>[^/.]+)')
+    def by_challenge(self, request, challenge_id=None):
         """
         특정 챌린지의 KPI 결과를 조회
         """
-        challenge_id = request.query_params.get('challenge_id')
-        if not challenge_id:
-            return Response({"error": "challenge_id is required"}, status=status.HTTP_400_BAD_REQUEST)
-        
         results = KpiResult.objects.filter(
             user=request.user,
             challenge_id=challenge_id
