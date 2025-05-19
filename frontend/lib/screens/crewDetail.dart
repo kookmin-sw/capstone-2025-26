@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg_provider/flutter_svg_provider.dart';
+import 'package:reme/routes.dart';
 import 'package:reme/screens/comment_dialog.dart';
 import 'package:reme/themes/color.dart';
 import 'package:reme/icon/tab_bar_icon_icons.dart';
@@ -78,6 +79,20 @@ class _CrewDetailState extends State<CrewDetail>
     var crewid = ModalRoute.of(context)!.settings.arguments;
 
     return Scaffold(
+      floatingActionButton: (_selectIndex == 1 || _selectIndex == 3)
+          ? FloatingActionButton(
+              backgroundColor: c900,
+              shape: CircleBorder(),
+              onPressed: () {
+                Navigator.pushNamed(context, Routes.addPost,
+                    arguments: _selectIndex);
+              },
+              child: const Icon(
+                Icons.add,
+                color: Colors.white,
+              ),
+            )
+          : null,
       backgroundColor: background,
       body: NestedScrollView(
         controller: _scrollController,
@@ -307,8 +322,9 @@ class _CrewDetailState extends State<CrewDetail>
                           ),
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(8),
-                            child: Image.network(
-                              'https://your-crew-icon-url.com/icon.png',
+                            // TODO: 크루 프로필 이미지 네트워크로 추가
+                            child: Image.asset(
+                              'assets/img/food.png',
                               fit: BoxFit.cover,
                               errorBuilder: (context, error, stackTrace) =>
                                   Icon(

@@ -1,3 +1,4 @@
+import 'package:reme/screens/add_post.dart';
 import 'package:reme/screens/crewDetail.dart';
 import 'package:reme/screens/guidePage.dart';
 import 'package:reme/screens/initialPage.dart';
@@ -18,6 +19,7 @@ class Routes {
   static const first = "/first";
   static const myPage = "/my-page";
   static const notificationList = "/notification-list";
+  static const addPost = "/add-post";
 }
 
 var namedRoute = {
@@ -30,4 +32,5 @@ var namedRoute = {
   Routes.retrospectCompletion: (context) => const RetrospectCompletionScreen(),
   Routes.myPage: (context) => MyPage(),
   Routes.notificationList: (context) => NotificationListPage(),
+  Routes.addPost: (context) => AddPost(),
 };
