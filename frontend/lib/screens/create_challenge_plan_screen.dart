@@ -75,7 +75,7 @@ class _CreateChallengePlanScreenState extends State<CreateChallengePlanScreen> {
                   Text(
                     '이런 플랜 어때요?',
                     style: TextStyle(
-                      color: textPrimary,
+                      color: fontColor, // fontColor로 변경
                       fontSize: 27.sp,
                       fontWeight: FontWeight.w800,
                       fontFamily: 'Pretendard',
@@ -163,7 +163,7 @@ class _CreateChallengePlanScreenState extends State<CreateChallengePlanScreen> {
                                                             _planEditController,
                                                         autofocus: true,
                                                         style: TextStyle(
-                                                          color: textPrimary,
+                                                          color: fontColor,
                                                           fontSize: 15.sp,
                                                           fontWeight:
                                                               FontWeight.w500,
@@ -189,7 +189,7 @@ class _CreateChallengePlanScreenState extends State<CreateChallengePlanScreen> {
                                                     : Text(
                                                         plans[idx],
                                                         style: TextStyle(
-                                                          color: textPrimary,
+                                                          color: fontColor,
                                                           fontSize: 15.sp,
                                                           fontWeight:
                                                               FontWeight.w500,
@@ -264,7 +264,7 @@ class _CreateChallengePlanScreenState extends State<CreateChallengePlanScreen> {
                                       Text(
                                         'KPI #${idx + 1}',
                                         style: TextStyle(
-                                          color: textPrimary,
+                                          color: fontColor,
                                           fontWeight: FontWeight.w800,
                                           fontSize: 20.sp,
                                           fontFamily: 'Pretendard',
@@ -296,7 +296,7 @@ class _CreateChallengePlanScreenState extends State<CreateChallengePlanScreen> {
                                             controller: _kpiEditController,
                                             autofocus: true,
                                             style: TextStyle(
-                                              color: textPrimary,
+                                              color: fontColor,
                                               fontSize: 15.sp,
                                               fontWeight: FontWeight.w500,
                                               fontFamily: 'Pretendard',
@@ -317,7 +317,7 @@ class _CreateChallengePlanScreenState extends State<CreateChallengePlanScreen> {
                                         : Text(
                                             kpis[idx],
                                             style: TextStyle(
-                                              color: textPrimary,
+                                              color: fontColor,
                                               fontSize: 15.sp,
                                               fontWeight: FontWeight.w500,
                                               fontFamily: 'Pretendard',
@@ -371,7 +371,7 @@ class _CreateChallengePlanScreenState extends State<CreateChallengePlanScreen> {
                         //     Text(
                         //       '플랜 추가',
                         //       style: TextStyle(
-                        //         color: textPrimary,
+                        //         color: fontColor,
                         //         fontSize: 14.sp,
                         //         fontWeight: FontWeight.w500,
                         //         fontFamily: 'Pretendard',
@@ -423,7 +423,7 @@ class _CreateChallengePlanScreenState extends State<CreateChallengePlanScreen> {
                             ? '확인'
                             : '다음',
                         style: TextStyle(
-                          color: textPrimary,
+                          color: fontColor,
                           fontSize: 16.sp,
                           fontWeight: FontWeight.w600,
                           fontFamily: 'Pretendard',

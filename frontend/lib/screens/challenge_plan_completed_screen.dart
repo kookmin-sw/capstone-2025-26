@@ -20,6 +20,8 @@ class ChallengePlanCompletedScreen extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: background,
         elevation: 0,
+        scrolledUnderElevation: 0,
+        surfaceTintColor: Colors.transparent,
         automaticallyImplyLeading: false,
         leadingWidth: 52,
         leading: GestureDetector(
@@ -51,7 +53,7 @@ class ChallengePlanCompletedScreen extends StatelessWidget {
                     child: Text(
                       challengeName,
                       style: TextStyle(
-                        color: textPrimary,
+                        color: fontColor,
                         fontSize: 26.sp,
                         fontWeight: FontWeight.w800,
                         fontFamily: 'Pretendard',
@@ -136,7 +138,7 @@ class ChallengePlanCompletedScreen extends StatelessWidget {
                                           child: Text(
                                             plans[idx],
                                             style: TextStyle(
-                                              color: textPrimary,
+                                              color: fontColor,
                                               fontSize: 15.sp,
                                               fontWeight: FontWeight.w500,
                                               fontFamily: 'Pretendard',
@@ -182,7 +184,7 @@ class ChallengePlanCompletedScreen extends StatelessWidget {
                                   Text(
                                     'KPI #${idx + 1}',
                                     style: TextStyle(
-                                      color: textPrimary,
+                                      color: fontColor,
                                       fontWeight: FontWeight.w800,
                                       fontSize: 16.sp,
                                       fontFamily: 'Pretendard',
@@ -193,7 +195,7 @@ class ChallengePlanCompletedScreen extends StatelessWidget {
                                     child: Text(
                                       kpis[idx],
                                       style: TextStyle(
-                                        color: textPrimary,
+                                        color: fontColor,
                                         fontSize: 12.sp,
                                         fontWeight: FontWeight.w500,
                                         fontFamily: 'Pretendard',
