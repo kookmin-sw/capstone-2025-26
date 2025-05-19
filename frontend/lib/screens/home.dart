@@ -130,8 +130,8 @@ class _HomeState extends State<Home> {
             marginLTRB: EdgeInsets.only(left: 24.w, right: 24.w),
             children: [
               CustomListitem(height: 46.h, content: "모두를 위한 머신러닝 읽기"),
-              CustomListitem(height: 46.h, content: "모두를 위한 머신러닝 읽기"),
-              CustomListitem(height: 46.h, content: "모두를 위한 머신러닝 읽기"),
+              CustomListitem(height: 46.h, content: "매일 조깅하기"),
+              CustomListitem(height: 46.h, content: "용기내 챌린지 하기"),
             ],
           ),
           SizedBox(
@@ -149,7 +149,7 @@ class _HomeState extends State<Home> {
               CrewList(
                 crewId: 0,
                 crewName: "캡스톤 26조 파이팅",
-                crewIntro: "크루에 대한 설명칸. 길어진다면 다음과 같이 마무리 하는게 좋을거 같긴 한데",
+                crewIntro: "2025 캡스톤 프로젝트를 성공적으로 완수하기 위한 크루입니다.",
               ),
               SizedBox(
                 height: 15.h,
@@ -157,7 +157,7 @@ class _HomeState extends State<Home> {
               CrewList(
                 crewId: 1,
                 crewName: "은성 캉의 영어 회화 교실",
-                crewIntro: "크루에 대한 설명칸. 길어진다면 다음과 같이 마무리 하는게 좋을거 같긴 한데",
+                crewIntro: "은성 캉의 영어 회화 교실입니다.",
               ),
               SizedBox(
                 height: 15.h,
@@ -165,7 +165,7 @@ class _HomeState extends State<Home> {
               CrewList(
                 crewId: 2,
                 crewName: "정릉동 우주최강 조깅 모임",
-                crewIntro: "크루에 대한 설명칸. 길어진다면 다음과 같이 마무리 하는게 좋을거 같긴 한데",
+                crewIntro: "정릉동 사람들의 건강을 위해 하는 조깅 모임입니다.",
               ),
             ],
           )
