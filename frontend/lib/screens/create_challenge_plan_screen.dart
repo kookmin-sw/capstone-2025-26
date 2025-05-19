@@ -24,8 +24,15 @@ class _CreateChallengePlanScreenState extends State<CreateChallengePlanScreen> {
   void initState() {
     super.initState();
 
-    plans = List.generate(5, (i) => '5분 3분 인터벌 트레이닝 10회 실시');
-    kpis = List.generate(3, (i) => 'kpi 설명설명설명설명설명 설명설명설명설명설명 설명설명설명설명설명');
+    plans = List.generate(1, (i) => '스프린트 트레이닝 10분 실시');
+    plans.add('스트레칭 20분');
+    plans.add('고탄수 식단 수행');
+    plans.add('5분 3분 인터벌 트레이닝 10회 실시');
+
+    plans.add('물 1L 섭취');
+    kpis = List.generate(1, (i) => '15분 페이스로 3km 달리기를 한 주간의 횟수');
+    kpis.add('달리기 전후 5분 스트레칭을 매번 수행여부');
+    kpis.add('3km 달리기를 15분 이내에 완료했는지 여부');
   }
 
   @override
