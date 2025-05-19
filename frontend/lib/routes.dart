@@ -1,4 +1,5 @@
 import 'package:reme/screens/add_post.dart';
+import 'package:reme/screens/crew_admin_page.dart';
 import 'package:reme/screens/crewDetail.dart';
 import 'package:reme/screens/guidePage.dart';
 import 'package:reme/screens/initialPage.dart';
@@ -20,6 +21,7 @@ class Routes {
   static const myPage = "/my-page";
   static const notificationList = "/notification-list";
   static const addPost = "/add-post";
+  static const crewAdmin = "/crew-admin";
 }
 
 var namedRoute = {
@@ -33,4 +35,5 @@ var namedRoute = {
   Routes.myPage: (context) => MyPage(),
   Routes.notificationList: (context) => NotificationListPage(),
   Routes.addPost: (context) => AddPost(),
+  Routes.crewAdmin: (context) => CrewAdminPage(),
 };

@@ -198,8 +198,66 @@ class _CrewDetailState extends State<CrewDetail>
                                     Positioned(
                                       right: -10.w,
                                       top: 18.h,
-                                      child: const Icon(Icons.more_vert,
-                                          color: Colors.white),
+                                      child: GestureDetector(
+                                        onTap: () {
+                                          showModalBottomSheet(
+                                            context: context,
+                                            backgroundColor: boxBackgroundColor,
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.vertical(
+                                                top: Radius.circular(20.r),
+                                              ),
+                                            ),
+                                            builder: (context) {
+                                              return Container(
+                                                padding: EdgeInsets.symmetric(
+                                                    vertical: 20.h),
+                                                child: Column(
+                                                  mainAxisSize:
+                                                      MainAxisSize.min,
+                                                  children: [
+                                                    // TODO: 크루 관리자일 경우만 관리하기 버튼 띄우기
+                                                    ListTile(
+                                                      leading: const Icon(
+                                                        Icons
+                                                            .admin_panel_settings,
+                                                        color: fontColor,
+                                                      ),
+                                                      title: const Text('관리하기',
+                                                          style: TextStyle(
+                                                              color:
+                                                                  fontColor)),
+                                                      onTap: () {
+                                                        Navigator.pop(context);
+                                                        Navigator.pushNamed(
+                                                            context,
+                                                            Routes.crewAdmin);
+                                                      },
+                                                    ),
+                                                    ListTile(
+                                                      leading: const Icon(
+                                                          Icons
+                                                              .report_problem_outlined,
+                                                          color: fontColor),
+                                                      title: const Text('신고하기',
+                                                          style: TextStyle(
+                                                              color:
+                                                                  fontColor)),
+                                                      onTap: () {
+                                                        Navigator.pop(context);
+                                                        // TODO: 신고하기 기능 구현
+                                                      },
+                                                    ),
+                                                  ],
+                                                ),
+                                              );
+                                            },
+                                          );
+                                        },
+                                        child: const Icon(Icons.more_vert,
+                                            color: Colors.white),
+                                      ),
                                     ),
                                     Container(
                                       padding: EdgeInsets.only(top: 32.h),
