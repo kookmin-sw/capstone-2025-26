@@ -130,8 +130,8 @@ class _HomeState extends State<Home> {
             marginLTRB: EdgeInsets.only(left: 24.w, right: 24.w),
             children: [
               CustomListitem(height: 46.h, content: "모두를 위한 머신러닝 읽기"),
-              CustomListitem(height: 46.h, content: "매일 조깅하기"),
-              CustomListitem(height: 46.h, content: "용기내 챌린지 하기"),
+              CustomListitem(height: 46.h, content: "모두를 위한 머신러닝 읽기"),
+              CustomListitem(height: 46.h, content: "모두를 위한 머신러닝 읽기"),
             ],
           ),
           SizedBox(
@@ -146,26 +146,29 @@ class _HomeState extends State<Home> {
               SizedBox(
                 height: 10.h,
               ),
-              CrewList(
+              const CrewList(
                 crewId: 0,
                 crewName: "캡스톤 26조 파이팅",
-                crewIntro: "2025 캡스톤 프로젝트를 성공적으로 완수하기 위한 크루입니다.",
+                crewIntro:
+                    "국민대학교 캡스톤 26조의 프로젝트를 위한 크루입니다. 회고를 통한 지속적인 개선과 성장을 목표로 합니다.",
               ),
               SizedBox(
                 height: 15.h,
               ),
-              CrewList(
+              const CrewList(
                 crewId: 1,
                 crewName: "은성 캉의 영어 회화 교실",
-                crewIntro: "은성 캉의 영어 회화 교실입니다.",
+                crewIntro:
+                    "원어민 강사와 함께하는 실전 영어 회화 스터디입니다. 매주 화, 목 저녁 7시에 진행되며, 다양한 주제로 자유로운 대화를 나눕니다.",
               ),
               SizedBox(
                 height: 15.h,
               ),
-              CrewList(
+              const CrewList(
                 crewId: 2,
                 crewName: "정릉동 우주최강 조깅 모임",
-                crewIntro: "정릉동 사람들의 건강을 위해 하는 조깅 모임입니다.",
+                crewIntro:
+                    "정릉동 주변에서 함께 뛰는 조깅 모임입니다. 매일 아침 6시 정릉천에서 시작하며, 초보자부터 마라톤러까지 모두 환영합니다.",
               ),
             ],
           )
