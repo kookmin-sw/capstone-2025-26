@@ -604,25 +604,35 @@ class _CrewDetailState extends State<CrewDetail>
             child: SingleChildScrollView(
               child: Column(
                 children: [
-                  PostCard(
-                    nickname: '롱기스트',
-                    date:
-                        '${_focusedDay.year}.${_focusedDay.month}.${_focusedDay.day}',
-                    title: _selectChallenge,
-                    content: '오늘은 3k 달리기를 20분 페이스에 달렸어요. 조금만 더 빨리 뛰어봐요',
-                    isRetrospect: true,
-                    hasSuccess: false,
-                    score: '60',
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.pushNamed(context, Routes.retrospectDetail);
+                    },
+                    child: PostCard(
+                      nickname: '롱기스트',
+                      date:
+                          '${_focusedDay.year}.${_focusedDay.month}.${_focusedDay.day}',
+                      title: _selectChallenge,
+                      content: '오늘은 3k 달리기를 20분 페이스에 달렸어요. 조금만 더 빨리 뛰어봐요',
+                      isRetrospect: true,
+                      hasSuccess: false,
+                      score: '60',
+                    ),
                   ),
-                  PostCard(
-                    nickname: '다욤둥',
-                    date:
-                        '${_focusedDay.year}.${_focusedDay.month}.${_focusedDay.day}',
-                    title: _selectChallenge,
-                    content: '3k 달리기를 16분 페이스에 달렸어요. 거의다 왔어요! 조금만 더 화이팅',
-                    isRetrospect: true,
-                    hasSuccess: true,
-                    score: '90',
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.pushNamed(context, Routes.retrospectDetail);
+                    },
+                    child: PostCard(
+                      nickname: '다욤둥',
+                      date:
+                          '${_focusedDay.year}.${_focusedDay.month}.${_focusedDay.day}',
+                      title: _selectChallenge,
+                      content: '3k 달리기를 16분 페이스에 달렸어요. 거의다 왔어요! 조금만 더 화이팅',
+                      isRetrospect: true,
+                      hasSuccess: true,
+                      score: '90',
+                    ),
                   ),
                 ],
               ),
