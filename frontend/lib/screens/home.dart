@@ -129,9 +129,25 @@ class _HomeState extends State<Home> {
             isMore: false,
             marginLTRB: EdgeInsets.only(left: 24.w, right: 24.w),
             children: [
-              CustomListitem(height: 46.h, content: "모두를 위한 머신러닝 읽기"),
-              CustomListitem(height: 46.h, content: "모두를 위한 머신러닝 읽기"),
-              CustomListitem(height: 46.h, content: "모두를 위한 머신러닝 읽기"),
+              GestureDetector(
+                onTap: () {
+                  Navigator.pushNamed(context, Routes.retrospectDetail);
+                },
+                child:
+                    CustomListitem(height: 46.h, content: "물 1L 마시기, 커피 줄이기"),
+              ),
+              GestureDetector(
+                onTap: () {
+                  Navigator.pushNamed(context, Routes.retrospectDetail);
+                },
+                child: CustomListitem(height: 46.h, content: "매일 조깅하기"),
+              ),
+              GestureDetector(
+                onTap: () {
+                  Navigator.pushNamed(context, Routes.retrospectDetail);
+                },
+                child: CustomListitem(height: 46.h, content: "용기내 챌린지 하기"),
+              ),
             ],
           ),
           SizedBox(
@@ -147,10 +163,11 @@ class _HomeState extends State<Home> {
                 height: 10.h,
               ),
               const CrewList(
+                image: AssetImage('assets/img/food.png'),
                 crewId: 0,
-                crewName: "캡스톤 26조 파이팅",
+                crewName: "저속 노화 따라가기",
                 crewIntro:
-                    "국민대학교 캡스톤 26조의 프로젝트를 위한 크루입니다. 회고를 통한 지속적인 개선과 성장을 목표로 합니다.",
+                    "저속 노화 위주의 식사와 규칙적인 생활을 통해 삶을 재정비하고 이다현보다 오래 살기 위해 노력합니다.",
               ),
               SizedBox(
                 height: 15.h,

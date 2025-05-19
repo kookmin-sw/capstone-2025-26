@@ -184,7 +184,7 @@ class _ReflectionAnalysisScreenState extends State<ReflectionAnalysisScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        "3/30일 오늘도 수고하셨어요!",
+                        "5/20일 오늘도 수고하셨어요!",
                         style: TextStyle(
                           color: Colors.white,
                           fontFamily: 'Pretendard',

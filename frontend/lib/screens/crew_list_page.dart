@@ -97,6 +97,7 @@ class _CrewListPageState extends State<CrewListPage> {
         borderRadius: BorderRadius.circular(10.r),
       ),
       child: CrewList(
+        image: (index == 0) ? AssetImage('assets/img/food.png') : null,
         crewId: index,
         crewName: _getCrewData(index)['name'],
         crewIntro: _getCrewData(index)['intro'],
@@ -187,8 +188,8 @@ class _CrewListPageState extends State<CrewListPage> {
   Map<String, dynamic> _getCrewData(int index) {
     final crews = [
       {
-        'name': '정릉동 건강인 모임',
-        'intro': '정릉동 건강인 모임을 위한 크루. 더 이상 어떤 말을 해도 그 내용이 우리 크루를 설명할 수 없다.',
+        'name': '저속 노화 따라가기',
+        'intro': '저속 노화 위주의 식사와 규칙적인 생활을 통해 삶을 재정비하고 이다현보다 오래 살기 위해 노력합니다.',
         'isJoined': false,
       },
       {
