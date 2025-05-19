@@ -1,9 +1,13 @@
+import 'package:reme/screens/add_post.dart';
+import 'package:reme/screens/add_template.dart';
+import 'package:reme/screens/crew_admin_page.dart';
 import 'package:reme/screens/crewDetail.dart';
 import 'package:reme/screens/guidePage.dart';
 import 'package:reme/screens/initialPage.dart';
 import 'package:reme/screens/login.dart';
 import 'package:reme/screens/my_page.dart';
 import 'package:reme/screens/notification_list_page.dart';
+import 'package:reme/screens/retrospect_detail.dart';
 import 'package:reme/screens/signupPage.dart';
 import 'package:reme/screens/retrospectChallengeList.dart';
 import 'package:reme/screens/retrospect_completion_screen.dart';
@@ -18,6 +22,10 @@ class Routes {
   static const first = "/first";
   static const myPage = "/my-page";
   static const notificationList = "/notification-list";
+  static const addPost = "/add-post";
+  static const crewAdmin = "/crew-admin";
+  static const retrospectDetail = "/retrospect-detail";
+  static const addTemplate = "/add-template";
 }
 
 var namedRoute = {
@@ -30,4 +38,8 @@ var namedRoute = {
   Routes.retrospectCompletion: (context) => const RetrospectCompletionScreen(),
   Routes.myPage: (context) => MyPage(),
   Routes.notificationList: (context) => NotificationListPage(),
+  Routes.addPost: (context) => AddPost(),
+  Routes.crewAdmin: (context) => CrewAdminPage(),
+  Routes.retrospectDetail: (context) => RetrospectDetail(),
+  Routes.addTemplate: (context) => AddTemplate(),
 };

@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg_provider/flutter_svg_provider.dart';
+import 'package:reme/routes.dart';
+import 'package:reme/screens/comment_dialog.dart';
 import 'package:reme/themes/color.dart';
 import 'package:reme/icon/tab_bar_icon_icons.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:table_calendar/table_calendar.dart';
 
 class CrewDetail extends StatefulWidget {
   const CrewDetail({super.key});
@@ -37,6 +40,14 @@ class _CrewDetailState extends State<CrewDetail>
   final double _nameInitialSize = 19.0;
   final double _nameFinalSize = 16.0;
 
+  DateTime _focusedDay = DateTime.now();
+
+  final _challengeList = [
+    "저속 노화 식단하기",
+    "저속 노화에 대한 포스팅 올리기",
+  ];
+  String _selectChallenge = '';
+
   @override
   void initState() {
     super.initState();
@@ -50,6 +61,10 @@ class _CrewDetailState extends State<CrewDetail>
     });
 
     _scrollController = ScrollController();
+
+    setState(() {
+      _selectChallenge = _challengeList[0];
+    });
   }
 
   @override
@@ -64,6 +79,20 @@ class _CrewDetailState extends State<CrewDetail>
     var crewid = ModalRoute.of(context)!.settings.arguments;
 
     return Scaffold(
+      floatingActionButton: (_selectIndex == 1 || _selectIndex == 3)
+          ? FloatingActionButton(
+              backgroundColor: c900,
+              shape: CircleBorder(),
+              onPressed: () {
+                Navigator.pushNamed(context, Routes.addPost,
+                    arguments: _selectIndex);
+              },
+              child: const Icon(
+                Icons.add,
+                color: Colors.white,
+              ),
+            )
+          : null,
       backgroundColor: background,
       body: NestedScrollView(
         controller: _scrollController,
@@ -169,25 +198,84 @@ class _CrewDetailState extends State<CrewDetail>
                                     Positioned(
                                       right: -10.w,
                                       top: 18.h,
-                                      child: const Icon(Icons.more_vert,
-                                          color: Colors.white),
+                                      child: GestureDetector(
+                                        onTap: () {
+                                          showModalBottomSheet(
+                                            context: context,
+                                            backgroundColor: boxBackgroundColor,
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.vertical(
+                                                top: Radius.circular(20.r),
+                                              ),
+                                            ),
+                                            builder: (context) {
+                                              return Container(
+                                                padding: EdgeInsets.symmetric(
+                                                    vertical: 20.h),
+                                                child: Column(
+                                                  mainAxisSize:
+                                                      MainAxisSize.min,
+                                                  children: [
+                                                    // TODO: 크루 관리자일 경우만 관리하기 버튼 띄우기
+                                                    ListTile(
+                                                      leading: const Icon(
+                                                        Icons
+                                                            .admin_panel_settings,
+                                                        color: fontColor,
+                                                      ),
+                                                      title: const Text('관리하기',
+                                                          style: TextStyle(
+                                                              color:
+                                                                  fontColor)),
+                                                      onTap: () {
+                                                        Navigator.pop(context);
+                                                        Navigator.pushNamed(
+                                                            context,
+                                                            Routes.crewAdmin);
+                                                      },
+                                                    ),
+                                                    ListTile(
+                                                      leading: const Icon(
+                                                          Icons
+                                                              .report_problem_outlined,
+                                                          color: fontColor),
+                                                      title: const Text('신고하기',
+                                                          style: TextStyle(
+                                                              color:
+                                                                  fontColor)),
+                                                      onTap: () {
+                                                        Navigator.pop(context);
+                                                        // TODO: 신고하기 기능 구현
+                                                      },
+                                                    ),
+                                                  ],
+                                                ),
+                                              );
+                                            },
+                                          );
+                                        },
+                                        child: const Icon(Icons.more_vert,
+                                            color: Colors.white),
+                                      ),
                                     ),
                                     Container(
                                       padding: EdgeInsets.only(top: 32.h),
                                       child: Column(
                                         crossAxisAlignment:
-                                        CrossAxisAlignment.start,
+                                            CrossAxisAlignment.start,
                                         children: [
                                           Column(
                                             crossAxisAlignment:
-                                            CrossAxisAlignment.start,
+                                                CrossAxisAlignment.start,
                                             mainAxisSize: MainAxisSize.min,
                                             children: [
                                               Container(
                                                 child: Row(
                                                   children: [
                                                     SizedBox(
-                                                        width: 142.w), // 크루명 공간 확보
+                                                        width:
+                                                            142.w), // 크루명 공간 확보
                                                     SizedBox(width: 13.w),
                                                     const Icon(
                                                       Icons
@@ -200,7 +288,8 @@ class _CrewDetailState extends State<CrewDetail>
                                                       '12명',
                                                       style: TextStyle(
                                                         fontSize: 13.sp,
-                                                        color: Color(0xFFA3A3A3),
+                                                        color:
+                                                            Color(0xFFA3A3A3),
                                                       ),
                                                     ),
                                                     const Spacer(),
@@ -209,38 +298,38 @@ class _CrewDetailState extends State<CrewDetail>
                                               ),
                                               Container(
                                                 padding:
-                                                EdgeInsets.only(top: 10.h),
+                                                    EdgeInsets.only(top: 10.h),
                                                 child: Text(
                                                   '저속 노화 위주의 식사와 규칙적인 생활을 통해 삶을 재정비하고 이다현보다 오래 살기 위해 노력합니다',
                                                   style: TextStyle(
-                                                    fontSize: 14.sp,
-                                                    fontWeight: FontWeight.w500,
-                                                    color: fontColor,
-                                                    height: 1.70.h,
-                                                    letterSpacing: 0.01
-                                                  ),
+                                                      fontSize: 14.sp,
+                                                      fontWeight:
+                                                          FontWeight.w500,
+                                                      color: fontColor,
+                                                      height: 1.70.h,
+                                                      letterSpacing: 0.01),
                                                   maxLines: 2,
                                                   overflow: TextOverflow.clip,
                                                 ),
                                               ),
                                               Container(
                                                 margin:
-                                                EdgeInsets.only(top: 15.h),
+                                                    EdgeInsets.only(top: 15.h),
                                                 height: 41.h,
                                                 width: double.maxFinite,
                                                 child: ElevatedButton(
                                                   style:
-                                                  ElevatedButton.styleFrom(
+                                                      ElevatedButton.styleFrom(
                                                     backgroundColor: c800,
                                                     shape:
-                                                    RoundedRectangleBorder(
+                                                        RoundedRectangleBorder(
                                                       borderRadius:
-                                                      BorderRadius.circular(
-                                                          10),
+                                                          BorderRadius.circular(
+                                                              10),
                                                     ),
                                                     padding:
-                                                    const EdgeInsets.only(
-                                                        top: 8, bottom: 8),
+                                                        const EdgeInsets.only(
+                                                            top: 8, bottom: 8),
                                                   ),
                                                   onPressed: () {},
                                                   child: Text(
@@ -249,7 +338,7 @@ class _CrewDetailState extends State<CrewDetail>
                                                       fontSize: 16.sp,
                                                       color: fontColor,
                                                       fontWeight:
-                                                      FontWeight.w700,
+                                                          FontWeight.w700,
                                                       height: 1.5.h,
                                                     ),
                                                   ),
@@ -291,15 +380,16 @@ class _CrewDetailState extends State<CrewDetail>
                           ),
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(8),
-                            child: Image.network(
-                              'https://your-crew-icon-url.com/icon.png',
+                            // TODO: 크루 프로필 이미지 네트워크로 추가
+                            child: Image.asset(
+                              'assets/img/food.png',
                               fit: BoxFit.cover,
                               errorBuilder: (context, error, stackTrace) =>
                                   Icon(
-                                    Icons.group,
-                                    size: iconSize * 0.7,
-                                    color: Colors.grey,
-                                  ),
+                                Icons.group,
+                                size: iconSize * 0.7,
+                                color: Colors.grey,
+                              ),
                             ),
                           ),
                         ),
@@ -361,7 +451,7 @@ class _CrewDetailState extends State<CrewDetail>
           children: [
             _buildPostList(),
             _buildPostList(),
-            _buildPostList(),
+            _buildRetrospectList(),
             _buildPostList(),
           ],
         ),
@@ -417,6 +507,141 @@ class _CrewDetailState extends State<CrewDetail>
       ],
     );
   }
+
+  Widget _buildRetrospectList() {
+    return SizedBox(
+      height: 300.h,
+      child: Column(
+        children: [
+          TableCalendar(
+            headerStyle: HeaderStyle(
+              titleCentered: true,
+              titleTextStyle: TextStyle(
+                fontSize: 20.sp,
+                fontWeight: FontWeight.w600,
+                color: fontColor,
+              ),
+              leftChevronIcon: Icon(
+                Icons.chevron_left,
+                color: fontColor,
+              ),
+              rightChevronIcon: Icon(
+                Icons.chevron_right,
+                color: fontColor,
+              ),
+              formatButtonVisible: false,
+            ),
+            calendarFormat: CalendarFormat.week,
+            calendarStyle: const CalendarStyle(
+              defaultTextStyle: TextStyle(color: fontColor),
+              // weekend
+              weekendTextStyle: TextStyle(color: Colors.red),
+              weekendDecoration: BoxDecoration(
+                color: Colors.transparent,
+                shape: BoxShape.circle,
+              ),
+              // selected
+              selectedDecoration: BoxDecoration(
+                color: c700,
+                shape: BoxShape.circle,
+              ),
+              // today
+              todayDecoration: BoxDecoration(
+                color: Colors.transparent,
+                shape: BoxShape.circle,
+              ),
+            ),
+            locale: "ko_KR",
+            focusedDay: _focusedDay,
+            firstDay: DateTime(2025, 01, 01),
+            lastDay: DateTime(2030, 12, 31),
+            selectedDayPredicate: (day) {
+              return isSameDay(_focusedDay, day);
+            },
+            onDaySelected: (selectedDay, focusedDay) {
+              setState(() {
+                _focusedDay = focusedDay;
+              });
+            },
+            onPageChanged: (focusedDay) {
+              setState(() {
+                _focusedDay = focusedDay;
+              });
+            },
+          ),
+          Container(
+            width: double.infinity,
+            padding: EdgeInsets.symmetric(horizontal: 21.w, vertical: 10.h),
+            child: DropdownButton(
+              alignment: Alignment.topLeft,
+              focusColor: c800,
+              value: _selectChallenge,
+              dropdownColor: boxBackgroundColor,
+              isExpanded: true,
+              underline: Container(
+                height: 2,
+                color: c800,
+              ),
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 16.sp,
+                fontWeight: FontWeight.w500,
+              ),
+              items: _challengeList
+                  .map((e) => DropdownMenuItem(
+                        child: Text(e),
+                        value: e,
+                      ))
+                  .toList(),
+              onChanged: (value) {
+                setState(() {
+                  _selectChallenge = value!;
+                });
+              },
+            ),
+          ),
+          Expanded(
+            child: SingleChildScrollView(
+              child: Column(
+                children: [
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.pushNamed(context, Routes.retrospectDetail);
+                    },
+                    child: PostCard(
+                      nickname: '롱기스트',
+                      date:
+                          '${_focusedDay.year}.${_focusedDay.month}.${_focusedDay.day}',
+                      title: _selectChallenge,
+                      content: '오늘은 3k 달리기를 20분 페이스에 달렸어요. 조금만 더 빨리 뛰어봐요',
+                      isRetrospect: true,
+                      hasSuccess: false,
+                      score: '60',
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.pushNamed(context, Routes.retrospectDetail);
+                    },
+                    child: PostCard(
+                      nickname: '다욤둥',
+                      date:
+                          '${_focusedDay.year}.${_focusedDay.month}.${_focusedDay.day}',
+                      title: _selectChallenge,
+                      content: '3k 달리기를 16분 페이스에 달렸어요. 거의다 왔어요! 조금만 더 화이팅',
+                      isRetrospect: true,
+                      hasSuccess: true,
+                      score: '90',
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 // 탭바를 고정시키기 위한 Delegate
@@ -458,12 +683,20 @@ class PostCard extends StatelessWidget {
   final String date;
   final String title;
   final String content;
+  final bool? isRetrospect;
+  final String? score;
+  final bool hasSuccess;
+  final bool isComment;
   const PostCard({
     super.key,
     required this.nickname,
     required this.date,
     required this.title,
     required this.content,
+    this.isRetrospect = false,
+    this.score,
+    this.hasSuccess = false,
+    this.isComment = false,
   });
 
   @override
@@ -526,16 +759,50 @@ class PostCard extends StatelessWidget {
                   letterSpacing: 0.1.r),
             ),
             SizedBox(height: 15.h),
-            Row(
-              children: [
-                SizedBox(
-                  width: 1.w,
-                ),
-                Icon(TabBarIcon.heart, color: Colors.white, size: 16.sp),
-                SizedBox(width: 19.w),
-                Icon(TabBarIcon.comment, color: Colors.white, size: 19.sp),
-              ],
-            ),
+            if (isRetrospect == false)
+              Row(
+                children: [
+                  SizedBox(
+                    width: 1.w,
+                  ),
+                  Icon(TabBarIcon.heart, color: Colors.white, size: 16.sp),
+                  SizedBox(width: 19.w),
+                  if (isComment == false)
+                    GestureDetector(
+                        onTap: () {
+                          showDialog(
+                              context: context,
+                              builder: (context) => Dialog(
+                                    child: CommentDialog(postId: '1'),
+                                  ));
+                        },
+                        child: Icon(TabBarIcon.comment,
+                            color: Colors.white, size: 19.sp)),
+                ],
+              ),
+            if (isRetrospect == true)
+              Row(
+                children: [
+                  SizedBox(
+                    width: 1.w,
+                  ),
+                  Icon(
+                    hasSuccess ? Icons.local_fire_department : Icons.warning,
+                    color: hasSuccess ? Colors.orange : Colors.yellow,
+                    size: 24,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    "$score/100",
+                    style: TextStyle(
+                      color: hasSuccess ? Colors.orange : Colors.yellow,
+                      fontFamily: 'Pretendard',
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
             SizedBox(
               height: 10.h,
             )

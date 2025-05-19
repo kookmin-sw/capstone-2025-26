@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:reme/icon/tab_bar_icon_icons.dart';
+import 'package:reme/routes.dart';
 import 'package:reme/screens/retrospect_writing_screen.dart';
 import 'package:reme/themes/color.dart';
 
@@ -77,7 +79,7 @@ class _RetrospectMethodSelectionState extends State<RetrospectMethodSelection> {
         children: [
           // 타이틀 텍스트
           const Padding(
-            padding: EdgeInsets.fromLTRB(21.0, 15.0, 16.0, 27.0),
+            padding: EdgeInsets.fromLTRB(21.0, 15.0, 16.0, 0),
             child: Align(
               alignment: Alignment.centerLeft,
               child: Text(
@@ -90,6 +92,20 @@ class _RetrospectMethodSelectionState extends State<RetrospectMethodSelection> {
                   height: 1.50,
                   letterSpacing: 0.54,
                 ),
+              ),
+            ),
+          ),
+          Container(
+            margin: EdgeInsets.only(right: 21.w),
+            alignment: Alignment.centerRight,
+            child: IconButton(
+              onPressed: () {
+                Navigator.pushNamed(context, Routes.addTemplate);
+              },
+              icon: Icon(
+                Icons.add_outlined,
+                color: Colors.white,
+                size: 30.sp,
               ),
             ),
           ),
