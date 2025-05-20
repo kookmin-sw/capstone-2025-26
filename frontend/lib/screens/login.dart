@@ -3,15 +3,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:get/get.dart';
 import 'package:reme/models/user_info.dart';
 import 'package:reme/routes.dart';
 import 'package:reme/screens/socialLoginWebView.dart';
 import 'package:reme/themes/color.dart';
+import 'package:reme/utils/user_info_controller.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    Get.put(UserInfoController());
     return Scaffold(
         backgroundColor: background,
         body: Container(
@@ -137,9 +140,9 @@ class LoginPage extends StatelessWidget {
             FlutterSecureStorage(); // accessToken과 refreshToken을 저장하는 SecrueStorage
         await storage.write(key: 'AccessToken', value: data.accessToken);
         await storage.write(key: 'RefreshToken', value: data.refreshToken);
-        await storage.write(key: 'Email', value: data.email);
         await storage.write(key: 'Id', value: data.id);
-        await storage.write(key: 'ProfileImage', value: data.profileImage);
+        Get.find<UserInfoController>()
+            .setUserInfo(data.id, data.userName, data.email, data.profileImage);
 
         if (data.needSignup == true) {
           // 사용자 명이 없을 때 회원가입 페이지로 이동.

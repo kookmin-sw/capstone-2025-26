@@ -1,14 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:get/get.dart';
+import 'package:reme/services/user_update.dart';
 import 'package:reme/themes/color.dart';
+import 'package:reme/utils/user_info_controller.dart';
 
 class GetInfo extends StatelessWidget {
   final int type; // 정보 입력 타임 (관심사(0), 닉네임(1), 이메일(2), 문의하기(3))
   final String? content;
-  const GetInfo({super.key, required this.type, this.content});
+  final FlutterSecureStorage storage = const FlutterSecureStorage();
+  late final UserInfoController userInfoController;
+  GetInfo({super.key, required this.type, this.content});
 
   @override
   Widget build(BuildContext context) {
+    userInfoController = Get.put(UserInfoController()); // 상태관리를 위한 코드
+    final TextEditingController controller =
+        TextEditingController(text: content);
     return Container(
       width: MediaQuery.of(context).size.width * 0.9,
       height: 400.h,
@@ -75,9 +84,9 @@ class GetInfo extends StatelessWidget {
               height: 29.h,
             ),
             TextFormField(
+              controller: controller,
               minLines: 1,
               maxLines: type == 0 || type == 3 ? 6 : 1,
-              initialValue: content,
               decoration: InputDecoration(
                 labelText: type == 0
                     ? "관심사"
@@ -123,8 +132,29 @@ class GetInfo extends StatelessWidget {
                 Expanded(
                   child: ElevatedButton(
                     onPressed: () {
-                      Navigator.pop(context);
                       // TODO: type별로 서버로 보내는 방식 다르게 설정
+                      if (type == 0) {
+                        // 관심사 저장
+                      } else if (type == 1) {
+                        // 닉네임 저장
+                        storage.read(key: 'Id').then((value) async {
+                          userInfoController.updateUserInfo(
+                              'username', controller.text);
+                          await dio.patch('/users/$value/', {
+                            'username': controller.text,
+                          });
+                        });
+                      } else if (type == 2) {
+                        // 이메일 저장
+                        storage.read(key: 'Id').then((value) async {
+                          userInfoController.updateUserInfo(
+                              'email', controller.text);
+                          await dio.patch('/users/$value/', {
+                            'email': controller.text,
+                          });
+                        });
+                      }
+                      Navigator.pop(context);
                     },
                     child: Text("확인"),
                     style: ElevatedButton.styleFrom(

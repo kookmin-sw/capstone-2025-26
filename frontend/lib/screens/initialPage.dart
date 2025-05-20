@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:get/get.dart';
 import 'package:reme/routes.dart';
 import 'package:reme/screens/crew_list_page.dart';
 import 'package:reme/screens/feed.dart';
@@ -8,6 +9,7 @@ import 'package:reme/screens/retrospectPage.dart';
 import 'package:reme/services/user_update.dart';
 import 'package:reme/themes/color.dart';
 import 'package:reme/icon/tab_bar_icon_icons.dart';
+import 'package:reme/utils/user_info_controller.dart';
 
 class Initialpage extends StatefulWidget {
   const Initialpage({super.key});
@@ -27,6 +29,7 @@ class _InitialpageState extends State<Initialpage>
 
   @override
   void initState() {
+    Get.put(UserInfoController());
     super.initState();
     tabController = TabController(length: 4, vsync: this);
     retroTabController = TabController(length: 2, vsync: this);
@@ -41,8 +44,10 @@ class _InitialpageState extends State<Initialpage>
         }));
 
     getUserInfo().then((value) {
+      Get.find<UserInfoController>().setUserInfo(value['id'].toString(),
+          value['username'], value['email'], value['profile_image']);
       setState(() {
-        userInfo = value;
+        userInfo = Get.find<UserInfoController>().getUserInfo();
       });
     });
   }
@@ -108,12 +113,7 @@ class _InitialpageState extends State<Initialpage>
                         child: GestureDetector(
                             onTap: () {
                               if (userInfo != null) {
-                                Navigator.pushNamed(context, Routes.myPage,
-                                    arguments: {
-                                      'username': userInfo['username'] ?? '',
-                                      'email': userInfo['email'] ?? '',
-                                      'profile_image': userInfo['profile_image']
-                                    });
+                                Navigator.pushNamed(context, Routes.myPage);
                               }
                             },
                             child: CircleAvatar(

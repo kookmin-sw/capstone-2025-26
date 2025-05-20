@@ -46,6 +46,7 @@ dependencies:
   table_calendar: ^3.0.9
   introduction_screen: ^3.1.17
   dio: ^5.8.0
+  get: ^4.7.2
   
 dev_dependencies:
   flutter_test:
