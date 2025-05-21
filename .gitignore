@@ -11,6 +11,13 @@
 frontend/.vscode/
 migrate_working_dir/
 
+# Environment variables
+frontend/.env
+.env
+.env.local
+.env.development
+.env.production
+
 # IntelliJ related
 *.iml
 *.ipr
@@ -50,4 +57,8 @@ frontend/android/app/.cxx/*
 
 # iOS build data
 frontend/ios/build/ios/XCBuildData/
+
+# firebase
+frontend/ios/Runner/GoogleService-Info.plist
+frontend/android/app/google-services.json
 
