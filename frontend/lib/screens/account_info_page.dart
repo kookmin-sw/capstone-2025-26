@@ -1,8 +1,12 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg_provider/flutter_svg_provider.dart';
 import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:reme/screens/get_info.dart';
+import 'package:reme/services/user_update.dart';
 import 'package:reme/themes/color.dart';
 import 'package:reme/utils/user_info_controller.dart';
 
@@ -67,20 +71,37 @@ class _AccountInfoPageState extends State<AccountInfoPage> {
             SizedBox(height: 32.h),
             GestureDetector(
               onTap: () {
-                print("프로필 이미지 클릭");
+                XFile? image;
+                ImagePicker()
+                    .pickImage(source: ImageSource.gallery)
+                    .then((pickedFile) {
+                  if (pickedFile != null) {
+                    // 이미지를 선택했다면?
+                    image = pickedFile;
+                    print(pickedFile.path);
+                    updateUser(
+                            id: userController.userInfo['id'],
+                            profile_image: File(pickedFile.path))
+                        .then((value) {
+                      print("upload 완료 후 리턴 값 $value");
+                      userController.updateUserInfo(
+                          'profile_image', value.data['profile_image']);
+                    });
+                  }
+                });
               },
               child: Container(
                 width: 120.w,
                 height: 120.h,
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(10.r),
+                  borderRadius: BorderRadius.circular(30.r),
                 ),
-                child: Obx(() => Image(
-                      image: userController.userInfo['profile_image'] != null
-                          ? NetworkImage(
-                              userController.userInfo['profile_image'])
-                          : Svg('assets/img/account_circle.svg'),
-                      fit: BoxFit.fill,
+                child: Obx(() => CircleAvatar(
+                      backgroundImage:
+                          userController.userInfo['profile_image'] != null
+                              ? NetworkImage(
+                                  userController.userInfo['profile_image'])
+                              : Svg('assets/img/account_circle.svg'),
                     )),
               ),
             ),

@@ -1,6 +1,10 @@
 import 'dart:io';
 
+import 'package:get/get.dart';
 import 'package:reme/services/mydio.dart';
+import 'package:reme/utils/secret.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:reme/utils/user_info_controller.dart';
 
 MyDio dio = MyDio();
 
@@ -12,9 +16,7 @@ Future<dynamic> updateUser(
     File? profile_image}) async {
   String? profile_image_link;
   if (profile_image != null) {
-    _uploadProfileImage(profile_image).then((value) {
-      profile_image_link = value;
-    });
+    profile_image_link = await uploadProfileImage(profile_image, 0);
   }
   try {
     final response = await dio.patch('/users/${id}/', {
@@ -29,8 +31,47 @@ Future<dynamic> updateUser(
   }
 }
 
-Future<dynamic> _uploadProfileImage(File image) async {
-  // TODO: 프로필 이미지 업로드 작업
+Future<String> uploadProfileImage(File image, int type) async {
+  try {
+    final storage = FirebaseStorage.instance;
+    final ref;
+    final id = Get.find<UserInfoController>().userInfo['id'];
+
+    switch (type) {
+      case 0:
+        ref = storage.ref().child('userprofile').child('${id}profile.png');
+        break;
+      case 1:
+        ref = storage.ref().child('crewprofile');
+        break;
+      case 2:
+        ref = storage.ref().child('crewback');
+        break;
+      case 3:
+        ref = storage.ref().child('challengeimage');
+        break;
+      default:
+        ref = storage.ref();
+        break;
+    }
+
+    // 메타데이터 설정
+    final metadata = SettableMetadata(
+      contentType: 'image/png',
+      customMetadata: {'picked-file-path': image.path},
+    );
+
+    // 파일 업로드
+    final uploadTask = await ref.putFile(image, metadata);
+
+    // 업로드 완료 후 URL 가져오기
+    final downloadURL = await uploadTask.ref.getDownloadURL();
+
+    return downloadURL;
+  } catch (e) {
+    print('이미지 업로드 에러: $e');
+    rethrow;
+  }
 }
 
 Future<dynamic> getUserInfo() async {
