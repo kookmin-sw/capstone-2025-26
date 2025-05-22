@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:reme/services/crew_api.dart';
 import 'package:reme/themes/color.dart';
 import 'package:reme/utils/crew_controller.dart';
 import 'package:reme/widgets/crewList.dart';
@@ -90,8 +91,10 @@ class _CrewListPageState extends State<CrewListPage> {
         crewIntro: notJoinedCrewList[index]['crew_description'],
         isJoined: false,
         onJoinTap: () {
+          joinCrew(notJoinedCrewList[index]['id'].toString());
           print("아이디: ${notJoinedCrewList[index]['id']} 크루 가입");
         },
+        joinClicked: false, //TODO: 크루 가입 대기중인지 확인해서 데이터 집어넣기
       ),
     );
   }

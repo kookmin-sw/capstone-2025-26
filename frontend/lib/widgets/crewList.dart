@@ -11,8 +11,9 @@ class CrewList extends StatefulWidget {
   final String crewIntro;
   final bool? isJoined;
   final VoidCallback? onJoinTap;
+  bool? joinClicked;
 
-  const CrewList({
+  CrewList({
     super.key,
     this.image,
     required this.crewId,
@@ -20,6 +21,7 @@ class CrewList extends StatefulWidget {
     required this.crewIntro,
     this.isJoined,
     this.onJoinTap,
+    this.joinClicked,
   });
 
   @override
@@ -27,7 +29,14 @@ class CrewList extends StatefulWidget {
 }
 
 class _CrewListState extends State<CrewList> {
-  bool joinClicked = false;
+  late bool joinClicked;
+
+  @override
+  void initState() {
+    super.initState();
+    joinClicked = widget.joinClicked ?? false;
+  }
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
