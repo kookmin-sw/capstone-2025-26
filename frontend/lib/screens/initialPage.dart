@@ -7,9 +7,11 @@ import 'package:reme/screens/crew_list_page.dart';
 import 'package:reme/screens/feed.dart';
 import 'package:reme/screens/home.dart';
 import 'package:reme/screens/retrospectPage.dart';
+import 'package:reme/services/crew_api.dart';
 import 'package:reme/services/user_update.dart';
 import 'package:reme/themes/color.dart';
 import 'package:reme/icon/tab_bar_icon_icons.dart';
+import 'package:reme/utils/crew_controller.dart';
 import 'package:reme/utils/user_info_controller.dart';
 
 class Initialpage extends StatefulWidget {
@@ -31,6 +33,7 @@ class _InitialpageState extends State<Initialpage>
   @override
   void initState() {
     Get.put(UserInfoController());
+    Get.put(CrewController());
     super.initState();
     tabController = TabController(length: 4, vsync: this);
     retroTabController = TabController(length: 2, vsync: this);
@@ -50,6 +53,15 @@ class _InitialpageState extends State<Initialpage>
       setState(() {
         userInfo = Get.find<UserInfoController>().getUserInfo();
       });
+
+      getJoinedCrewList().then((value) {
+        Get.find<CrewController>().setJoinedCrewList(value);
+      });
+
+      getChallengeList(filter: 0).then((value) {
+        // TODO: 챌린지 리스트 상태관리
+      });
+
       FlutterNativeSplash.remove();
     });
   }
