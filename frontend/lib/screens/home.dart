@@ -50,11 +50,11 @@ class _HomeState extends State<Home> {
   @override
   void initState() {
     super.initState();
-    getChallengeList(filter: 0).then((value) {
-      setState(() {
-        challengeList = value;
-      });
-    });
+    // getChallengeList(filter: 0).then((value) {
+    //   setState(() {
+    //     challengeList = value;
+    //   });
+    // });
     topBoxTap = [
       widget.switchToRetrospect, // 회고 목록 보는 페이지로 이동
       () {
