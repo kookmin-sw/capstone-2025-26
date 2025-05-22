@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:get/get.dart';
 import 'package:reme/themes/color.dart';
+import 'package:reme/utils/crew_controller.dart';
 import 'package:reme/widgets/crewList.dart';
 
 class CrewListPage extends StatefulWidget {
@@ -47,13 +49,16 @@ class _HeaderDelegate extends SliverPersistentHeaderDelegate {
 }
 
 class _CrewListPageState extends State<CrewListPage> {
-  final int joinedCrewCount = 3;
-  final int notJoinedCrewCount = 20;
+  late final int joinedCrewCount;
+  late final int notJoinedCrewCount;
 
   bool joinCrewHeaderPinned = true;
 
   late final ScrollController _scrollController;
 
+  final crewController = Get.put(CrewController());
+  var joinedCrewList;
+  var notJoinedCrewList;
   Widget _buildJoinedCrew(int index) {
     return Container(
       margin: EdgeInsets.only(bottom: 15.h),
@@ -63,9 +68,9 @@ class _CrewListPageState extends State<CrewListPage> {
         borderRadius: BorderRadius.circular(10.r),
       ),
       child: CrewList(
-        crewId: index,
-        crewName: "캡스톤 26조 화이팅",
-        crewIntro: "캡스톤 26조 화이팅을 위한 크루. 더 이상 어떤 말을 @해도 그 내용이 우리 크루를 설명할 수 없다.",
+        crewId: joinedCrewList[index]['id'],
+        crewName: joinedCrewList[index]['crew_name'],
+        crewIntro: joinedCrewList[index]['crew_description'],
         isJoined: true,
       ),
     );
@@ -80,12 +85,12 @@ class _CrewListPageState extends State<CrewListPage> {
         borderRadius: BorderRadius.circular(10.r),
       ),
       child: CrewList(
-        crewId: index,
-        crewName: "정릉동 건강인 모임",
-        crewIntro: "정릉동 건강인 모임을 위한 크루. 더 이상 어떤 말을 해도 그 내용이 우리 크루를 설명할 수 없다.",
+        crewId: notJoinedCrewList[index]['id'],
+        crewName: notJoinedCrewList[index]['crew_name'],
+        crewIntro: notJoinedCrewList[index]['crew_description'],
         isJoined: false,
         onJoinTap: () {
-          print("${index}번째 크루 가입");
+          print("아이디: ${notJoinedCrewList[index]['id']} 크루 가입");
         },
       ),
     );
@@ -117,6 +122,11 @@ class _CrewListPageState extends State<CrewListPage> {
         });
       }
     });
+    joinedCrewList = crewController.getJoinedCrewList();
+    joinedCrewCount = joinedCrewList.length;
+
+    notJoinedCrewList = crewController.getNotJoinedCrewList();
+    notJoinedCrewCount = notJoinedCrewList.length;
   }
 
   @override

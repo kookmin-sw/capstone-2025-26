@@ -32,11 +32,12 @@ class _InitialpageState extends State<Initialpage>
 
   @override
   void initState() {
+    super.initState();
     Get.put(UserInfoController());
     Get.put(CrewController());
-    super.initState();
     tabController = TabController(length: 4, vsync: this);
     retroTabController = TabController(length: 2, vsync: this);
+    int loadingCount = 0;
 
     tabController!.addListener(() => setState(() {
           scrollController.jumpTo(0);
@@ -47,22 +48,27 @@ class _InitialpageState extends State<Initialpage>
           _retroSelectIndex = retroTabController!.index;
         }));
 
-    getUserInfo().then((value) {
-      Get.find<UserInfoController>().setUserInfo(value['id'].toString(),
-          value['username'], value['email'], value['profile_image']);
-      setState(() {
-        userInfo = Get.find<UserInfoController>().getUserInfo();
-      });
-
+    // 사용자 정보 저장
+    Future.wait<dynamic>([
+      getUserInfo().then((value) {
+        Get.find<UserInfoController>().setUserInfo(value['id'].toString(),
+            value['username'], value['email'], value['profile_image']);
+        setState(() {
+          userInfo = Get.find<UserInfoController>().getUserInfo();
+        });
+      }),
       getJoinedCrewList().then((value) {
         Get.find<CrewController>().setJoinedCrewList(value);
-      });
-
+      }),
+      getCrewList().then((value) {
+        Get.find<CrewController>().setNotJoinedCrewList(value.data['results']);
+      }),
       getChallengeList(filter: 0).then((value) {
         // TODO: 챌린지 리스트 상태관리
-      });
-
+      })
+    ]).then((_) {
       FlutterNativeSplash.remove();
+      setState(() {}); // Home 위젯을 다시 렌더링
     });
   }
 
