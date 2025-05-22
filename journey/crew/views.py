@@ -267,6 +267,17 @@ class CrewMembershipViewSet(viewsets.ModelViewSet):
     serializer_class = CrewMembershipSerializer
     permission_classes = [permissions.IsAuthenticated, IsMembershipOwnerOrCrewCreatorOrAdmin]
 
+    @action(detail=False, methods=['get'], url_path='my-memberships', permission_classes=[permissions.IsAuthenticated])
+    def my_memberships(self, request):
+        """
+        현재 인증된 사용자의 모든 크루 멤버십 현황을 반환합니다.
+        """
+        user = request.user
+        memberships = CrewMembership.objects.filter(user=user).order_by('-joined_at')
+
+        serializer = CrewMembershipSerializer(memberships, many=True)
+        return Response(serializer.data)
+
     def get_queryset(self):
         """Optionally filters the queryset by crew_id if provided in query_params."""
         queryset = super().get_queryset()
