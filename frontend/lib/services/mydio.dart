@@ -27,23 +27,27 @@ class MyDio {
     }
   }
 
+  void _handleError(DioException e, String method) {
+    if (e.type == DioExceptionType.connectionTimeout ||
+        e.type == DioExceptionType.receiveTimeout ||
+        e.type == DioExceptionType.sendTimeout) {
+      print('Timeout Error: ${e.message}');
+    } else if (e.type == DioExceptionType.connectionError) {
+      print('Connection Error: ${e.message}');
+    } else {
+      print('$method Error: ${e.message}');
+      print('Response: ${e.response?.data}');
+    }
+    throw e;
+  }
+
   Future<dynamic> get(String path) async {
     await initializeToken();
     try {
       var response = await _dio.get(path);
       return response;
     } on DioException catch (e) {
-      if (e.type == DioExceptionType.connectionTimeout ||
-          e.type == DioExceptionType.receiveTimeout ||
-          e.type == DioExceptionType.sendTimeout) {
-        print('Timeout Error: ${e.message}');
-      } else if (e.type == DioExceptionType.connectionError) {
-        print('Connection Error: ${e.message}');
-      } else {
-        print('GET Error: ${e.message}');
-        print('Response: ${e.response?.data}');
-      }
-      rethrow;
+      _handleError(e, 'GET');
     }
   }
 
@@ -52,17 +56,7 @@ class MyDio {
       var response = await _dio.post(path, data: data);
       return response;
     } on DioException catch (e) {
-      if (e.type == DioExceptionType.connectionTimeout ||
-          e.type == DioExceptionType.receiveTimeout ||
-          e.type == DioExceptionType.sendTimeout) {
-        print('Timeout Error: ${e.message}');
-      } else if (e.type == DioExceptionType.connectionError) {
-        print('Connection Error: ${e.message}');
-      } else {
-        print('POST Error: ${e.message}');
-        print('Response: ${e.response?.data}');
-      }
-      rethrow;
+      _handleError(e, 'POST');
     }
   }
 
@@ -71,17 +65,7 @@ class MyDio {
       var response = await _dio.put(path, data: data);
       return response;
     } on DioException catch (e) {
-      if (e.type == DioExceptionType.connectionTimeout ||
-          e.type == DioExceptionType.receiveTimeout ||
-          e.type == DioExceptionType.sendTimeout) {
-        print('Timeout Error: ${e.message}');
-      } else if (e.type == DioExceptionType.connectionError) {
-        print('Connection Error: ${e.message}');
-      } else {
-        print('PUT Error: ${e.message}');
-        print('Response: ${e.response?.data}');
-      }
-      rethrow;
+      _handleError(e, 'PUT');
     }
   }
 
@@ -90,17 +74,7 @@ class MyDio {
       var response = await _dio.delete(path);
       return response;
     } on DioException catch (e) {
-      if (e.type == DioExceptionType.connectionTimeout ||
-          e.type == DioExceptionType.receiveTimeout ||
-          e.type == DioExceptionType.sendTimeout) {
-        print('Timeout Error: ${e.message}');
-      } else if (e.type == DioExceptionType.connectionError) {
-        print('Connection Error: ${e.message}');
-      } else {
-        print('DELETE Error: ${e.message}');
-        print('Response: ${e.response?.data}');
-      }
-      rethrow;
+      _handleError(e, 'DELETE');
     }
   }
 
@@ -109,17 +83,7 @@ class MyDio {
       var response = await _dio.patch(path, data: data);
       return response;
     } on DioException catch (e) {
-      if (e.type == DioExceptionType.connectionTimeout ||
-          e.type == DioExceptionType.receiveTimeout ||
-          e.type == DioExceptionType.sendTimeout) {
-        print('Timeout Error: ${e.message}');
-      } else if (e.type == DioExceptionType.connectionError) {
-        print('Connection Error: ${e.message}');
-      } else {
-        print('DELETE Error: ${e.message}');
-        print('Response: ${e.response?.data}');
-      }
-      rethrow;
+      _handleError(e, 'PATCH');
     }
   }
 }
