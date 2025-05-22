@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:reme/routes.dart';
+import 'package:reme/services/user_update.dart';
 import 'package:reme/themes/color.dart';
 import 'package:reme/widgets/crewList.dart';
 import 'package:reme/widgets/customListItem.dart';
@@ -16,6 +17,7 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
+  dynamic challengeList;
   List<String> topBoxTitle = ["연속 32일째!", "오늘의 탬플릿", "크루를 찾아봐요"];
   List<String> topBoxContent = [
     "오늘도 함꼐 \n회고해요😉",
@@ -44,6 +46,11 @@ class _HomeState extends State<Home> {
   @override
   void initState() {
     super.initState();
+    getChallengeList(filter: 0).then((value) {
+      setState(() {
+        challengeList = value;
+      });
+    });
     topBoxTap = [
       widget.switchToRetrospect, // 회고 목록 보는 페이지로 이동
       () {
@@ -124,14 +131,30 @@ class _HomeState extends State<Home> {
             height: 15.h,
           ),
           WidgetBox(
-            height: 225.h,
             title: "오늘의 개인 챌린지",
             isMore: false,
             marginLTRB: EdgeInsets.only(left: 24.w, right: 24.w),
             children: [
-              CustomListitem(height: 46.h, content: "모두를 위한 머신러닝 읽기"),
-              CustomListitem(height: 46.h, content: "모두를 위한 머신러닝 읽기"),
-              CustomListitem(height: 46.h, content: "모두를 위한 머신러닝 읽기"),
+              if (challengeList != null && challengeList['count'] == 0)
+                Text(
+                  "개인 챌린지가 없어요",
+                  style: TextStyle(
+                    fontSize: 26.sp,
+                    fontWeight: FontWeight.w300,
+                    color: fontColor,
+                  ),
+                )
+              else if (challengeList != null && challengeList['count'] > 0)
+                for (var i = 0; i < challengeList?['count']; i++)
+                  if (challengeList['results']['owner_type'] == "USER")
+                    GestureDetector(
+                        onTap: () {
+                          // TODO: 챌린지 상세 조회 페이지로 이동
+                        },
+                        child: CustomListitem(
+                            height: 46.h,
+                            content: challengeList['results']
+                                ['challenge_name'])),
             ],
           ),
           SizedBox(

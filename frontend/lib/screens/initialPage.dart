@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:get/get.dart';
 import 'package:reme/routes.dart';
 import 'package:reme/screens/crew_list_page.dart';
 import 'package:reme/screens/feed.dart';
 import 'package:reme/screens/home.dart';
 import 'package:reme/screens/retrospectPage.dart';
+import 'package:reme/services/user_update.dart';
 import 'package:reme/themes/color.dart';
 import 'package:reme/icon/tab_bar_icon_icons.dart';
+import 'package:reme/utils/user_info_controller.dart';
 
 class Initialpage extends StatefulWidget {
   const Initialpage({super.key});
@@ -22,9 +25,11 @@ class _InitialpageState extends State<Initialpage>
   ScrollController scrollController = ScrollController();
   int _selectIndex = 0;
   int _retroSelectIndex = 0;
+  dynamic userInfo;
 
   @override
   void initState() {
+    Get.put(UserInfoController());
     super.initState();
     tabController = TabController(length: 4, vsync: this);
     retroTabController = TabController(length: 2, vsync: this);
@@ -37,6 +42,14 @@ class _InitialpageState extends State<Initialpage>
     retroTabController!.addListener(() => setState(() {
           _retroSelectIndex = retroTabController!.index;
         }));
+
+    getUserInfo().then((value) {
+      Get.find<UserInfoController>().setUserInfo(value['id'].toString(),
+          value['username'], value['email'], value['profile_image']);
+      setState(() {
+        userInfo = Get.find<UserInfoController>().getUserInfo();
+      });
+    });
   }
 
   @override
@@ -99,11 +112,16 @@ class _InitialpageState extends State<Initialpage>
                         padding: EdgeInsets.only(left: 8.w, right: 19.w),
                         child: GestureDetector(
                             onTap: () {
-                              Navigator.pushNamed(context, Routes.myPage,
-                                  arguments: "이다현");
+                              if (userInfo != null) {
+                                Navigator.pushNamed(context, Routes.myPage);
+                              }
                             },
                             child: CircleAvatar(
                               radius: 18.5.r,
+                              backgroundImage: userInfo != null &&
+                                      userInfo['profile_image'] != null
+                                  ? NetworkImage(userInfo['profile_image'])
+                                  : null,
                             )))
                   ],
                   toolbarHeight: 55,

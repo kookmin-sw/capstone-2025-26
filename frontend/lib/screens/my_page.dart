@@ -1,18 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg_provider/flutter_svg_provider.dart';
+import 'package:get/get.dart';
 import 'package:reme/screens/account_info_page.dart';
 import 'package:reme/screens/get_info.dart';
 import 'package:reme/screens/guidePage.dart';
 import 'package:reme/screens/retrospect_completion_screen.dart';
 import 'package:reme/themes/color.dart';
+import 'package:reme/utils/user_info_controller.dart';
 
-class MyPage extends StatelessWidget {
+class MyPage extends StatefulWidget {
   const MyPage({super.key});
 
   @override
+  State<MyPage> createState() => _MyPageState();
+}
+
+class _MyPageState extends State<MyPage> {
+  late final UserInfoController userController;
+
+  @override
+  void initState() {
+    super.initState();
+    userController = Get.put(UserInfoController());
+  }
+
+  @override
   Widget build(BuildContext context) {
-    var userName = ModalRoute.of(context)!.settings.arguments;
     return Scaffold(
       backgroundColor: background,
       appBar: AppBar(
@@ -29,29 +43,29 @@ class MyPage extends StatelessWidget {
         child: Column(
           children: [
             SizedBox(height: 32.h),
-            Text.rich(
-              TextSpan(
-                style: TextStyle(
-                  fontSize: 27.sp,
-                  letterSpacing: 0.54,
-                  fontWeight: FontWeight.w800,
-                ),
-                children: [
+            Obx(() => Text.rich(
                   TextSpan(
-                    text: userName.toString(),
                     style: TextStyle(
-                      color: c600,
+                      fontSize: 27.sp,
+                      letterSpacing: 0.54,
+                      fontWeight: FontWeight.w800,
                     ),
+                    children: [
+                      TextSpan(
+                        text: userController.userInfo['username'],
+                        style: TextStyle(
+                          color: c600,
+                        ),
+                      ),
+                      TextSpan(
+                        text: "님\n환영합니다 👀",
+                        style: TextStyle(
+                          color: fontColor,
+                        ),
+                      ),
+                    ],
                   ),
-                  TextSpan(
-                    text: "님\n환영합니다 👀",
-                    style: TextStyle(
-                      color: fontColor,
-                    ),
-                  ),
-                ],
-              ),
-            ),
+                )),
             SizedBox(height: 55.h),
             Row(children: [
               GestureDetector(
@@ -102,8 +116,7 @@ class MyPage extends StatelessWidget {
                   Navigator.push(
                       context,
                       MaterialPageRoute(
-                          builder: (context) =>
-                              AccountInfoPage(username: userName.toString())));
+                          builder: (context) => AccountInfoPage()));
                 },
                 child: Container(
                   width: 112.w,

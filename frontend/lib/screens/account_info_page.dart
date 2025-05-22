@@ -1,18 +1,32 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_svg_provider/flutter_svg_provider.dart';
+import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:reme/screens/get_info.dart';
+import 'package:reme/services/user_update.dart';
 import 'package:reme/themes/color.dart';
+import 'package:reme/utils/user_info_controller.dart';
 
 class AccountInfoPage extends StatefulWidget {
-  final String username;
-  AccountInfoPage({super.key, required this.username});
+  AccountInfoPage({
+    super.key,
+  });
 
   @override
   State<AccountInfoPage> createState() => _AccountInfoPageState();
 }
 
 class _AccountInfoPageState extends State<AccountInfoPage> {
+  final UserInfoController userController = Get.find<UserInfoController>();
+
   @override
+  void initState() {
+    super.initState();
+  }
+
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: background,
@@ -27,28 +41,28 @@ class _AccountInfoPageState extends State<AccountInfoPage> {
             color: fontColor,
           ),
         ),
-        title: Text.rich(
-          TextSpan(
-            style: TextStyle(
-              fontSize: 19.sp,
-              fontWeight: FontWeight.w800,
-            ),
-            children: [
+        title: Obx(() => Text.rich(
               TextSpan(
-                text: widget.username,
                 style: TextStyle(
-                  color: c800,
+                  fontSize: 19.sp,
+                  fontWeight: FontWeight.w800,
                 ),
+                children: [
+                  TextSpan(
+                    text: userController.userInfo['username'],
+                    style: TextStyle(
+                      color: c800,
+                    ),
+                  ),
+                  TextSpan(
+                    text: "님의 정보",
+                    style: TextStyle(
+                      color: fontColor,
+                    ),
+                  )
+                ],
               ),
-              TextSpan(
-                text: "님의 정보",
-                style: TextStyle(
-                  color: fontColor,
-                ),
-              )
-            ],
-          ),
-        ),
+            )),
         centerTitle: true,
       ),
       body: Center(
@@ -57,19 +71,38 @@ class _AccountInfoPageState extends State<AccountInfoPage> {
             SizedBox(height: 32.h),
             GestureDetector(
               onTap: () {
-                // Todo: 변경할 이미지 선택하는 화면.
-                print("프로필 이미지 클릭");
+                XFile? image;
+                ImagePicker()
+                    .pickImage(source: ImageSource.gallery)
+                    .then((pickedFile) {
+                  if (pickedFile != null) {
+                    // 이미지를 선택했다면?
+                    image = pickedFile;
+                    print(pickedFile.path);
+                    updateUser(
+                            id: userController.userInfo['id'],
+                            profile_image: File(pickedFile.path))
+                        .then((value) {
+                      print("upload 완료 후 리턴 값 $value");
+                      userController.updateUserInfo(
+                          'profile_image', value.data['profile_image']);
+                    });
+                  }
+                });
               },
               child: Container(
                 width: 120.w,
                 height: 120.h,
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(10.r),
+                  borderRadius: BorderRadius.circular(30.r),
                 ),
-                child: Image.asset(
-                  'assets/img/food.png',
-                  fit: BoxFit.fill,
-                ),
+                child: Obx(() => CircleAvatar(
+                      backgroundImage:
+                          userController.userInfo['profile_image'] != null
+                              ? NetworkImage(
+                                  userController.userInfo['profile_image'])
+                              : Svg('assets/img/account_circle.svg'),
+                    )),
               ),
             ),
             SizedBox(height: 35.h),
@@ -78,12 +111,17 @@ class _AccountInfoPageState extends State<AccountInfoPage> {
                 showDialog(
                     context: context,
                     builder: (context) => Dialog(
-                          child: GetInfo(type: 1, content: widget.username),
-                        ));
+                          child: GetInfo(
+                              type: 1,
+                              content: userController.userInfo['username']),
+                        )).then((value) {
+                  userController.getUserInfo();
+                });
               },
               child: Padding(
                 padding: EdgeInsets.only(left: 21.w, right: 21.w),
-                child: _buildInfo("닉네임", widget.username),
+                child: Obx(() =>
+                    _buildInfo("닉네임", userController.userInfo['username'])),
               ),
             ),
             SizedBox(height: 29.h),
@@ -92,12 +130,17 @@ class _AccountInfoPageState extends State<AccountInfoPage> {
                 showDialog(
                     context: context,
                     builder: (context) => Dialog(
-                          child: GetInfo(type: 2, content: "email@example.com"),
-                        ));
+                          child: GetInfo(
+                              type: 2,
+                              content: userController.userInfo['email']),
+                        )).then((value) {
+                  userController.getUserInfo();
+                });
               },
               child: Padding(
                 padding: EdgeInsets.only(left: 21.w, right: 21.w),
-                child: _buildInfo("이메일", "email@example.com"),
+                child: Obx(
+                    () => _buildInfo("이메일", userController.userInfo['email'])),
               ),
             ),
           ],

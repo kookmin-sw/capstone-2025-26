@@ -23,13 +23,13 @@ class SignupStep {
 class SignupFlow {
   static const List<SignupStep> steps = [
     SignupStep(
-      title: "Re:ME에서 사용할\n닉네임을 알려주세요!",
+      title: "To-Go에서 사용할\n닉네임을 알려주세요!",
       subtitle: "앱에서 크루별 닉네임을 설정할 수 있어요!",
       hintText: "닉네임",
       shortTitle: "닉네임",
     ),
     SignupStep(
-      title: "Re:ME에서 사용할\n비밀번호를 입력해주세요",
+      title: "회원정보 수정에 사용할\n비밀번호를 입력해주세요",
       subtitle: "영문, 숫자, 특수문자(@\$!%*#?&) 포함 8자 이상",
       hintText: "비밀번호",
       shortTitle: "비밀번호",
@@ -43,21 +43,6 @@ class SignupFlow {
       shortTitle: "비밀번호 확인",
       isPassword: true,
       requiresValidation: true,
-    ),
-    SignupStep(
-      title: "회원가입을 마칩니다",
-      shortTitle: "회원가입 끝",
-      hintText: "회원가입 끝",
-    ),
-    SignupStep(
-      title: "누구맘대로",
-      shortTitle: "누구맘대로",
-      hintText: "아",
-    ),
-    SignupStep(
-      title: "마지막",
-      shortTitle: "찐막",
-      hintText: "찐찐찐막",
     ),
   ];
 }

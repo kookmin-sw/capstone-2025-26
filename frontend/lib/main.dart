@@ -1,7 +1,10 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:get/get.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:reme/firebase_options.dart';
 import 'package:reme/routes.dart';
 import 'package:posthog_flutter/posthog_flutter.dart';
 import 'package:reme/themes/color.dart';
@@ -20,6 +23,9 @@ Future<void> main() async {
   // 달력 locale을 위한 초기화
   await initializeDateFormatting();
 
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  ); // firebase 연동을 위한 초기화
   //sharedPreferences 설정
   SharedPreferences prefs = await SharedPreferences.getInstance();
   runApp(MyApp(prefs: prefs));
@@ -38,7 +44,7 @@ class MyApp extends StatelessWidget {
 
     if (isFirstInstall == null) {
       initialRoute = Routes.first;
-    } else if (isAccessToken == null) {
+    } else if (isAccessToken == null || isAccessToken == false) {
       initialRoute = Routes.login;
     } else {
       initialRoute = Routes.splash;
@@ -54,7 +60,7 @@ class MyApp extends StatelessWidget {
 
     return ScreenUtilInit(
       designSize: Size(414, 896),
-      child: MaterialApp(
+      child: GetMaterialApp(
         debugShowCheckedModeBanner: false,
         title: 'Flutter Demo',
         theme: ThemeData(
