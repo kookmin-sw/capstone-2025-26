@@ -8,17 +8,17 @@ Future<dynamic> getJoinedCrewList() async {
 }
 
 Future<dynamic> joinCrew(String crewId) async {
-  final response = await dio.post('/crew/$crewId/request-join/', {});
+  final response = await dio.post('/crew/$crewId/request-join/', null);
   return response;
 }
 
 Future<dynamic> acceptJoinRequest(String crewId, String userId) async {
-  final response = await dio.post('/crew/$crewId/accept_member/$userId/', {});
+  final response = await dio.post('/crew/$crewId/accept_member/$userId/', null);
   return response;
 }
 
 Future<dynamic> rejectJoinRequest(String crewId, String userId) async {
-  final response = await dio.post('/crew/$crewId/reject_member/$userId/', {});
+  final response = await dio.post('/crew/$crewId/reject_member/$userId/', null);
   return response;
 }
 
