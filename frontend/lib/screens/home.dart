@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:reme/routes.dart';
-import 'package:reme/services/crew_api.dart';
 import 'package:reme/services/user_update.dart';
 import 'package:reme/themes/color.dart';
 import 'package:reme/utils/crew_controller.dart';
