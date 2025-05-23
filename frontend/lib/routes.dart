@@ -38,10 +38,10 @@ class Routes {
 
 var namedRoute = {
   Routes.splash: (context) => const Initialpage(),
-  Routes.login: (context) => const LoginPage(),
+  Routes.login: (context) => LoginPage(),
   Routes.signup: (context) => const SignupPage(),
   Routes.crew: (context) => const CrewDetail(),
-  Routes.first: (context) => const GuidePage(),
+  Routes.first: (context) => GuidePage(),
   Routes.retrospectChallenge: (context) => const RetrospectChallengeList(),
   Routes.retrospectCompletion: (context) => const RetrospectCompletionScreen(),
   Routes.createChallengeName: (context) => const CreateChallengeNameScreen(),
