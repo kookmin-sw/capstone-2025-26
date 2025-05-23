@@ -51,6 +51,7 @@ urlpatterns = [
         path('crew/', include('crew.urls')),
         path('community/', include('community.urls')),
         path('retrospect/', include('retrospect.urls')),
+        path('payment/', include('payment.urls')),
     ])), 
 ]
 

@@ -57,6 +57,7 @@ INSTALLED_APPS = [
     'community', 
     'crew',
     'retrospect',
+    'payment',
     "django_celery_beat",
     "django_celery_results"
 ]
@@ -196,6 +197,11 @@ KAKAO_REDIRECT_URI = os.getenv('KAKAO_REDIRECT_URI', '')
 NAVER_REST_API_KEY = os.getenv('NAVER_REST_API_KEY', '')
 NAVER_SECRET_API_KEY = os.getenv('NAVER_SECRET_API_KEY', '')
 NAVER_REDIRECT_URI = os.getenv('NAVER_REDIRECT_URI', '')
+
+KAKAO_PAY_CLIENT_ID = os.getenv('KAKAO_PAY_CLIENT_ID', '')
+KAKAO_PAY_SECRET = os.getenv('KAKAO_PAY_SECRET', '')
+KAKAO_PAY_KEY = os.getenv('KAKAO_PAY_KEY', '')
+CID = os.getenv('CID', '')
 
 REDIS_HOST = os.getenv('REDIS_HOST', 'redis') # 기본 호스트명을 'redis' (Docker Compose용) 또는 'localhost' 등으로 설정
 REDIS_PORT = os.getenv('REDIS_PORT', '6379')

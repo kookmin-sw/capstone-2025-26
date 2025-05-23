@@ -4,7 +4,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from .models import Crew, CrewMembership, CrewMembershipStatus, CrewMembershipRole
 from .serializers import CrewSerializer, CrewMembershipSerializer
-from .permissions import IsCrewCreatorOrReadOnly  # 커스텀 권한 클래스를 가져옵니다.
+from .permissions import IsCrewCreatorOrReadOnly, IsMembershipOwnerOrCrewCreatorOrAdmin  # 커스텀 권한 클래스를 가져옵니다.
 from retrospect.models import Template, Retrospect, Challenge, ChallengeStatus
 from retrospect.serializers import TemplateSerializer, RetrospectSerializer, ChallengeSerializer
 # Create your views here.
@@ -254,3 +254,62 @@ class CrewViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
     # 기본 list, create, retrieve, update, destroy 액션을 지원합니다.
+
+class CrewMembershipViewSet(viewsets.ModelViewSet):
+    """
+    크루 멤버십의 생성, 조회, 수정, 삭제를 관리하는 API 엔드포인트입니다.
+    - 목록(list) 및 상세(retrieve) 조회: 인증된 모든 사용자에게 허용됩니다.
+    - 생성(create): 관리자만 가능합니다. (일반 사용자의 크루 참여/요청은 CrewViewSet을 통해 이루어집니다)
+    - 수정(update/partial_update): 관리자 또는 해당 크루의 생성자만 가능합니다.
+    - 삭제(destroy): 관리자, 해당 크루의 생성자, 또는 멤버십의 소유자(본인)만 가능합니다.
+    """
+    queryset = CrewMembership.objects.all()
+    serializer_class = CrewMembershipSerializer
+    permission_classes = [permissions.IsAuthenticated, IsMembershipOwnerOrCrewCreatorOrAdmin]
+
+    @action(detail=False, methods=['get'], url_path='my-memberships', permission_classes=[permissions.IsAuthenticated])
+    def my_memberships(self, request):
+        """
+        현재 인증된 사용자의 모든 크루 멤버십 현황을 반환합니다.
+        """
+        user = request.user
+        memberships = CrewMembership.objects.filter(user=user).order_by('-joined_at')
+
+        serializer = CrewMembershipSerializer(memberships, many=True)
+        return Response(serializer.data)
+
+    def get_queryset(self):
+        """Optionally filters the queryset by crew_id if provided in query_params."""
+        queryset = super().get_queryset()
+        crew_id = self.request.query_params.get('crew_id')
+        if crew_id:
+            queryset = queryset.filter(crew_id=crew_id)
+        return queryset
+
+    def _update_crew_member_count(self, crew):
+        """Helper function to update crew member count."""
+        crew.member_count = CrewMembership.objects.filter(
+            crew=crew, status=CrewMembershipStatus.ACCEPTED
+        ).count()
+        crew.save(update_fields=['member_count'])
+
+    def perform_create(self, serializer):
+        membership = serializer.save()
+        if membership.status == CrewMembershipStatus.ACCEPTED:
+            self._update_crew_member_count(membership.crew)
+
+    def perform_update(self, serializer):
+        original_status = serializer.instance.status
+        updated_membership = serializer.save()
+        
+        # Update member count if status changed to/from ACCEPTED
+        if original_status != updated_membership.status and \
+           (original_status == CrewMembershipStatus.ACCEPTED or updated_membership.status == CrewMembershipStatus.ACCEPTED):
+            self._update_crew_member_count(updated_membership.crew)
+
+    def perform_destroy(self, instance):
+        crew = instance.crew
+        original_status = instance.status
+        instance.delete()
+        if original_status == CrewMembershipStatus.ACCEPTED:
+            self._update_crew_member_count(crew)
