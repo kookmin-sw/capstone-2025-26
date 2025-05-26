@@ -29,6 +29,7 @@ class _CrewDetailState extends State<CrewDetail>
   int _selectIndex = 0;
   bool _isCollapsed = false;
   bool _isLoading = true;
+  bool _isUploaded = true;
 
   // 초기 위치 설정 변수들
   final double _iconInitialTop = 227.h; // 아이콘 초기 세로 위치 (하단에서부터)
@@ -126,7 +127,7 @@ class _CrewDetailState extends State<CrewDetail>
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return Scaffold(
+      return const Scaffold(
         backgroundColor: background,
         body: Center(
           child: CircularProgressIndicator(
@@ -443,6 +444,9 @@ class _CrewDetailState extends State<CrewDetail>
                           onTap: () {
                             if (isCreator) {
                               // 관리자의 경우 크루 프로필 클릭했을 때 크루 프로필 이미지 수정.
+                              setState(() {
+                                _isUploaded = false;
+                              });
                               ImagePicker()
                                   .pickImage(source: ImageSource.gallery)
                                   .then((pickedFile) async {
@@ -462,8 +466,16 @@ class _CrewDetailState extends State<CrewDetail>
                                     crewController.joinedCrew[joinedIndex]
                                         ['crew_image'] = response;
                                   }
-                                  await updateCrewProfileImage(
-                                      crew_id, response);
+                                  updateCrewProfileImage(crew_id, response)
+                                      .then((value) {
+                                    setState(() {
+                                      _isUploaded = true;
+                                    });
+                                  });
+                                } else {
+                                  setState(() {
+                                    _isUploaded = true;
+                                  });
                                 }
                               });
                               // TODO: 크루 프로필 업데이트 후 크루 리스트 페이지 이동했을 때 바로 반영 안되는 문제 수정 필요
@@ -479,13 +491,25 @@ class _CrewDetailState extends State<CrewDetail>
                             child: ClipRRect(
                               borderRadius: BorderRadius.circular(8),
                               // TODO: 크루 프로필 이미지 네트워크로 추가
-                              child: crew_image != null
-                                  ? Image.network(crew_image!)
-                                  : Icon(
-                                      Icons.group,
-                                      size: iconSize * 0.7,
-                                      color: Colors.grey,
-                                    ),
+                              child: !_isUploaded
+                                  ? Container(
+                                      width: iconSize,
+                                      height: iconSize,
+                                      color: boxBackgroundColor,
+                                      child: const Center(
+                                        child: CircularProgressIndicator(
+                                          color: c700,
+                                        ),
+                                      ),
+                                    )
+                                  : crew_image != null
+                                      ? Image.network(crew_image!,
+                                          fit: BoxFit.cover)
+                                      : Icon(
+                                          Icons.group,
+                                          size: iconSize * 0.7,
+                                          color: Colors.grey,
+                                        ),
                             ),
                           ),
                         ),
