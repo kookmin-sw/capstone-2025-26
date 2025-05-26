@@ -398,7 +398,25 @@ class _CrewDetailState extends State<CrewDetail>
                                                         const EdgeInsets.only(
                                                             top: 8, bottom: 8),
                                                   ),
-                                                  onPressed: () {},
+                                                  onPressed: () {
+                                                    if (member_status == 0) {
+                                                      // 크루 가입하기
+                                                      joinCrew(crew_id!
+                                                              .toString())
+                                                          .then((value) {
+                                                        setState(() {
+                                                          member_status++;
+                                                        });
+                                                      });
+                                                    } else if (member_status ==
+                                                        2) {
+                                                      // 크루 회고하기.
+                                                      Navigator.pushNamed(
+                                                          context,
+                                                          Routes
+                                                              .retrospectChallenge);
+                                                    }
+                                                  },
                                                   child: Text(
                                                     (member_status == 2)
                                                         ? "크루 회고 하기"
