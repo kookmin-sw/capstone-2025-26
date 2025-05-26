@@ -29,7 +29,7 @@ Future<dynamic> getCrewList() async {
   return response;
 }
 
-Future<dynamic> getCrewDeatil(int crewId) async {
+Future<dynamic> getCrewDetail(int crewId) async {
   final response = await dio.get('/crew/crews/${crewId.toString()}/');
   return response;
 }

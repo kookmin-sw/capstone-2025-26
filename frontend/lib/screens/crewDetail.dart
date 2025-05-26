@@ -89,7 +89,7 @@ class _CrewDetailState extends State<CrewDetail>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         crew_id = ModalRoute.of(context)!.settings.arguments;
-        getCrewDeatil(crew_id).then((value) {
+        getCrewDetail(crew_id).then((value) {
           if (mounted) {
             setState(() {
               crew_name = value.data['crew_name'];
