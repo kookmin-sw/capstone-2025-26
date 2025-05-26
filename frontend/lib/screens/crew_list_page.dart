@@ -78,6 +78,7 @@ class _CrewListPageState extends State<CrewListPage> {
   }
 
   Widget _buildNonJoinedCrew(int index) {
+    dynamic crew_id = notJoinedCrewList[index]['id'];
     return Container(
       margin: EdgeInsets.only(bottom: 15.h),
       padding: EdgeInsets.symmetric(horizontal: 11.w, vertical: 10.h),
@@ -94,7 +95,8 @@ class _CrewListPageState extends State<CrewListPage> {
           joinCrew(notJoinedCrewList[index]['id'].toString());
           print("아이디: ${notJoinedCrewList[index]['id']} 크루 가입");
         },
-        joinClicked: false, //TODO: 크루 가입 대기중인지 확인해서 데이터 집어넣기
+        joinClicked: (crewController.myCrewMembership[crew_id]?['status'] ==
+            "PENDING"), //true이면 이미 신청중인 상태
       ),
     );
   }

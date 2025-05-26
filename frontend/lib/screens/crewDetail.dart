@@ -61,6 +61,7 @@ class _CrewDetailState extends State<CrewDetail>
   final crewController = Get.put(CrewController());
 
   bool isCreator = false;
+  int member_status = 0; // 0: 가입 안함, 1: 가입대기중, 2: 가입됨.
 
   @override
   void initState() {
@@ -92,6 +93,17 @@ class _CrewDetailState extends State<CrewDetail>
               crew_member_count = value.data['member_count'];
               isCreator =
                   crewController.myCrewMembership[crew_id]['role'] == 'CREATOR';
+              switch (crewController.myCrewMembership[crew_id]['status']) {
+                case 'PENDING':
+                  member_status = 1;
+                  break;
+                case 'ACCEPTED':
+                  member_status = 2;
+                  break;
+                default:
+                  member_status = 0;
+                  break;
+              }
               _isLoading = false;
             });
           }
@@ -365,7 +377,10 @@ class _CrewDetailState extends State<CrewDetail>
                                                 child: ElevatedButton(
                                                   style:
                                                       ElevatedButton.styleFrom(
-                                                    backgroundColor: c800,
+                                                    backgroundColor:
+                                                        (member_status == 1)
+                                                            ? grey
+                                                            : c800,
                                                     shape:
                                                         RoundedRectangleBorder(
                                                       borderRadius:
@@ -378,7 +393,11 @@ class _CrewDetailState extends State<CrewDetail>
                                                   ),
                                                   onPressed: () {},
                                                   child: Text(
-                                                    '크루 가입하기',
+                                                    (member_status == 2)
+                                                        ? "크루 회고 하기"
+                                                        : (member_status == 1)
+                                                            ? "가입 대기중"
+                                                            : "크루 탈퇴하기",
                                                     style: TextStyle(
                                                       fontSize: 16.sp,
                                                       color: fontColor,
