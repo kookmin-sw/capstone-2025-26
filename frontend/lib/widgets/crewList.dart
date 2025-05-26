@@ -41,7 +41,10 @@ class _CrewListState extends State<CrewList> {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        Navigator.pushNamed(context, Routes.crew, arguments: widget.crewId);
+        Navigator.pushNamed(context, Routes.crew, arguments: widget.crewId)
+            .then((value) {
+          setState(() {});
+        });
       },
       child: Container(
         width: 334.w,

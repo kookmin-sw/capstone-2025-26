@@ -15,7 +15,7 @@ Future<dynamic> updateUser(
     File? profile_image}) async {
   String? profile_image_link;
   if (profile_image != null) {
-    profile_image_link = await uploadProfileImage(profile_image, 0);
+    profile_image_link = await uploadProfileImage(profile_image, 0, null);
   }
   try {
     final response = await dio.patch('/users/${id}/', {
@@ -30,7 +30,7 @@ Future<dynamic> updateUser(
   }
 }
 
-Future<String> uploadProfileImage(File image, int type) async {
+Future<String> uploadProfileImage(File image, int type, int? crew_id) async {
   try {
     final storage = FirebaseStorage.instance;
     final ref;
@@ -41,7 +41,7 @@ Future<String> uploadProfileImage(File image, int type) async {
         ref = storage.ref().child('userprofile').child('${id}profile.png');
         break;
       case 1:
-        ref = storage.ref().child('crewprofile');
+        ref = storage.ref().child('crewprofile').child('${crew_id}profile.png');
         break;
       case 2:
         ref = storage.ref().child('crewback');

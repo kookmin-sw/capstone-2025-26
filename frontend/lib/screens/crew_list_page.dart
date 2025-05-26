@@ -72,6 +72,9 @@ class _CrewListPageState extends State<CrewListPage> {
         crewId: joinedCrewList[index]['id'],
         crewName: joinedCrewList[index]['crew_name'],
         crewIntro: joinedCrewList[index]['crew_description'],
+        image: joinedCrewList[index]['crew_image'] != null
+            ? NetworkImage(joinedCrewList[index]['crew_image'])
+            : null,
         isJoined: true,
       ),
     );

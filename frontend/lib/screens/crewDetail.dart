@@ -1,9 +1,13 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_svg_provider/flutter_svg_provider.dart';
 import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:reme/routes.dart';
 import 'package:reme/screens/comment_dialog.dart';
 import 'package:reme/services/crew_api.dart';
+import 'package:reme/services/user_update.dart';
 import 'package:reme/themes/color.dart';
 import 'package:reme/icon/tab_bar_icon_icons.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -91,9 +95,9 @@ class _CrewDetailState extends State<CrewDetail>
               crew_description = value.data['crew_description'];
               crew_image = value.data['crew_image'];
               crew_member_count = value.data['member_count'];
-              isCreator =
-                  crewController.myCrewMembership[crew_id]['role'] == 'CREATOR';
-              switch (crewController.myCrewMembership[crew_id]['status']) {
+              isCreator = crewController.myCrewMembership[crew_id]?['role'] ==
+                  'CREATOR';
+              switch (crewController.myCrewMembership[crew_id]?['status']) {
                 case 'PENDING':
                   member_status = 1;
                   break;
@@ -397,7 +401,7 @@ class _CrewDetailState extends State<CrewDetail>
                                                         ? "크루 회고 하기"
                                                         : (member_status == 1)
                                                             ? "가입 대기중"
-                                                            : "크루 탈퇴하기",
+                                                            : "크루 가입하기",
                                                     style: TextStyle(
                                                       fontSize: 16.sp,
                                                       color: fontColor,
@@ -438,7 +442,31 @@ class _CrewDetailState extends State<CrewDetail>
                         child: GestureDetector(
                           onTap: () {
                             if (isCreator) {
-                              // TODO: 관리자의 경우 크루 프로필 클릭했을 때 크루 프로필 이미지 수정.
+                              // 관리자의 경우 크루 프로필 클릭했을 때 크루 프로필 이미지 수정.
+                              ImagePicker()
+                                  .pickImage(source: ImageSource.gallery)
+                                  .then((pickedFile) async {
+                                if (pickedFile != null) {
+                                  final response = await uploadProfileImage(
+                                      File(pickedFile.path), 1, crew_id);
+                                  if (mounted) {
+                                    setState(() {
+                                      crew_image = response;
+                                    });
+                                  }
+                                  // joinedCrew 업데이트
+                                  int joinedIndex = crewController.joinedCrew
+                                      .indexWhere((element) =>
+                                          element['id'] == crew_id);
+                                  if (joinedIndex != -1) {
+                                    crewController.joinedCrew[joinedIndex]
+                                        ['crew_image'] = response;
+                                  }
+                                  await updateCrewProfileImage(
+                                      crew_id, response);
+                                }
+                              });
+                              // TODO: 크루 프로필 업데이트 후 크루 리스트 페이지 이동했을 때 바로 반영 안되는 문제 수정 필요
                             }
                           },
                           child: Container(
