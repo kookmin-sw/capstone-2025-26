@@ -14,7 +14,7 @@ llm = ChatVertexAI(
     temperature=0.7,
 )
 
-
+# 따로 일일회고 분석하는 API 생성 필요
 @receiver(post_save, sender=Retrospect)
 def generate_or_update_kpi_scores_on_retrospect_save(sender, instance, created, **kwargs):
     """
