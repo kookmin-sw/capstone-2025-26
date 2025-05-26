@@ -65,7 +65,10 @@ class _InitialpageState extends State<Initialpage>
       }),
       getChallengeList(filter: 0).then((value) {
         // TODO: 챌린지 리스트 상태관리
-      })
+      }),
+      getMyCrewMembership().then((value) {
+        Get.find<CrewController>().setMyCrewMembership(value.data);
+      }),
     ]).then((_) {
       FlutterNativeSplash.remove();
       setState(() {}); // Home 위젯을 다시 렌더링

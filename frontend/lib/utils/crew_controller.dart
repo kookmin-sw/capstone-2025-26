@@ -4,6 +4,8 @@ class CrewController extends GetxController {
   var joinedCrew = <dynamic>[].obs; // 가입한 크루 목록
   var notJoinedCrew = <dynamic>[].obs; // 가입하지 않은 크루 목록
 
+  var myCrewMembership = {}.obs; // 내 크루 멤버십 목록
+
   void setJoinedCrewList(List<dynamic> crew) {
     joinedCrew.value = crew;
   }
@@ -27,5 +29,14 @@ class CrewController extends GetxController {
 
   List<dynamic> getNotJoinedCrewList() {
     return notJoinedCrew;
+  }
+
+  void setMyCrewMembership(List<dynamic> membership) {
+    for (var m in membership) {
+      myCrewMembership[m['crew']] = {
+        'role': m['role'],
+        'status': m['status'],
+      };
+    }
   }
 }
