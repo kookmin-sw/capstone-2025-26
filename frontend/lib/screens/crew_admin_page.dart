@@ -210,7 +210,25 @@ class _CrewAdminPageState extends State<CrewAdminPage> {
                             height: 30.h,
                             margin: EdgeInsets.only(top: 5.h),
                             child: ElevatedButton(
-                              onPressed: () {},
+                              onPressed: () {
+                                showConfirmDialog(
+                                    title: "모두 승인",
+                                    content: "모든 가입 신청을 승인하시겠습니까?",
+                                    onConfirm: () {
+                                      for (var member in pendingMemberList) {
+                                        acceptJoinRequest(crew_id!.toString(),
+                                                member['id'].toString())
+                                            .then((_) {
+                                          setState(() {
+                                            pendingMemberList.remove(member);
+                                            pendingMemberCount--;
+                                            alreadyMemberList.add(member);
+                                            alreadyMemberCount++;
+                                          });
+                                        });
+                                      }
+                                    });
+                              },
                               child: Text(
                                 "모두 승인",
                                 style: TextStyle(
