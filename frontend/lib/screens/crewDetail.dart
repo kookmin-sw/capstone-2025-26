@@ -294,7 +294,9 @@ class _CrewDetailState extends State<CrewDetail>
                                                               context);
                                                           Navigator.pushNamed(
                                                               context,
-                                                              Routes.crewAdmin);
+                                                              Routes.crewAdmin,
+                                                              arguments:
+                                                                  crew_id);
                                                         },
                                                       ),
                                                     ListTile(

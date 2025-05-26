@@ -43,3 +43,8 @@ Future<void> updateCrewProfileImage(int crewId, String imageURL) async {
   final response =
       await dio.patch('/crew/crews/${crewId}/', {'crew_image': imageURL});
 }
+
+Future<dynamic> getAllCrewMemberships(int crewId) async {
+  final response = await dio.get('/crew/memberships/');
+  return response;
+}
