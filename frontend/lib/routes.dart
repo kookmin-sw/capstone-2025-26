@@ -10,7 +10,6 @@ import 'package:reme/screens/notification_list_page.dart';
 import 'package:reme/screens/retrospect_detail.dart';
 import 'package:reme/screens/signupPage.dart';
 import 'package:reme/screens/retrospectChallengeList.dart';
-import 'package:reme/screens/retrospect_completion_screen.dart';
 import 'package:reme/screens/create_challenge_name_screen.dart';
 import 'package:reme/screens/create_challenge_plan_screen.dart';
 import 'package:reme/screens/create_challenge_waiting_screen.dart';
