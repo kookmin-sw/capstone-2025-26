@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:reme/icon/tab_bar_icon_icons.dart';
 import 'package:reme/screens/animation_test.dart';
+import 'package:reme/services/retrospect_api.dart';
 import 'package:reme/themes/color.dart';
 import 'dart:async';
 import 'package:reme/routes.dart';
 import 'package:reme/widgets/challengeTypeItem.dart';
 
 class RetrospectCompletionScreen extends StatefulWidget {
-  const RetrospectCompletionScreen({super.key});
+  final List<Map<String, dynamic>> retrospectEntries;
+  const RetrospectCompletionScreen(
+      {super.key, required this.retrospectEntries});
 
   @override
   State<RetrospectCompletionScreen> createState() =>
@@ -23,17 +26,22 @@ class _RetrospectCompletionScreenState
   void initState() {
     super.initState();
 
-    // Mock AI data receiving after 5 seconds
-    // In real implementation, this would be replaced with actual API call
-    _mockAITimer = Timer(const Duration(seconds: 5), () {
-      if (mounted) {
+    if (mounted) {
+      Future.wait(widget.retrospectEntries.map((currentRetrospect) =>
+          createRetrospect(
+              challenge_id: currentRetrospect['challengeId'],
+              template_id: currentRetrospect['templateId'],
+              content: currentRetrospect['content'],
+              crew_id: null))).then((value) {
+        // Value로 받은 값들을 다시 kpi-result로 요청.
+        // 그래서 받은 값을 _navigateToAnalysisScreen에 넘기기.
         setState(() {
           _isDataReceived = true;
         });
         // Navigate to the analysis screen
         _navigateToAnalysisScreen();
-      }
-    });
+      });
+    }
   }
 
   @override

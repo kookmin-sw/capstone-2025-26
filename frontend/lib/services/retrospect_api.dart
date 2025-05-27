@@ -1,0 +1,39 @@
+import 'package:reme/services/mydio.dart';
+
+MyDio dio = MyDio();
+
+Future<dynamic> getRetrospectList({int? crew_id, int? challenge_id}) async {
+  final response = await dio.get('/retrospect/kpi-results/');
+  return response.data;
+}
+
+Future<dynamic> getRetrospectDetail(int retrospect_id) async {
+  final response = await dio.get('/retrospect/retrospects/$retrospect_id/');
+  return response.data;
+}
+
+Future<void> createRetrospect(
+    {int? crew_id,
+    required int challenge_id,
+    required int template_id,
+    required Map<String, dynamic> content}) async {
+  bool isCrew = false;
+  if (crew_id != null) {
+    isCrew = true;
+  }
+
+  final response = await dio.post('/retrospect/retrospects/', {
+    'crew_id': isCrew ? crew_id : null,
+    'challenge_id': challenge_id,
+    'template_id': template_id,
+    'content': content,
+    'visibility': "PRIVATE",
+    'owner_type': isCrew ? "CREW" : "USER",
+  });
+  return response.data;
+}
+
+Future<dynamic> getTemplateList() async {
+  final response = await dio.get('/retrospect/templates/');
+  return response.data['results'];
+}

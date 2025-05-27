@@ -136,6 +136,7 @@ class _RetrospectChallengeListState extends State<RetrospectChallengeList> {
               MaterialPageRoute(
                 builder: (context) => RetrospectMethodSelection(
                   selectedChallenges: selectedChallenges,
+                  retrospectType: "COMMON",
                 ),
               ),
             );
