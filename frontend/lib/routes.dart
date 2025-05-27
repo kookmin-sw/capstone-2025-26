@@ -22,7 +22,6 @@ class Routes {
   static const signup = "/signup";
   static const crew = "/crew";
   static const retrospectChallenge = "/retrospect-challenge";
-  static const retrospectCompletion = "/retrospect-completion";
   static const first = "/first";
   static const createChallengeName = "/create-challenge-name";
   static const createChallengePlan = "/create-challenge-plan";
@@ -43,7 +42,6 @@ var namedRoute = {
   Routes.crew: (context) => const CrewDetail(),
   Routes.first: (context) => GuidePage(),
   Routes.retrospectChallenge: (context) => const RetrospectChallengeList(),
-  Routes.retrospectCompletion: (context) => const RetrospectCompletionScreen(),
   Routes.createChallengeName: (context) => const CreateChallengeNameScreen(),
   Routes.createChallengePlan: (context) => const CreateChallengePlanScreen(),
   Routes.createChallengeWaiting: (context) =>
