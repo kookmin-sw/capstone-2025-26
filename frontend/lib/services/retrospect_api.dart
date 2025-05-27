@@ -23,9 +23,9 @@ Future<void> createRetrospect(
   }
 
   final response = await dio.post('/retrospect/retrospects/', {
-    'crew_id': isCrew ? crew_id : null,
-    'challenge_id': challenge_id,
-    'template_id': template_id,
+    'crew': isCrew ? crew_id : null,
+    'challenge': challenge_id,
+    'template': template_id,
     'content': content,
     'visibility': "PRIVATE",
     'owner_type': isCrew ? "CREW" : "USER",
