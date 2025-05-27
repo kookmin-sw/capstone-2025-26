@@ -76,3 +76,9 @@ sudo docker compose up
 |:---:|:---:|:---:|:---:|:---:|:---:|
 |Full Stack|Frontend|Backend, AI|Backend, PO|Backend, PO|Backend, AI|
 |****3022|****3037|****3039|****5225|****0303|****2006|
+
+[최종보고서](https://ecampus.kookmin.ac.kr/pluginfile.php/2073170/assignsubmission_file/submission_files/4994578/%EC%88%98%ED%96%89%EA%B2%B0%EA%B3%BC%EB%B3%B4%EA%B3%A0%EC%84%9C-Togo.docx?forcedownload=1)<br/>
+[최종포스터](https://github.com/user-attachments/files/20447356/26.-.pdf)<br/>
+[시연동영상](https://youtu.be/txA3WKv5Rvs?si=4_vzWUHu1LlltJfo)<br/>
+[발표자료](https://ecampus.kookmin.ac.kr/pluginfile.php/2073170/assignsubmission_file/submission_files/4994578/26%E1%84%8C%E1%85%A9-%E1%84%80%E1%85%B5%E1%84%86%E1%85%A1%E1%86%AF%E1%84%87%E1%85%A1%E1%86%AF%E1%84%91%E1%85%AD.pdf?forcedownload=1)<br/>
+
