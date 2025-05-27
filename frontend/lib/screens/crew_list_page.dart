@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:get/get.dart';
+import 'package:reme/services/crew_api.dart';
 import 'package:reme/themes/color.dart';
+import 'package:reme/utils/crew_controller.dart';
 import 'package:reme/widgets/crewList.dart';
 
 class CrewListPage extends StatefulWidget {
@@ -47,13 +50,11 @@ class _HeaderDelegate extends SliverPersistentHeaderDelegate {
 }
 
 class _CrewListPageState extends State<CrewListPage> {
-  final int joinedCrewCount = 3;
-  final int notJoinedCrewCount = 20;
-
   bool joinCrewHeaderPinned = true;
 
   late final ScrollController _scrollController;
 
+  final crewController = Get.put(CrewController());
   Widget _buildJoinedCrew(int index) {
     return Container(
       margin: EdgeInsets.only(bottom: 15.h),
@@ -63,15 +64,21 @@ class _CrewListPageState extends State<CrewListPage> {
         borderRadius: BorderRadius.circular(10.r),
       ),
       child: CrewList(
-        crewId: index,
-        crewName: "캡스톤 26조 화이팅",
-        crewIntro: "캡스톤 26조 화이팅을 위한 크루. 더 이상 어떤 말을 @해도 그 내용이 우리 크루를 설명할 수 없다.",
-        isJoined: true,
-      ),
+          crewId: crewController.joinedCrew[index]['id'],
+          crewName: crewController.joinedCrew[index]['crew_name'],
+          crewIntro: crewController.joinedCrew[index]['crew_description'],
+          image: crewController.joinedCrew[index]['crew_image'] != null
+              ? NetworkImage(crewController.joinedCrew[index]['crew_image'])
+              : null,
+          isJoined: true,
+          afterCardClicked: () {
+            setState(() {});
+          }),
     );
   }
 
   Widget _buildNonJoinedCrew(int index) {
+    dynamic crew_id = crewController.notJoinedCrew[index]['id'];
     return Container(
       margin: EdgeInsets.only(bottom: 15.h),
       padding: EdgeInsets.symmetric(horizontal: 11.w, vertical: 10.h),
@@ -80,14 +87,25 @@ class _CrewListPageState extends State<CrewListPage> {
         borderRadius: BorderRadius.circular(10.r),
       ),
       child: CrewList(
-        crewId: index,
-        crewName: "정릉동 건강인 모임",
-        crewIntro: "정릉동 건강인 모임을 위한 크루. 더 이상 어떤 말을 해도 그 내용이 우리 크루를 설명할 수 없다.",
-        isJoined: false,
-        onJoinTap: () {
-          print("${index}번째 크루 가입");
-        },
-      ),
+          crewId: crewController.notJoinedCrew[index]['id'],
+          crewName: crewController.notJoinedCrew[index]['crew_name'],
+          crewIntro: crewController.notJoinedCrew[index]['crew_description'],
+          isJoined: false,
+          onJoinTap: () {
+            joinCrew(crewController.notJoinedCrew[index]['id'].toString());
+            getMyCrewMembership().then((value) {
+              crewController.setMyCrewMembership(value.data);
+            });
+            print("아이디: ${crewController.notJoinedCrew[index]['id']} 크루 가입");
+          },
+          joinClicked: (crewController.myCrewMembership[crew_id]?['status'] ==
+              "PENDING"),
+          image: crewController.notJoinedCrew[index]['crew_image'] != null
+              ? NetworkImage(crewController.notJoinedCrew[index]['crew_image'])
+              : null,
+          afterCardClicked: () {
+            setState(() {});
+          }),
     );
   }
 
@@ -105,7 +123,8 @@ class _CrewListPageState extends State<CrewListPage> {
       // 가입한 크루 섹션의 총 높이
       final double joinedCrewSectionHeight = headerHeight +
           bottomMargin +
-          (boxHeight + boxPadding + bottomMargin) * joinedCrewCount;
+          (boxHeight + boxPadding + bottomMargin) *
+              crewController.joinedCrew.length;
 
       // 현재 스크롤 위치가 가입한 크루 섹션을 넘어섰는지 확인
       final bool shouldUnpin =
@@ -127,43 +146,43 @@ class _CrewListPageState extends State<CrewListPage> {
       decoration: BoxDecoration(
         color: Color(0xFF111111),
       ),
-      child: CustomScrollView(
-        controller: _scrollController,
-        slivers: [
-          SliverPersistentHeader(
-            pinned: joinCrewHeaderPinned,
-            delegate: _HeaderDelegate(
-              title: "가입한 크루",
-              height: 50.h,
-            ),
-          ),
-          SliverPadding(
-            padding: EdgeInsets.only(top: 10.h),
-            sliver: SliverList(
-              delegate: SliverChildBuilderDelegate(
-                (context, index) => _buildJoinedCrew(index),
-                childCount: joinedCrewCount,
+      child: Obx(() => CustomScrollView(
+            controller: _scrollController,
+            slivers: [
+              SliverPersistentHeader(
+                pinned: joinCrewHeaderPinned,
+                delegate: _HeaderDelegate(
+                  title: "가입한 크루",
+                  height: 50.h,
+                ),
               ),
-            ),
-          ),
-          SliverPersistentHeader(
-            pinned: true,
-            delegate: _HeaderDelegate(
-              title: "크루 찾아보기",
-              height: 50.h,
-            ),
-          ),
-          SliverPadding(
-            padding: EdgeInsets.only(top: 10.h),
-            sliver: SliverList(
-              delegate: SliverChildBuilderDelegate(
-                (context, index) => _buildNonJoinedCrew(index),
-                childCount: notJoinedCrewCount,
+              SliverPadding(
+                padding: EdgeInsets.only(top: 10.h),
+                sliver: SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) => _buildJoinedCrew(index),
+                    childCount: crewController.joinedCrew.length,
+                  ),
+                ),
               ),
-            ),
-          ),
-        ],
-      ),
+              SliverPersistentHeader(
+                pinned: true,
+                delegate: _HeaderDelegate(
+                  title: "크루 찾아보기",
+                  height: 50.h,
+                ),
+              ),
+              SliverPadding(
+                padding: EdgeInsets.only(top: 10.h),
+                sliver: SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) => _buildNonJoinedCrew(index),
+                    childCount: crewController.notJoinedCrew.length,
+                  ),
+                ),
+              ),
+            ],
+          )),
     );
   }
 }

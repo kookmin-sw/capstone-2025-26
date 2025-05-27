@@ -1,6 +1,7 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:intl/date_symbol_data_local.dart';
@@ -12,7 +13,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 Future<void> main() async {
   // init WidgetsFlutterBinding if not yet
-  WidgetsFlutterBinding.ensureInitialized();
+  final WidgetsBinding widgetsBinding =
+      WidgetsFlutterBinding.ensureInitialized();
   final config =
       PostHogConfig('phc_vcpqApKqc66zUcHBBqPntqdLGrPwww4mcwtJ2M5nQ3l');
   config.debug = true;
@@ -28,6 +30,9 @@ Future<void> main() async {
   ); // firebase 연동을 위한 초기화
   //sharedPreferences 설정
   SharedPreferences prefs = await SharedPreferences.getInstance();
+
+  FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
+
   runApp(MyApp(prefs: prefs));
 }
 
@@ -43,8 +48,10 @@ class MyApp extends StatelessWidget {
     String initialRoute = Routes.first;
 
     if (isFirstInstall == null) {
+      FlutterNativeSplash.remove();
       initialRoute = Routes.first;
     } else if (isAccessToken == null || isAccessToken == false) {
+      FlutterNativeSplash.remove();
       initialRoute = Routes.login;
     } else {
       initialRoute = Routes.splash;

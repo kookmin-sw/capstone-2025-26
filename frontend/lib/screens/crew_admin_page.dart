@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg_provider/flutter_svg_provider.dart';
+import 'package:get/get.dart';
+import 'package:reme/services/crew_api.dart';
 import 'package:reme/themes/color.dart';
+import 'package:reme/utils/crew_controller.dart';
 
 class CrewAdminPage extends StatefulWidget {
   const CrewAdminPage({super.key});
@@ -11,21 +14,126 @@ class CrewAdminPage extends StatefulWidget {
 }
 
 class _CrewAdminPageState extends State<CrewAdminPage> {
-  final int pendingMemberCount = 3;
-  final int alreadyMemberCount = 10;
+  final crewController = Get.put(CrewController());
+  late final int crew_index;
+  late int pendingMemberCount; // 가입 대기중인 사람 수
+  late int alreadyMemberCount; // 이미 크루 멤버인 사람 수
+
+  int? crew_id;
+  bool _isLoaded = false;
+  List<dynamic> pendingMemberList = [];
+  List<dynamic> alreadyMemberList = [];
 
   bool joinCrewHeaderPinned = true;
   late final ScrollController _scrollController;
 
+  void showConfirmDialog({
+    required String title,
+    required String content,
+    required VoidCallback onConfirm,
+  }) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: boxBackgroundColor,
+        title: Text(
+          title,
+          style: TextStyle(
+            color: fontColor,
+            fontSize: 18.sp,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        content: Text(
+          content,
+          style: TextStyle(
+            color: fontColor,
+            fontSize: 16.sp,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              '아니오',
+              style: TextStyle(
+                color: fontColor,
+                fontSize: 16.sp,
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              onConfirm();
+            },
+            child: Text(
+              '예',
+              style: TextStyle(
+                color: c700,
+                fontSize: 16.sp,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     _scrollController = ScrollController();
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_isLoaded) {
+      crew_id = ModalRoute.of(context)?.settings.arguments as int;
+      // crew_id = 2;
+      crew_index = crewController.joinedCrew
+          .indexWhere((element) => element['id'] == crew_id);
+      getAllCrewMemberships(crew_id!).then((value) {
+        if (!mounted) return;
+
+        pendingMemberList.clear();
+        alreadyMemberList.clear();
+
+        for (var member in value.data['results']) {
+          if (member['crew'] == crew_id && member['role'] != 'CREATOR') {
+            if (member['status'] == 'PENDING') {
+              pendingMemberList.add(member['user_details']);
+            } else if (member['status'] == 'ACCEPTED') {
+              alreadyMemberList.add(member['user_details']);
+            }
+          }
+        }
+
+        pendingMemberCount = pendingMemberList.length;
+        alreadyMemberCount = alreadyMemberList.length;
+
+        setState(() {
+          _isLoaded = true;
+        });
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    if (!_isLoaded) {
+      return Scaffold(
+        backgroundColor: background,
+        body: Center(
+          child: CircularProgressIndicator(
+            color: c700,
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: background,
       resizeToAvoidBottomInset: true,
@@ -34,10 +142,24 @@ class _CrewAdminPageState extends State<CrewAdminPage> {
         scrolledUnderElevation: 0,
         title: Row(
           children: [
-            Image.asset('assets/img/food.png', width: 37.w, height: 37.h),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8.r),
+              child: crewController.joinedCrew[crew_index]['crew_image'] != null
+                  ? Image.network(
+                      crewController.joinedCrew[crew_index]['crew_image'],
+                      width: 37.w,
+                      height: 37.h,
+                      fit: BoxFit.cover,
+                    )
+                  : Container(
+                      width: 37.w,
+                      height: 37.h,
+                      color: Colors.white,
+                      child: Icon(Icons.group, size: 37.w * 0.7, color: c100)),
+            ),
             SizedBox(width: 10.w),
             Text(
-              "저속노화 따라가기",
+              crewController.joinedCrew[crew_index]['crew_name'],
               style: TextStyle(
                 fontSize: 19.sp,
                 color: fontColor,
@@ -83,27 +205,46 @@ class _CrewAdminPageState extends State<CrewAdminPage> {
                     Row(
                       children: [
                         Spacer(),
-                        Container(
-                          height: 30.h,
-                          margin: EdgeInsets.only(top: 5.h),
-                          child: ElevatedButton(
-                            onPressed: () {},
-                            child: Text(
-                              "모두 승인",
-                              style: TextStyle(
-                                color: fontColor,
-                                fontSize: 16.sp,
-                                fontWeight: FontWeight.w700,
+                        if (pendingMemberCount > 0)
+                          Container(
+                            height: 30.h,
+                            margin: EdgeInsets.only(top: 5.h),
+                            child: ElevatedButton(
+                              onPressed: () {
+                                showConfirmDialog(
+                                    title: "모두 승인",
+                                    content: "모든 가입 신청을 승인하시겠습니까?",
+                                    onConfirm: () {
+                                      for (var member in pendingMemberList) {
+                                        acceptJoinRequest(crew_id!.toString(),
+                                                member['id'].toString())
+                                            .then((_) {
+                                          setState(() {
+                                            pendingMemberList.remove(member);
+                                            pendingMemberCount--;
+                                            alreadyMemberList.add(member);
+                                            alreadyMemberCount++;
+                                          });
+                                        });
+                                      }
+                                    });
+                              },
+                              child: Text(
+                                "모두 승인",
+                                style: TextStyle(
+                                  color: fontColor,
+                                  fontSize: 16.sp,
+                                  fontWeight: FontWeight.w700,
+                                ),
                               ),
-                            ),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: c900,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10.r),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: c900,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10.r),
+                                ),
                               ),
                             ),
                           ),
-                        ),
                       ],
                     )
                   ],
@@ -146,14 +287,16 @@ class _CrewAdminPageState extends State<CrewAdminPage> {
       child: Row(
         children: [
           Image(
-            image: Svg('assets/img/account_circle.svg'),
+            image: pendingMemberList[index]['profile_image'] != null
+                ? NetworkImage(pendingMemberList[index]['profile_image'])
+                : Svg('assets/img/account_circle.svg'),
             width: 40.w,
             height: 40.h,
             color: c100,
           ),
           SizedBox(width: 16.w),
           Text(
-            "롱기스트",
+            pendingMemberList[index]['username'],
             style: TextStyle(
               color: fontColor,
               fontSize: 20.sp,
@@ -165,7 +308,23 @@ class _CrewAdminPageState extends State<CrewAdminPage> {
             width: 56.w,
             height: 30.h,
             child: GestureDetector(
-              onTap: () {},
+              onTap: () {
+                showConfirmDialog(
+                  title: '가입 거절',
+                  content:
+                      '${pendingMemberList[index]['username']}님의 가입 신청을 거절하시겠습니까?',
+                  onConfirm: () {
+                    rejectJoinRequest(crew_id!.toString(),
+                            pendingMemberList[index]['id'].toString())
+                        .then((_) {
+                      setState(() {
+                        pendingMemberList.removeAt(index);
+                        pendingMemberCount--;
+                      });
+                    });
+                  },
+                );
+              },
               child: Container(
                 child: Center(
                   child: Text(
@@ -186,7 +345,25 @@ class _CrewAdminPageState extends State<CrewAdminPage> {
           ),
           SizedBox(width: 4.w),
           GestureDetector(
-            onTap: () {},
+            onTap: () {
+              showConfirmDialog(
+                title: '가입 승인',
+                content:
+                    '${pendingMemberList[index]['username']}님의 가입 신청을 승인하시겠습니까?',
+                onConfirm: () {
+                  acceptJoinRequest(crew_id!.toString(),
+                          pendingMemberList[index]['id'].toString())
+                      .then((_) {
+                    setState(() {
+                      pendingMemberList.removeAt(index);
+                      pendingMemberCount--;
+                      alreadyMemberList.add(pendingMemberList[index]);
+                      alreadyMemberCount++;
+                    });
+                  });
+                },
+              );
+            },
             child: Container(
               width: 56.w,
               height: 30.h,

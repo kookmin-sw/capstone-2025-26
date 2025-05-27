@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:get/get.dart';
 import 'package:reme/routes.dart';
 import 'package:reme/services/user_update.dart';
 import 'package:reme/themes/color.dart';
+import 'package:reme/utils/crew_controller.dart';
 import 'package:reme/widgets/crewList.dart';
 import 'package:reme/widgets/customListItem.dart';
 import 'package:reme/widgets/widgetBox.dart';
@@ -18,6 +20,8 @@ class Home extends StatefulWidget {
 
 class _HomeState extends State<Home> {
   dynamic challengeList;
+  dynamic joinedCrewList;
+  final crewController = Get.put(CrewController());
   List<String> topBoxTitle = ["연속 32일째!", "오늘의 탬플릿", "크루를 찾아봐요"];
   List<String> topBoxContent = [
     "오늘도 함꼐 \n회고해요😉",
@@ -46,11 +50,11 @@ class _HomeState extends State<Home> {
   @override
   void initState() {
     super.initState();
-    getChallengeList(filter: 0).then((value) {
-      setState(() {
-        challengeList = value;
-      });
-    });
+    // getChallengeList(filter: 0).then((value) {
+    //   setState(() {
+    //     challengeList = value;
+    //   });
+    // });
     topBoxTap = [
       widget.switchToRetrospect, // 회고 목록 보는 페이지로 이동
       () {
@@ -58,6 +62,9 @@ class _HomeState extends State<Home> {
       },
       widget.onCrewMoreTap, // 크루 페이지로 이동
     ];
+
+    // 크루 목록이 있는지 확인하고 없다면 불러오기.
+    joinedCrewList = crewController.getJoinedCrewList();
   }
 
   @override
@@ -145,8 +152,8 @@ class _HomeState extends State<Home> {
                   ),
                 )
               else if (challengeList != null && challengeList['count'] > 0)
-                for (var i = 0; i < challengeList?['count']; i++)
-                  if (challengeList['results']['owner_type'] == "USER")
+                for (var i = 0; i < challengeList['count']; i++)
+                  if (challengeList['results'][i]['owner_type'] == "USER")
                     GestureDetector(
                         onTap: () {
                           // TODO: 챌린지 상세 조회 페이지로 이동
@@ -162,34 +169,45 @@ class _HomeState extends State<Home> {
           ),
           WidgetBox(
             title: "내 크루",
-            isMore: true,
+            isMore: (joinedCrewList != null && joinedCrewList.length > 3)
+                ? true
+                : false,
             marginLTRB: EdgeInsets.only(left: 24.w, right: 24.w),
             onTap: widget.onCrewMoreTap,
             children: [
               SizedBox(
                 height: 10.h,
               ),
-              CrewList(
-                crewId: 0,
-                crewName: "캡스톤 26조 파이팅",
-                crewIntro: "크루에 대한 설명칸. 길어진다면 다음과 같이 마무리 하는게 좋을거 같긴 한데",
-              ),
-              SizedBox(
-                height: 15.h,
-              ),
-              CrewList(
-                crewId: 1,
-                crewName: "은성 캉의 영어 회화 교실",
-                crewIntro: "크루에 대한 설명칸. 길어진다면 다음과 같이 마무리 하는게 좋을거 같긴 한데",
-              ),
-              SizedBox(
-                height: 15.h,
-              ),
-              CrewList(
-                crewId: 2,
-                crewName: "정릉동 우주최강 조깅 모임",
-                crewIntro: "크루에 대한 설명칸. 길어진다면 다음과 같이 마무리 하는게 좋을거 같긴 한데",
-              ),
+              if (joinedCrewList != null && joinedCrewList.length > 0)
+                for (var i = 0;
+                    i < (joinedCrewList.length > 3 ? 3 : joinedCrewList.length);
+                    i++)
+                  Container(
+                    margin: EdgeInsets.only(bottom: 10.h),
+                    child: GestureDetector(
+                      onTap: () {
+                        Navigator.pushNamed(context, Routes.crew,
+                            arguments: joinedCrewList[i]['id']);
+                      },
+                      child: CrewList(
+                        crewId: joinedCrewList[i]['id'],
+                        crewName: joinedCrewList[i]['crew_name'],
+                        crewIntro: joinedCrewList[i]['crew_description'],
+                        image: (joinedCrewList[i]['crew_image'] != null)
+                            ? NetworkImage(joinedCrewList[i]['crew_image'])
+                            : null,
+                      ),
+                    ),
+                  )
+              else
+                Text(
+                  "크루에 참여하세요",
+                  style: TextStyle(
+                    fontSize: 26.sp,
+                    fontWeight: FontWeight.w300,
+                    color: fontColor,
+                  ),
+                )
             ],
           )
         ],

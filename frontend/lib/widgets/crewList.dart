@@ -11,8 +11,10 @@ class CrewList extends StatefulWidget {
   final String crewIntro;
   final bool? isJoined;
   final VoidCallback? onJoinTap;
+  final VoidCallback? afterCardClicked;
+  bool? joinClicked;
 
-  const CrewList({
+  CrewList({
     super.key,
     this.image,
     required this.crewId,
@@ -20,6 +22,8 @@ class CrewList extends StatefulWidget {
     required this.crewIntro,
     this.isJoined,
     this.onJoinTap,
+    this.joinClicked,
+    this.afterCardClicked,
   });
 
   @override
@@ -27,22 +31,43 @@ class CrewList extends StatefulWidget {
 }
 
 class _CrewListState extends State<CrewList> {
-  bool joinClicked = false;
+  late bool joinClicked;
+
+  @override
+  void initState() {
+    super.initState();
+    joinClicked = widget.joinClicked ?? false;
+  }
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        Navigator.pushNamed(context, Routes.crew, arguments: widget.crewId);
+        Navigator.pushNamed(context, Routes.crew, arguments: widget.crewId)
+            .then((_) {
+          widget.afterCardClicked?.call();
+        });
       },
       child: Container(
         width: 334.w,
         height: 50.h,
         child: Row(
           children: [
-            Image(
-              image: widget.image ?? Svg("assets/img/account_circle.svg"),
-              width: 50.w,
-              height: 50.h,
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8.r),
+              child: widget.image != null
+                  ? Image(
+                      image: widget.image!,
+                      width: 50.w,
+                      height: 50.h,
+                      fit: BoxFit.cover,
+                    )
+                  : Container(
+                      width: 50.w,
+                      height: 50.h,
+                      color: Colors.white,
+                      child: Icon(Icons.group,
+                          size: 50.w * 0.7, color: Colors.grey)),
             ),
             SizedBox(
               width: 10.88.w,
@@ -79,10 +104,12 @@ class _CrewListState extends State<CrewList> {
             if (widget.isJoined == false)
               GestureDetector(
                 onTap: () {
-                  setState(() {
-                    joinClicked = true;
-                  });
-                  widget.onJoinTap?.call();
+                  if (!joinClicked) {
+                    setState(() {
+                      joinClicked = true;
+                    });
+                    widget.onJoinTap?.call();
+                  }
                 },
                 child: Container(
                   alignment: Alignment.center,

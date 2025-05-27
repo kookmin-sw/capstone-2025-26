@@ -1,10 +1,17 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_svg_provider/flutter_svg_provider.dart';
+import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:reme/routes.dart';
 import 'package:reme/screens/comment_dialog.dart';
+import 'package:reme/services/crew_api.dart';
+import 'package:reme/services/user_update.dart';
 import 'package:reme/themes/color.dart';
 import 'package:reme/icon/tab_bar_icon_icons.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:reme/utils/crew_controller.dart';
 import 'package:table_calendar/table_calendar.dart';
 
 class CrewDetail extends StatefulWidget {
@@ -21,6 +28,8 @@ class _CrewDetailState extends State<CrewDetail>
   final double _expandedHeight = 240.h + 178.h;
   int _selectIndex = 0;
   bool _isCollapsed = false;
+  bool _isLoading = true;
+  bool _isUploaded = true;
 
   // 초기 위치 설정 변수들
   final double _iconInitialTop = 227.h; // 아이콘 초기 세로 위치 (하단에서부터)
@@ -48,6 +57,17 @@ class _CrewDetailState extends State<CrewDetail>
   ];
   String _selectChallenge = '';
 
+  dynamic crew_id;
+  String crew_name = '';
+  String crew_description = '';
+  String? crew_image = null;
+  int crew_member_count = 0;
+
+  final crewController = Get.put(CrewController());
+
+  bool isCreator = false;
+  int member_status = 0; // 0: 가입 안함, 1: 가입대기중, 2: 가입됨.
+
   @override
   void initState() {
     super.initState();
@@ -65,6 +85,36 @@ class _CrewDetailState extends State<CrewDetail>
     setState(() {
       _selectChallenge = _challengeList[0];
     });
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        crew_id = ModalRoute.of(context)!.settings.arguments;
+        getCrewDetail(crew_id).then((value) {
+          if (mounted) {
+            setState(() {
+              crew_name = value.data['crew_name'];
+              crew_description = value.data['crew_description'];
+              crew_image = value.data['crew_image'];
+              crew_member_count = value.data['member_count'];
+              isCreator = crewController.myCrewMembership[crew_id]?['role'] ==
+                  'CREATOR';
+              switch (crewController.myCrewMembership[crew_id]?['status']) {
+                case 'PENDING':
+                  member_status = 1;
+                  break;
+                case 'ACCEPTED':
+                  member_status = 2;
+                  break;
+                default:
+                  member_status = 0;
+                  break;
+              }
+              _isLoading = false;
+            });
+          }
+        });
+      }
+    });
   }
 
   @override
@@ -76,7 +126,16 @@ class _CrewDetailState extends State<CrewDetail>
 
   @override
   Widget build(BuildContext context) {
-    var crewid = ModalRoute.of(context)!.settings.arguments;
+    if (_isLoading) {
+      return const Scaffold(
+        backgroundColor: background,
+        body: Center(
+          child: CircularProgressIndicator(
+            color: c700,
+          ),
+        ),
+      );
+    }
 
     return Scaffold(
       floatingActionButton: (_selectIndex == 1 || _selectIndex == 3)
@@ -217,24 +276,29 @@ class _CrewDetailState extends State<CrewDetail>
                                                   mainAxisSize:
                                                       MainAxisSize.min,
                                                   children: [
-                                                    // TODO: 크루 관리자일 경우만 관리하기 버튼 띄우기
-                                                    ListTile(
-                                                      leading: const Icon(
-                                                        Icons
-                                                            .admin_panel_settings,
-                                                        color: fontColor,
+                                                    // 크루 관리자일 경우만 관리하기 버튼 띄우기
+                                                    if (isCreator)
+                                                      ListTile(
+                                                        leading: const Icon(
+                                                          Icons
+                                                              .admin_panel_settings,
+                                                          color: fontColor,
+                                                        ),
+                                                        title: const Text(
+                                                            '관리하기',
+                                                            style: TextStyle(
+                                                                color:
+                                                                    fontColor)),
+                                                        onTap: () {
+                                                          Navigator.pop(
+                                                              context);
+                                                          Navigator.pushNamed(
+                                                              context,
+                                                              Routes.crewAdmin,
+                                                              arguments:
+                                                                  crew_id);
+                                                        },
                                                       ),
-                                                      title: const Text('관리하기',
-                                                          style: TextStyle(
-                                                              color:
-                                                                  fontColor)),
-                                                      onTap: () {
-                                                        Navigator.pop(context);
-                                                        Navigator.pushNamed(
-                                                            context,
-                                                            Routes.crewAdmin);
-                                                      },
-                                                    ),
                                                     ListTile(
                                                       leading: const Icon(
                                                           Icons
@@ -276,7 +340,7 @@ class _CrewDetailState extends State<CrewDetail>
                                                     SizedBox(
                                                         width:
                                                             142.w), // 크루명 공간 확보
-                                                    SizedBox(width: 13.w),
+                                                    // SizedBox(width: 13.w),
                                                     const Icon(
                                                       Icons
                                                           .person_outline_outlined,
@@ -285,7 +349,7 @@ class _CrewDetailState extends State<CrewDetail>
                                                     ),
                                                     SizedBox(width: 1.w),
                                                     Text(
-                                                      '12명',
+                                                      '${crew_member_count}명',
                                                       style: TextStyle(
                                                         fontSize: 13.sp,
                                                         color:
@@ -300,7 +364,7 @@ class _CrewDetailState extends State<CrewDetail>
                                                 padding:
                                                     EdgeInsets.only(top: 10.h),
                                                 child: Text(
-                                                  '저속 노화 위주의 식사와 규칙적인 생활을 통해 삶을 재정비하고 이다현보다 오래 살기 위해 노력합니다',
+                                                  '${crew_description}',
                                                   style: TextStyle(
                                                       fontSize: 14.sp,
                                                       fontWeight:
@@ -320,7 +384,10 @@ class _CrewDetailState extends State<CrewDetail>
                                                 child: ElevatedButton(
                                                   style:
                                                       ElevatedButton.styleFrom(
-                                                    backgroundColor: c800,
+                                                    backgroundColor:
+                                                        (member_status == 1)
+                                                            ? grey
+                                                            : c800,
                                                     shape:
                                                         RoundedRectangleBorder(
                                                       borderRadius:
@@ -331,9 +398,31 @@ class _CrewDetailState extends State<CrewDetail>
                                                         const EdgeInsets.only(
                                                             top: 8, bottom: 8),
                                                   ),
-                                                  onPressed: () {},
+                                                  onPressed: () {
+                                                    if (member_status == 0) {
+                                                      // 크루 가입하기
+                                                      joinCrew(crew_id!
+                                                              .toString())
+                                                          .then((value) {
+                                                        setState(() {
+                                                          member_status++;
+                                                        });
+                                                      });
+                                                    } else if (member_status ==
+                                                        2) {
+                                                      // 크루 회고하기.
+                                                      Navigator.pushNamed(
+                                                          context,
+                                                          Routes
+                                                              .retrospectChallenge);
+                                                    }
+                                                  },
                                                   child: Text(
-                                                    '크루 가입하기',
+                                                    (member_status == 2)
+                                                        ? "크루 회고 하기"
+                                                        : (member_status == 1)
+                                                            ? "가입 대기중"
+                                                            : "크루 가입하기",
                                                     style: TextStyle(
                                                       fontSize: 16.sp,
                                                       color: fontColor,
@@ -371,25 +460,76 @@ class _CrewDetailState extends State<CrewDetail>
                             ? _expandedHeight - _iconInitialTop
                             : iconTop,
                         left: progress < 0.01 ? _iconInitialLeft : iconLeft,
-                        child: Container(
-                          width: iconSize,
-                          height: iconSize,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(8),
-                            // TODO: 크루 프로필 이미지 네트워크로 추가
-                            child: Image.asset(
-                              'assets/img/food.png',
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) =>
-                                  Icon(
-                                Icons.group,
-                                size: iconSize * 0.7,
-                                color: Colors.grey,
-                              ),
+                        child: GestureDetector(
+                          onTap: () {
+                            if (isCreator) {
+                              // 관리자의 경우 크루 프로필 클릭했을 때 크루 프로필 이미지 수정.
+                              setState(() {
+                                _isUploaded = false;
+                              });
+                              ImagePicker()
+                                  .pickImage(source: ImageSource.gallery)
+                                  .then((pickedFile) async {
+                                if (pickedFile != null) {
+                                  final response = await uploadProfileImage(
+                                      File(pickedFile.path), 1, crew_id);
+                                  if (mounted) {
+                                    setState(() {
+                                      crew_image = response;
+                                    });
+                                  }
+                                  // joinedCrew 업데이트
+                                  int joinedIndex = crewController.joinedCrew
+                                      .indexWhere((element) =>
+                                          element['id'] == crew_id);
+                                  if (joinedIndex != -1) {
+                                    crewController.joinedCrew[joinedIndex]
+                                        ['crew_image'] = response;
+                                  }
+                                  updateCrewProfileImage(crew_id, response)
+                                      .then((value) {
+                                    setState(() {
+                                      _isUploaded = true;
+                                    });
+                                  });
+                                } else {
+                                  setState(() {
+                                    _isUploaded = true;
+                                  });
+                                }
+                              });
+                              // TODO: 크루 프로필 업데이트 후 크루 리스트 페이지 이동했을 때 바로 반영 안되는 문제 수정 필요
+                            }
+                          },
+                          child: Container(
+                            width: iconSize,
+                            height: iconSize,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              // TODO: 크루 프로필 이미지 네트워크로 추가
+                              child: !_isUploaded
+                                  ? Container(
+                                      width: iconSize,
+                                      height: iconSize,
+                                      color: boxBackgroundColor,
+                                      child: const Center(
+                                        child: CircularProgressIndicator(
+                                          color: c700,
+                                        ),
+                                      ),
+                                    )
+                                  : crew_image != null
+                                      ? Image.network(crew_image!,
+                                          fit: BoxFit.cover)
+                                      : Icon(
+                                          Icons.group,
+                                          size: iconSize * 0.7,
+                                          color: Colors.grey,
+                                        ),
                             ),
                           ),
                         ),
@@ -400,13 +540,16 @@ class _CrewDetailState extends State<CrewDetail>
                         top: progress < 0.01
                             ? _expandedHeight - _nameInitialTop
                             : nameTop,
-                        child: Text(
-                          '저속 노화 따라가기',
-                          style: TextStyle(
-                            letterSpacing: 0.01,
-                            fontSize: nameSize.sp,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
+                        child: Container(
+                          width: 142.w,
+                          child: Text(
+                            '${crew_name}',
+                            style: TextStyle(
+                              letterSpacing: 0.01,
+                              fontSize: nameSize.sp,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
                           ),
                         ),
                       ),
