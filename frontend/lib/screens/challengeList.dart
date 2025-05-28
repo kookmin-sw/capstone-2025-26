@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:reme/themes/color.dart';
+import 'package:reme/routes.dart';
+import 'package:get/get.dart';
 
 class ChallengeList extends StatefulWidget {
   const ChallengeList({super.key});
@@ -15,7 +17,7 @@ class _ChallengeListState extends State<ChallengeList> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return SizedBox(
       width: double.maxFinite,
       height: 630.h,
       child: Stack(
@@ -53,6 +55,7 @@ class _ChallengeListState extends State<ChallengeList> {
             child: GestureDetector(
               onTap: () {
                 print("챌린지 추가하기 버튼 누름");
+                Get.toNamed(Routes.createChallengeName);
               },
               child: Center(
                 child: Container(
