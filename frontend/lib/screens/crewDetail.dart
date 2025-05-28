@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:reme/routes.dart';
 import 'package:reme/screens/comment_dialog.dart';
+import 'package:reme/screens/retrospectChallengeList.dart';
 import 'package:reme/services/crew_api.dart';
 import 'package:reme/services/user_update.dart';
 import 'package:reme/themes/color.dart';
@@ -411,10 +412,13 @@ class _CrewDetailState extends State<CrewDetail>
                                                     } else if (member_status ==
                                                         2) {
                                                       // 크루 회고하기.
-                                                      Navigator.pushNamed(
+                                                      Navigator.push(
                                                           context,
-                                                          Routes
-                                                              .retrospectChallenge);
+                                                          MaterialPageRoute(
+                                                              builder: (context) =>
+                                                                  RetrospectChallengeList(
+                                                                      crewId:
+                                                                          crew_id)));
                                                     }
                                                   },
                                                   child: Text(

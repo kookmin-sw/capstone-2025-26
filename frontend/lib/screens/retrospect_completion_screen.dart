@@ -32,7 +32,7 @@ class _RetrospectCompletionScreenState
               challenge_id: currentRetrospect['challengeId'],
               template_id: currentRetrospect['templateId'],
               content: currentRetrospect['content'],
-              crew_id: null))).then((value) {
+              crew_id: currentRetrospect['crew_id'] ?? null))).then((value) {
         // Value로 받은 값들을 다시 kpi-result로 요청.
         // 그래서 받은 값을 _navigateToAnalysisScreen에 넘기기.
         setState(() {
@@ -316,7 +316,14 @@ class _ReflectionAnalysisScreenState extends State<ReflectionAnalysisScreen> {
                 Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: ElevatedButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      // 만약 크루에서 시작된 회고라면
+                      // setVisibility(retrospect_id: retrospect_id, visibility: "CREW", crew_id: crew_id);
+                      // 개인 회고 라면
+                      // setVisibility(retrospect_id: retrospect_id, visibility: "PUBLIC");
+                      Navigator.pushNamedAndRemoveUntil(
+                          context, Routes.splash, (route) => false);
+                    },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF223990),
                       shape: RoundedRectangleBorder(

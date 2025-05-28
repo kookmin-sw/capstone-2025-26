@@ -40,7 +40,6 @@ var namedRoute = {
   Routes.signup: (context) => const SignupPage(),
   Routes.crew: (context) => const CrewDetail(),
   Routes.first: (context) => GuidePage(),
-  Routes.retrospectChallenge: (context) => const RetrospectChallengeList(),
   Routes.createChallengeName: (context) => const CreateChallengeNameScreen(),
   Routes.createChallengePlan: (context) => const CreateChallengePlanScreen(),
   Routes.createChallengeWaiting: (context) =>

@@ -9,11 +9,13 @@ import 'package:reme/themes/color.dart';
 class RetrospectMethodSelection extends StatefulWidget {
   final List<Map<String, dynamic>> selectedChallenges;
   final String retrospectType;
+  int? crewId;
 
-  const RetrospectMethodSelection({
+  RetrospectMethodSelection({
     super.key,
     required this.selectedChallenges,
     required this.retrospectType,
+    this.crewId,
   });
 
   @override
@@ -34,7 +36,8 @@ class _RetrospectMethodSelectionState extends State<RetrospectMethodSelection> {
     super.initState();
     getTemplateList().then((value) {
       for (var template in value) {
-        if (template['owner_type'] == widget.retrospectType) {
+        if (template['owner_type'] == widget.retrospectType ||
+            template['owner_type'] == "COMMON") {
           _retrospectMethods.add(template);
         }
       }
@@ -231,6 +234,7 @@ class _RetrospectMethodSelectionState extends State<RetrospectMethodSelection> {
                         ['name'],
                     selectedChallenges: widget.selectedChallenges,
                     selectedMethod: _retrospectMethods[_selectedMethodIndex],
+                    crewId: widget.crewId,
                   ),
                 ),
               );
