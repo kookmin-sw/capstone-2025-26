@@ -136,3 +136,24 @@ class TriggerWeeklyAnalysisSerializer(serializers.Serializer):
 
         return data
 
+
+class SimplePlanItemSerializer(serializers.ModelSerializer):
+    """Simple serializer for individual plan items."""
+    class Meta:
+        model = Plan
+        fields = ['id', 'plan_text']
+
+class GeneratePlanResponseSerializer(serializers.Serializer):
+    """Serializer for the generate plan API response."""
+    user = serializers.IntegerField(source='user.id')
+    challenge = serializers.IntegerField(source='challenge.id')
+    plans = SimplePlanItemSerializer(many=True)
+
+    def create(self, validated_data):
+        # This serializer is for response representation, not for creating objects.
+        raise NotImplementedError("This serializer is not meant for object creation.")
+
+    def update(self, instance, validated_data):
+        # This serializer is for response representation, not for updating objects.
+        raise NotImplementedError("This serializer is not meant for object update.")
+

@@ -7,7 +7,7 @@ from django.db.models import Q
 import logging
 from .serializers import (
     GenerateKpiRequestSerializer, GeneratePlanRequestSerializer, KpiListResponseSerializer,
-    GenerateNextPlanSerializer, TriggerWeeklyAnalysisSerializer
+    GenerateNextPlanSerializer, TriggerWeeklyAnalysisSerializer, GeneratePlanResponseSerializer
 )
 from .permissions import IsAuthenticated
 from drf_yasg import openapi
@@ -161,8 +161,15 @@ class GeneratePlanFromChallengeAPIView(generics.GenericAPIView):
         responses={
             201: openapi.Response(
                 description="Plan successfully created",
-                schema=PlanResponseSerializer(many=True),
-                examples={'application/json': plan_list_example}
+                schema=GeneratePlanResponseSerializer,
+                examples={'application/json': {
+                    "user": 1,
+                    "challenge": 1,
+                    "plans": [
+                        {"id": 1, "content": "Complete Chapter 1 of 'Advanced Python'", "is_done": False},
+                        {"id": 2, "content": "Practice 5 LeetCode problems (Easy)", "is_done": False}
+                    ]
+                }},
             ),
             400: openapi.Response("Bad request, invalid input parameters"),
             403: openapi.Response("Permission Denied"),
@@ -206,7 +213,12 @@ class GeneratePlanFromChallengeAPIView(generics.GenericAPIView):
             generated_plans = generate_plan_from_challenge(challenge, user_context, item_count)
         
             # 새로운 직렬화 클래스로 응답 생성
-            response_serializer = PlanResponseSerializer(generated_plans)
+            response_data = {
+                "user": request.user,  # user 인스턴스 전달
+                "challenge": challenge,  # challenge 인스턴스 전달
+                "plans": generated_plans
+            }
+            response_serializer = GeneratePlanResponseSerializer(instance=response_data)
             return Response(response_serializer.data, status=status.HTTP_201_CREATED)
             
         except Challenge.DoesNotExist:

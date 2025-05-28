@@ -82,7 +82,7 @@ def generate_plan_from_retrospect(challenge, retrospect):
         })
     
     # 프롬프트 - JSON 형식 출력을 요청하도록 수정
-    template_str = (Path(__file__).parent.parent / "templates" / "plan_from_retrospect_prompt.txt").read_text()
+    template_str = (Path(__file__).parent.parent / "templates" / "plan_from_retrospect_prompt.txt").read_text(encoding="utf-8")
     prompt = PromptTemplate(
         input_variables=["challenge_name", "kpi_info", "retrospect_content"],
         template=template_str
@@ -150,7 +150,7 @@ def generate_plan_from_challenge(challenge, user_context="", item_count=3):
     item_count = max(1, min(item_count, 5))  # 1-5 사이의 값으로 제한
     
     # JSON 형식 프롬프트로 수정
-    template_str = (Path(__file__).parent.parent / "templates" / "plan_from_challenge_prompt.txt").read_text()
+    template_str = (Path(__file__).parent.parent / "templates" / "plan_from_challenge_prompt.txt").read_text(encoding="utf-8")
     prompt_template = PromptTemplate(
         input_variables=["challenge_name", "challenge_description", "user_context", "item_count"],
         template=template_str

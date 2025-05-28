@@ -134,7 +134,7 @@ def generate_kpis_for_challenge(challenge: Challenge, plan_ids: List[int], user_
     if not plans_data:
         raise ValueError("유효한 계획 데이터가 없습니다. 적어도 하나의 계획이 필요합니다.")
     
-    template_str = (Path(__file__).parent.parent / "templates" / "kpi_generator_prompt.txt").read_text()
+    template_str = (Path(__file__).parent.parent / "templates" / "kpi_generator_prompt.txt").read_text(encoding="utf-8")
     prompt = PromptTemplate(
         input_variables=["challenge_name", "challenge_description", "plans", "user_context", "item_count"],
         template=template_str
