@@ -7,12 +7,14 @@ class RetrospectWritingScreen extends StatefulWidget {
   final String methodName;
   final List<Map<String, dynamic>> selectedChallenges;
   final dynamic selectedMethod;
+  int? crewId;
 
-  const RetrospectWritingScreen({
+  RetrospectWritingScreen({
     super.key,
     required this.methodName,
     required this.selectedChallenges,
     required this.selectedMethod,
+    this.crewId,
   });
 
   @override
@@ -42,7 +44,7 @@ class _RetrospectWritingScreenState extends State<RetrospectWritingScreen> {
         'content': _retrospectContent,
         'isCompleted': false,
         'templateId': widget.selectedMethod['id'],
-        'crew_id': null,
+        'crew_id': widget.crewId,
       });
     }
   }
