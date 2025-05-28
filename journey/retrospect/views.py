@@ -342,6 +342,34 @@ class PlanViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(instance)
         return Response(serializer.data)
 
+    @action(detail=False, methods=['get'], url_path='by-challenge/(?P<challenge_id>[^/.]+)')
+    def by_challenge(self, request, challenge_id=None):
+        """
+        특정 챌린지의 Plan 목록을 조회합니다.
+        """
+        if not challenge_id:
+            return Response({"error": "challenge_id is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            challenge = Challenge.objects.get(pk=challenge_id)
+        except Challenge.DoesNotExist:
+            return Response({"error": f"Challenge with id {challenge_id} not found."}, status=status.HTTP_404_NOT_FOUND)
+        # 챌린지 소유자 또는 크루 멤버인지 확인
+        if challenge.owner_type == ChallengeOwnerType.USER:
+            if challenge.user != request.user:
+                raise PermissionDenied("오직 챌린지 소유자만 계획을 조회할 수 있습니다.")
+        elif challenge.owner_type == ChallengeOwnerType.CREW:
+            if not CrewMembership.objects.filter(
+                crew=challenge.crew,
+                user=request.user,
+                status=CrewMembershipStatus.ACCEPTED
+            ).exists():
+                raise PermissionDenied("오직 크루 멤버만 계획을 조회할 수 있습니다.")
+        
+        queryset = Plan.objects.filter(challenge=challenge, user=request.user)
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+        
 class KpiViewSet(viewsets.ModelViewSet):
     """
     KPI를 관리하는 ViewSet
