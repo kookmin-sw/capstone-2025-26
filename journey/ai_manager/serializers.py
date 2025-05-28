@@ -145,9 +145,24 @@ class SimplePlanItemSerializer(serializers.ModelSerializer):
 
 class GeneratePlanResponseSerializer(serializers.Serializer):
     """Serializer for the generate plan API response."""
-    user = serializers.IntegerField(source='user.id')
-    challenge = serializers.IntegerField(source='challenge.id')
-    plans = SimplePlanItemSerializer(many=True)
+    user = serializers.IntegerField() 
+    challenge = serializers.IntegerField()
+    plans = SimplePlanItemSerializer(many=True, read_only=True)
+
+    def to_representation(self, instance):
+        """
+        Override to_representation to handle both dictionary and object instances.
+        This makes the serializer more flexible to work with different input types.
+        """
+        if isinstance(instance, dict):
+            # If instance is a dict, format accordingly
+            return {
+                'user': instance.get('user'),
+                'challenge': instance.get('challenge'),
+                'plans': SimplePlanItemSerializer(instance.get('plans', []), many=True).data
+            }
+        # For other cases, use default behavior
+        return super().to_representation(instance)
 
     def create(self, validated_data):
         # This serializer is for response representation, not for creating objects.

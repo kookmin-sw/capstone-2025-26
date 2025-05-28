@@ -166,8 +166,8 @@ class GeneratePlanFromChallengeAPIView(generics.GenericAPIView):
                     "user": 1,
                     "challenge": 1,
                     "plans": [
-                        {"id": 1, "content": "Complete Chapter 1 of 'Advanced Python'", "is_done": False},
-                        {"id": 2, "content": "Practice 5 LeetCode problems (Easy)", "is_done": False}
+                        {"id": 1, "plan_text": "Complete Chapter 1 of 'Advanced Python'"},
+                        {"id": 2, "plan_text": "Practice 5 LeetCode problems (Easy)"}
                     ]
                 }},
             ),
@@ -210,15 +210,15 @@ class GeneratePlanFromChallengeAPIView(generics.GenericAPIView):
                     )
             
             # Plan 생성
-            generated_plans = generate_plan_from_challenge(challenge, user_context, item_count)
-        
-            # 새로운 직렬화 클래스로 응답 생성
+            generated_plans = generate_plan_from_challenge(challenge, user_context, item_count)            # 새로운 직렬화 클래스로 응답 생성
             response_data = {
-                "user": request.user,  # user 인스턴스 전달
-                "challenge": challenge,  # challenge 인스턴스 전달
-                "plans": generated_plans
+                "user": request.user.id,
+                "challenge": challenge.id,
+                "plans": generated_plans  # Plan model instances
             }
-            response_serializer = GeneratePlanResponseSerializer(instance=response_data)
+            
+            # Use the improved serializer with the response data
+            response_serializer = GeneratePlanResponseSerializer(response_data)
             return Response(response_serializer.data, status=status.HTTP_201_CREATED)
             
         except Challenge.DoesNotExist:
