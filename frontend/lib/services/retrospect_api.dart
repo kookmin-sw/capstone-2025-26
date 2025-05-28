@@ -29,6 +29,7 @@ Future<void> createRetrospect(
     'content': content,
     'visibility': "PRIVATE",
     'owner_type': isCrew ? "CREW" : "USER",
+    'initial_plan_description': 'asdf', // 추후 지울 필요 있음.
   });
   return response.data;
 }
@@ -36,4 +37,14 @@ Future<void> createRetrospect(
 Future<dynamic> getTemplateList() async {
   final response = await dio.get('/retrospect/templates/');
   return response.data['results'];
+}
+
+Future<dynamic> setVisibility(
+    {required int retrospect_id,
+    required String visibility,
+    int? crew_id}) async {
+  final response = await dio.patch('/retrospect/retrospects/$retrospect_id/', {
+    'visibility': visibility,
+  });
+  return response.data;
 }
