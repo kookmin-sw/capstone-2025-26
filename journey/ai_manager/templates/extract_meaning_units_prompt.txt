@@ -10,8 +10,8 @@
 [예시]
 입력: "3시간 공부했지만 집중력이 떨어졌다"
 출력: [
-  { "category": "행동", "keyword": "공부", "value": "3시간" },
-  { "category": "성과", "keyword": "집중력", "value": "낮음" }
+  {{ "category": "행동", "keyword": "공부", "value": "3시간" }},
+  {{ "category": "성과", "keyword": "집중력", "value": "낮음" }}
 ]
 
 회고 텍스트:
