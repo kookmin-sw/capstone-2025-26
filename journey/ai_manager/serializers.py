@@ -2,6 +2,7 @@ from rest_framework import serializers
 from retrospect.models import Challenge, Kpi, Plan, Retrospect
 import json
 from datetime import date
+from retrospect.models import KpiResult
 
 class LLMRequestSerializer(serializers.Serializer):
     query = serializers.CharField(required=True)
@@ -63,6 +64,13 @@ class KpiOutputSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'definition', 'measurement_unit', 'data_type', 'challenge', 'user']
         read_only_fields = ['id', 'challenge', 'user'] # challenge and user are set contextually
 
+class KpiResultOutputSerializer(serializers.ModelSerializer):
+    kpi_name = serializers.CharField(source='kpi.name', read_only=True)
+
+    class Meta:
+        model = KpiResult
+        fields = ['id', 'kpi_name', 'score', 'comment']
+        
 # Separate serializer for the API response that contains a list of KPIs
 class KpiListResponseSerializer(serializers.Serializer):
     kpis = KpiOutputSerializer(many=True)

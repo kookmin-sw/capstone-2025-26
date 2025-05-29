@@ -16,11 +16,46 @@ from .permissions import (IsRetrospectOwnerOrCrewMemberOrReadOnly,  # 인증 읽
                           IsTemplateOwnerOrCrewMemberOrReadOnly, 
                           IsChallengeOwnerOrCrewMemberOrReadOnly, 
                           IsRetrospectWeeklyAnalysisOwnerOrCrewMemberOrReadOnly)
+from langchain_google_vertexai.chat_models import ChatVertexAI
+from langfuse.callback import CallbackHandler
 from django.utils import timezone
 from datetime import timedelta
+from django.db import transaction
+from ai_manager.services.kpi_score_generator import score_kpis_from_retrospect
+
+import os
+import logging
+
 # from django_filters.rest_framework import DjangoFilterBackend # If you want filtering
 
 # Create your views here.
+
+from dotenv import load_dotenv
+
+load_dotenv()
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
+
+logger = logging.getLogger(__name__)
+
+# LangChain LLM 설정
+llm = ChatVertexAI(
+    project=os.getenv("PROJECT_ID"),
+    location="us-central1",
+    model_name="gemini-2.0-flash-lite-001",
+    max_output_tokens=1024,
+    temperature=0.7,
+)
+
+# Langfuse 핸들러 초기화
+langfuse_handler = None
+try:
+    langfuse_handler = CallbackHandler(
+        secret_key=os.getenv("LANGFUSE_SECRET_KEY"),
+        public_key=os.getenv("LANGFUSE_PUBLIC_KEY"),
+        host=os.getenv("LANGFUSE_HOST"),
+    )
+except Exception as e:
+    logger.warning(f"Langfuse 핸들러 초기화 오류: {str(e)}. 토큰 사용량 추적이 비활성화됩니다.")
 
 
 class RetrospectViewSet(viewsets.ModelViewSet):
@@ -64,21 +99,18 @@ class RetrospectViewSet(viewsets.ModelViewSet):
         else:
             raise PermissionDenied("Invalid challenge owner type.")
 
-        serializer.save(user=user, challenge=challenge, template=template, crew=crew_to_save)
+        # 트랜잭션 내에서 회고 생성 및 KPI 점수 생성 처리
+        with transaction.atomic():
+            instance = serializer.save(user=user, challenge=challenge, template=template, crew=crew_to_save)
 
-    # 사용하지 않는 Plan 자동 생성 로직 및 예시 액션 주석을 제거했습니다.
+            # KPI 점수 생성
+            score_kpis_from_retrospect(instance, llm)
+            print(f"KPI 점수 생성 완료 (회고 ID: {instance.id})")
 
+        # 회고 저장 결과 및 생성된 KPI 결과를 리턴
+        return instance
 
-    # Add specific actions if needed, e.g., linking to crew, etc.
-    # Example: List retrospects for a specific challenge or user might be useful
-    # @action(detail=False, methods=['get'], url_path='by-challenge/(?P<challenge_id>\\d+)')
-    # def by_challenge(self, request, challenge_id=None):
-    #     ...
-
-    # @action(detail=False, methods=['get'], url_path='my-retrospects')
-    # def my_retrospects(self, request):
-    #    ...
-
+    
 class TemplateViewSet(viewsets.ModelViewSet):
     """Template 모델을 처리하는 ViewSet"""
     serializer_class = TemplateSerializer
