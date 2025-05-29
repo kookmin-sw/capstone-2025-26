@@ -38,7 +38,7 @@ Future<void> main() async {
 
 class MyApp extends StatelessWidget {
   final SharedPreferences prefs;
-  MyApp({super.key, required this.prefs});
+  const MyApp({super.key, required this.prefs});
 
   // This widget is the root of your application.
   @override
@@ -66,7 +66,7 @@ class MyApp extends StatelessWidget {
     );
 
     return ScreenUtilInit(
-      designSize: Size(414, 896),
+      designSize: const Size(414, 896),
       child: GetMaterialApp(
         debugShowCheckedModeBanner: false,
         title: 'Flutter Demo',

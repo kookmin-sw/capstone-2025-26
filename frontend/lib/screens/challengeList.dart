@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:reme/themes/color.dart';
+import 'package:reme/routes.dart';
+import 'package:get/get.dart';
+import 'package:logger/logger.dart';
+import 'package:reme/services/challenge_api.dart';
 
 class ChallengeList extends StatefulWidget {
   const ChallengeList({super.key});
@@ -10,12 +14,104 @@ class ChallengeList extends StatefulWidget {
 }
 
 class _ChallengeListState extends State<ChallengeList> {
+  final _logger = Logger(
+    printer: PrettyPrinter(
+      methodCount: 0,
+      errorMethodCount: 5,
+      lineLength: 50,
+      colors: true,
+      printEmojis: true,
+      printTime: true,
+    ),
+  );
+  final _challengeApi = ChallengeApi();
   // 현재 선택된 카테고리 (0: 전체, 1: 개인, 2: 크루)
   int _selectedCategory = 0;
+  List<Map<String, dynamic>> _challenges = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchChallenges();
+  }
+
+  Future<void> _fetchChallenges() async {
+    setState(() {
+      _isLoading = true;
+    });
+    try {
+      final response = await _challengeApi.getChallenges();
+
+      // _logger.i('API 응답 상태 코드: ${response.statusCode}');
+      // _logger.i('API 응답 데이터: ${response.data}');
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseBody =
+            response.data as Map<String, dynamic>;
+
+        if (responseBody.containsKey('results') &&
+            responseBody['results'] is List) {
+          final List<dynamic> challengesFromServer =
+              responseBody['results'] as List<dynamic>;
+
+          // .map의 결과를 List<Map<String, dynamic>>으로 명확히 하기 위한 처리
+          final List<Map<String, dynamic>> processedChallenges =
+              challengesFromServer
+                  .map<Map<String, dynamic>>((challenge) {
+                    // map의 반환 타입을 명시적으로 지정
+                    if (challenge is Map<String, dynamic>) {
+                      // 반환되는 맵의 키가 String이고 값이 dynamic임을 보장
+                      return <String, dynamic>{
+                        // 리터럴 맵에도 타입 명시
+                        'id': challenge['id'],
+                        'icon': Icons.flash_on,
+                        'title': challenge['challenge_name'] ?? '이름 없음',
+                        'type': challenge['owner_type'] == 'USER'
+                            ? 'personal'
+                            : 'crew',
+                        'iconBgColor': const Color(0xFFE75C3C)
+                      };
+                    }
+                    // 조건에 맞지 않는 경우 빈 Map<String, dynamic> 반환 또는 필터링
+                    // 여기서는 필터링을 위해 null을 반환하고 나중에 제거하는 방식을 사용할 수도 있습니다.
+                    // 또는 로깅 후 빈 맵 반환
+                    _logger.w('올바르지 않은 챌린지 데이터 형식: $challenge');
+                    return <String, dynamic>{}; // 빈 맵도 타입 명시
+                  })
+                  .where((challengeMap) => challengeMap
+                      .containsKey('id')) // 유효한 챌린지만 필터링 (id가 있는 경우)
+                  .toList(); // 최종적으로 List<Map<String, dynamic>> 타입이 됨
+
+          setState(() {
+            _challenges = processedChallenges; // 이제 타입이 일치함
+            _isLoading = false;
+          });
+        } else {
+          throw Exception("챌린지 목록 데이터 형식이 올바르지 않습니다. 'results' 키를 확인하세요.");
+        }
+      } else {
+        throw Exception('챌린지 목록을 불러오는데 실패했습니다. 상태 코드: ${response.statusCode}');
+      }
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+      _logger.e('챌린지 목록을 불러오는 중 오류가 발생했습니다: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('챌린지 목록을 불러오는 중 오류가 발생했습니다.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return SizedBox(
       width: double.maxFinite,
       height: 630.h,
       child: Stack(
@@ -53,6 +149,7 @@ class _ChallengeListState extends State<ChallengeList> {
             child: GestureDetector(
               onTap: () {
                 print("챌린지 추가하기 버튼 누름");
+                Get.toNamed(Routes.createChallengeName);
               },
               child: Center(
                 child: Container(
@@ -125,11 +222,13 @@ class _ChallengeListState extends State<ChallengeList> {
   }
 
   Widget _buildChallengeList({String type = 'all'}) {
-    // 챌린지 목록 데이터
-    final challenges = _getChallenges();
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
     final filteredChallenges = type == 'all'
-        ? challenges
-        : challenges.where((c) => c['type'] == type).toList();
+        ? _challenges
+        : _challenges.where((c) => c['type'] == type).toList();
 
     return SizedBox(
       height: 500.h,
@@ -188,64 +287,5 @@ class _ChallengeListState extends State<ChallengeList> {
         ),
       ),
     );
-  }
-
-  // 챌린지 데이터 가져오기
-  List<Map<String, dynamic>> _getChallenges() {
-    return [
-      {
-        'id': 1,
-        'icon': Icons.flash_on,
-        'title': '물 1L 마시기, 커피 줄이기',
-        'type': 'personal',
-        'iconBgColor': const Color(0xFFE75C3C)
-      },
-      {
-        'id': 2,
-        'icon': Icons.flash_on,
-        'title': '어그로 끌리는 체육 연구',
-        'type': 'personal',
-        'iconBgColor': const Color(0xFFE75C3C)
-      },
-      {
-        'id': 3,
-        'icon': Icons.flash_on,
-        'title': '1일 1포스팅 및 핫게 댓글 달기',
-        'type': 'personal',
-        'iconBgColor': const Color(0xFFE75C3C)
-      },
-      {
-        'id': 4,
-        'icon': Icons.nature_people,
-        'title': '저속노화 식단하기',
-        'type': 'crew',
-        'image': 'assets/images/health_food.png',
-        'iconBgColor': const Color(0xFF3F51B5)
-      },
-      {
-        'id': 5,
-        'icon': Icons.nature_people,
-        'title': '저속노화에 대한 포스팅 올리기',
-        'type': 'crew',
-        'image': 'assets/images/health_post.png',
-        'iconBgColor': const Color(0xFF3F51B5)
-      },
-      {
-        'id': 6,
-        'icon': Icons.directions_run,
-        'title': '15분 페이스 3k 달리기',
-        'type': 'crew',
-        'image': 'assets/images/running.png',
-        'iconBgColor': const Color(0xFF00BCD4)
-      },
-      {
-        'id': 7,
-        'icon': Icons.directions_run,
-        'title': '마라톤 같이 할 러너 구하기',
-        'type': 'crew',
-        'image': 'assets/images/running_friends.png',
-        'iconBgColor': const Color(0xFF00BCD4)
-      },
-    ];
   }
 }
