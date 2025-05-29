@@ -12,6 +12,7 @@ import logging
 from typing import List, Dict, Any
 from datetime import datetime, timedelta
 from pathlib import Path
+import difflib
 from datetime import timedelta
 from dotenv import load_dotenv
 
@@ -40,6 +41,10 @@ try:
 except Exception as e:
     logger.warning(f"Langfuse 핸들러 초기화 오류: {str(e)}. 토큰 사용량 추적이 비활성화됩니다.")
 
+def is_similar(keyword1, keyword2, threshold=0.5):
+    ratio = difflib.SequenceMatcher(None, keyword1, keyword2).ratio()
+    return ratio >= threshold
+
 def extract_meaning_units(text: str) -> List[Dict[str, Any]]:
     """
     회고 텍스트에서 행동/성과/문제 등 의미 단위 추출 (LLM 사용)
@@ -60,23 +65,25 @@ def extract_meaning_units(text: str) -> List[Dict[str, Any]]:
         return []
 
 def match_meaning_units_to_kpi(kpi: Kpi, units: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-    """
-    KPI와 의미 단위를 매핑 (직접/간접/의미 기반)
-    """
     matched = []
     kpi_keywords = [kpi.name, kpi.definition]
+
     for unit in units:
         for kw in kpi_keywords:
-            if unit["keyword"] in kw:
+            if is_similar(unit["keyword"], kw):
                 matched.append(unit)
-                
+                break  # 중복 매칭 방지
     return matched
+
 
 def score_matched_units(units: List[Dict[str, Any]]) -> float:
     """
     매핑된 의미 단위들을 기반으로 KPI 스코어 계산
     - 간단히 키워드 기준 점수 부여 또는 정규화
     """
+    if not units:
+        return 0.3
+    
     scores = []
     for unit in units:
         val = unit["value"]
@@ -84,9 +91,9 @@ def score_matched_units(units: List[Dict[str, Any]]) -> float:
             scores.append(1.0)
         elif "절반" in val or "50%" in val:
             scores.append(0.5)
-        elif re.match(r'\d+\s*시간', val):
-            hours = float(re.search(r'\d+', val).group(0))
-            scores.append(min(hours / 5.0, 1.0))  # 5시간 이상이면 1.0
+        elif m := re.match(r"(\d+)\s*시간", val):
+            hours = float(m.group(1))
+            scores.append(min(hours / 5.0, 1.0))
         elif "못했다" in val or "실패" in val:
             scores.append(0.0)
         else:
@@ -151,67 +158,74 @@ def compare_retrospects(prev, curr, kpi, chain):
         chain=chain
     )
 
-def score_kpis_from_retrospect(retrospect, llm):
-    print(f"\n[INFO] 🔍 KPI 평가 시작 - 회고 ID: {retrospect.id}")
-    
-    challenge = retrospect.challenge
-    user = retrospect.user
-    retrospect_text = retrospect.content
+def score_kpis_from_retrospect(retrospect: Retrospect, llm_chain: ChatVertexAI) -> List[KpiResult]:
+    """
+    회고(Retrospect) 데이터를 기반으로 KPI 점수(KpiResult)를 생성하고 저장합니다.
 
-    print(f"[DEBUG] 유저: {user.username}, 챌린지: {challenge.challenge_name}")
-    
-    # 1. 평가 대상 KPI 조회
-    kpis = Kpi.objects.filter(challenge=challenge, user=user)
-    print(f"[DEBUG] 평가 대상 KPI 수: {kpis.count()}개")
+    Args:
+        retrospect: 점수를 매길 대상이 되는 Retrospect 인스턴스
+        llm_chain: 개선 여부 평가를 위한 LLM 체인 인스턴스
 
-    if not kpis.exists():
-        print(f"[WARN] 평가할 KPI가 없습니다. 회고 ID: {retrospect.id}")
+    Returns:
+        생성된 KpiResult 객체들의 리스트
+    """
+    
+    # 로깅: KPI 점수 생성 시작 알림
+    logger.info(f"Start KPI scoring for Retrospect ID={retrospect.id}")
+
+    # 해당 회고의 챌린지와 사용자에 연결된 KPI 목록 조회
+    kpis = Kpi.objects.filter(challenge=retrospect.challenge, user=retrospect.user)
+    if not kpis:
+        logger.warning("No KPIs to score.")
         return []
 
-    prev_retrospect = get_previous_retrospect(retrospect)
-    if prev_retrospect:
-        print(f"[DEBUG] 전날 회고 있음 → ID: {prev_retrospect.id}")
-    else:
-        print(f"[DEBUG] 전날 회고 없음")
+    # 전날 회고 조회 (개선 여부 평가용)
+    prev = get_previous_retrospect(retrospect)
+    
+    # 개선 여부 평가에 사용할 LLM 체인 생성
+    improvement_chain = build_improvement_evaluator()
+    results = []  # 저장된 KpiResult 객체를 담을 리스트
 
-    results = []
-
+    # 각 KPI에 대해 점수 계산 및 저장 반복
     for kpi in kpis:
-        print(f"\n[INFO] → KPI 평가 중: {kpi.name}")
-
         try:
-            # 기본 점수 계산
-            score, matched_units = score_kpi_using_meaning_units(kpi, retrospect_text)
-            print(f"[DEBUG] 기본 점수: {score}, 매칭된 의미 단위 수: {len(matched_units)}")
+            
+            units = extract_meaning_units(retrospect.content) # 1) 의미 단위 추출
+            matched = match_meaning_units_to_kpi(kpi, units) # 2) KPI 정의와 의미 단위 매칭 
+            base_score = score_matched_units(matched) # 3) 매칭된 단위 기반 기본 점수 계산
 
-            # 개선 여부 판단 및 보정 점수
-            if prev_retrospect is not None:
-                improvement_score = compare_retrospects(prev_retrospect, retrospect, kpi, llm)
-                score = min(score + improvement_score, 1.0)
-                print(f"[DEBUG] 개선 점수: {improvement_score} → 최종 점수: {score}")
+            if prev:  
+                adj = evaluate_improvement_with_llm(prev.content, retrospect.content, kpi.name, improvement_chain) # 4) 전날 회고가 있으면 개선 여부 평가하여 점수 보정
+                score = min(base_score + adj, 1.0)
             else:
-                print(f"[DEBUG] 개선 비교 생략 (전날 회고 없음)")
+                score = base_score
 
-            feedback = generate_feedback(kpi, matched_units, score)
+            feedback = generate_feedback(kpi, matched, score) # 5) 자연어 피드백 생성 (generate_feedback 함수 사용)
 
-            # KPIResult 저장
-            result = KpiResult.objects.create(
-                user=user,
-                challenge=challenge,
+            
+            result = KpiResult.objects.create( 
+                user=retrospect.user,
+                challenge=retrospect.challenge,
                 kpi=kpi,
                 retrospect=retrospect,
                 score=score,
                 comment=feedback
-            )
+            ) # 6) KpiResult 모델에 결과 저장
             results.append(result)
-            print(f"[SUCCESS] KPIResult 저장 완료 → ID: {result.id}, 점수: {score:.2f}")
+            
+            logger.info(f"Saved KpiResult ID={result.id}, score={score:.2f}")
+                        
 
+                        
         except Exception as e:
-            print(f"[ERROR] KPI '{kpi.name}' 평가 중 오류 발생: {e}")
-            continue
+            
+            logger.error(f"Error scoring KPI '{kpi.name}': {e}") # 오류 발생 시 로그 남기고 예외 재발생하여 트랜잭션 롤백 유도
+            raise
 
-    print(f"\n[INFO] ✅ KPI 평가 종료 - 총 {len(results)}개 저장됨")
+    
+    logger.info(f"Completed KPI scoring: {len(results)} results.") # 완료 로그 및 결과 반환
     return results
+
 
 
 '''
