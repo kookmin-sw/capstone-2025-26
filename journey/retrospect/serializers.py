@@ -17,12 +17,8 @@ class RetrospectSerializer(serializers.ModelSerializer):
     crew = serializers.PrimaryKeyRelatedField(queryset=Crew.objects.all(), allow_null=True, required=False)
     kpi_results = serializers.SerializerMethodField(read_only=True)
     
-    # 모델에는 없음 
-    initial_plan_description = serializers.CharField(
-        write_only=True,
-        required=False,  # 필수 필드에서 선택적 필드로 변경
-        help_text="LLM을 사용해 초기 계획을 생성하기 위해 설명을 입력하세요."
-    )
+    
+    
     class Meta:
         model = Retrospect
         fields = [
@@ -37,7 +33,7 @@ class RetrospectSerializer(serializers.ModelSerializer):
             'owner_type',
             'created_at',
             'updated_at',
-            'initial_plan_description', # 모델에는 없지만 회고 생성 시 사용
+            
             'kpi_results',  
         ]
         read_only_fields = ['id', 'created_at', 'updated_at', 'user'] # user is set in the view
@@ -49,15 +45,6 @@ class RetrospectSerializer(serializers.ModelSerializer):
         """
         is_crew_retrospect = data.get('crew') is not None
         owner_type = data.get('owner_type')
-        # Field to receive the initial plan description for LLM generation (not part of the model)
-        initial_description = data.get('initial_plan_description') #llm으로 보낼 요청
-
-        # 회고 생성 시에만 initial_plan_description 필드가 필요함
-        if self.context.get('request') and self.context['request'].method == 'POST' and not initial_description:
-             raise serializers.ValidationError("'initial_plan_description' must be provided for creating a retrospect.")
-
-        # 모델에는 없는 필드이므로, 이후 create() 메서드에 전달되지 않도록 제거        
-        data.pop('initial_plan_description', None)
 
         # Validate owner_type consistency
         if is_crew_retrospect and owner_type != Retrospect.RetrospectOwnerType.CREW:
