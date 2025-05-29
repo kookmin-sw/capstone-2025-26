@@ -48,3 +48,25 @@ Future<dynamic> setVisibility(
   });
   return response.data;
 }
+
+Future<dynamic> getKpiResult(
+    {required int challenge_id, required DateTime date, int count = 0}) async {
+  if (count > 5) return [];
+  final response =
+      await dio.get('/retrospect/kpi-results/by-challenge/$challenge_id/');
+
+  if (response.data.isEmpty) {
+    await Future.delayed(const Duration(milliseconds: 800));
+    return getKpiResult(
+        challenge_id: challenge_id, date: date, count: count + 1);
+  } else {
+    List<dynamic> kpiResult = [];
+    for (var result in response.data) {
+      if (result['created_at'].split('T')[0] == date.toString().split(' ')[0]) {
+        kpiResult.add(result);
+      }
+    }
+
+    return kpiResult;
+  }
+}

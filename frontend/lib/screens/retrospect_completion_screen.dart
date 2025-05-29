@@ -35,6 +35,7 @@ class _RetrospectCompletionScreenState
               crew_id: currentRetrospect['crew_id'] ?? null))).then((value) {
         // Value로 받은 값들을 다시 kpi-result로 요청.
         // 그래서 받은 값을 _navigateToAnalysisScreen에 넘기기.
+
         setState(() {
           _isDataReceived = true;
         });
@@ -52,12 +53,22 @@ class _RetrospectCompletionScreenState
 
   void _navigateToAnalysisScreen() {
     // Navigate to the reflection analysis page after receiving data
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (context) => ReflectionAnalysisScreen(),
-      ),
-    );
+    List<dynamic> kpiResult = [];
+    Future.wait(widget.retrospectEntries.map((currentRetrospect) =>
+        getKpiResult(
+                challenge_id: currentRetrospect['challengeId'],
+                date: DateTime.now(),
+                count: 0)
+            .then((value) {
+          kpiResult.add(value);
+        }))).then((_) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ReflectionAnalysisScreen(data: kpiResult),
+        ),
+      );
+    });
   }
 
   @override
@@ -138,7 +149,8 @@ class _RetrospectCompletionScreenState
 // Replace this with your actual reflection analysis screen implementation
 class ReflectionAnalysisScreen extends StatefulWidget {
   bool fromMyPage;
-  ReflectionAnalysisScreen({super.key, this.fromMyPage = false});
+  dynamic data;
+  ReflectionAnalysisScreen({super.key, this.fromMyPage = false, this.data});
 
   @override
   State<ReflectionAnalysisScreen> createState() =>
@@ -147,6 +159,16 @@ class ReflectionAnalysisScreen extends StatefulWidget {
 
 class _ReflectionAnalysisScreenState extends State<ReflectionAnalysisScreen> {
   int _selectedTabIndex = 0;
+  late String month;
+  late String day;
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    month = widget.data[0][0]['created_at'].split('T')[0].split('-')[1];
+    day = widget.data[0][0]['created_at'].split('T')[0].split('-')[2];
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -186,14 +208,14 @@ class _ReflectionAnalysisScreenState extends State<ReflectionAnalysisScreen> {
                 const SizedBox(height: 40),
 
                 // 타이틀 텍스트
-                const Padding(
+                Padding(
                   padding: EdgeInsets.fromLTRB(21.0, 0.0, 21.0, 20.0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        "3/30일 오늘도 수고하셨어요!",
-                        style: TextStyle(
+                        "${month}/${day}일 오늘도 수고하셨어요!",
+                        style: const TextStyle(
                           color: Colors.white,
                           fontFamily: 'Pretendard',
                           fontSize: 27,
@@ -202,7 +224,7 @@ class _ReflectionAnalysisScreenState extends State<ReflectionAnalysisScreen> {
                           letterSpacing: 0.54,
                         ),
                       ),
-                      Text(
+                      const Text(
                         "내일도 잊지말고 같이 회고해요",
                         style: TextStyle(
                           color: Colors.white,
@@ -268,7 +290,13 @@ class _ReflectionAnalysisScreenState extends State<ReflectionAnalysisScreen> {
                         child: GestureDetector(
                           onTap: () {
                             setState(() {
-                              _selectedTabIndex = 1;
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('준비중입니다'),
+                                  duration: Duration(seconds: 1),
+                                ),
+                              );
+                              // _selectedTabIndex = 1;
                             });
                           },
                           child: Container(
@@ -307,7 +335,7 @@ class _ReflectionAnalysisScreenState extends State<ReflectionAnalysisScreen> {
                 Expanded(
                   child: SingleChildScrollView(
                     child: _selectedTabIndex == 0
-                        ? _buildDailyAnalysis()
+                        ? _buildDailyAnalysis(widget.data)
                         : _buildWeeklyAnalysis(),
                   ),
                 ),
@@ -349,30 +377,17 @@ class _ReflectionAnalysisScreenState extends State<ReflectionAnalysisScreen> {
     );
   }
 
-  Widget _buildDailyAnalysis() {
+  Widget _buildDailyAnalysis(dynamic data) {
     return Column(
       children: [
-        ChallengeTypeItem(
-          title: "1일 1포스팅 및 핫게 댓글 달기",
-          description: "오늘 성공적으로 포스팅을 업로드 했어요! 지금 사회 이슈를 다루어 좋은 반응을 보였다니 축하해요!",
-          score: 90,
-          hasSuccess: true,
-          imagePath: 'assets/img/lightning.png',
-        ),
-        ChallengeTypeItem(
-          title: "저속노화 식단하기",
-          description: "오늘은 저속노화 식단을 하지 않았어요. 내일은 꼭 한번 도전해 봐요",
-          score: 0,
-          hasSuccess: false,
-          imagePath: 'assets/img/food.png',
-        ),
-        ChallengeTypeItem(
-          title: "15분 페이스 3k 달리기",
-          description: "오늘은 3k 달리기를 20분 페이스에 달렸어요. 조금만 더 빨리 뛰어봐요",
-          score: 60,
-          hasSuccess: false,
-          imagePath: 'assets/img/running.png',
-        ),
+        for (var item in data)
+          ChallengeTypeItem(
+            title: '건강하게 운동하기', // TODO: 챌린지 아이디 가지고 이름 가져오기
+            description: '${item[0]['comment']}',
+            score: item[0]['score'],
+            hasSuccess: item[0]['score'] > 50 ? true : false,
+            imagePath: '',
+          )
       ],
     );
   }

@@ -4,7 +4,7 @@ import 'package:reme/themes/color.dart';
 class ChallengeTypeItem extends StatelessWidget {
   final String title;
   final String description;
-  final int score;
+  final double score;
   final bool hasSuccess;
   final String imagePath;
 

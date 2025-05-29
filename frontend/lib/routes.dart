@@ -42,6 +42,7 @@ var namedRoute = {
   Routes.first: (context) => GuidePage(),
   Routes.createChallengeName: (context) => const CreateChallengeNameScreen(),
   Routes.createChallengePlan: (context) => const CreateChallengePlanScreen(),
+  Routes.retrospectChallenge: (context) => RetrospectChallengeList(),
   Routes.createChallengeWaiting: (context) =>
       const CreateChallengeWaitingScreen(),
   Routes.challengePlanCompleted: (context) =>
