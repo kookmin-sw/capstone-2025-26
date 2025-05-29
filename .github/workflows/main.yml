@@ -20,7 +20,6 @@ jobs:
         run: |
           mkdir -p jour # Ensure journey directory exists in the runner workspace
           echo "${{ secrets.MAP }}" > jour/.env
-          echo -n "${{ secrets.MAPG }}" 
           echo -n "${{ secrets.MAPG }}" | base64 --decode --ignore-garbage > jour/vertex-ai-sa.json
         shell: bash
         
