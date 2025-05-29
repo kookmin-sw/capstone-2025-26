@@ -70,3 +70,8 @@ Future<dynamic> getKpiResult(
     return kpiResult;
   }
 }
+
+Future<dynamic> getAllRetrospectList() async {
+  final response = await dio.get('/retrospect/kpi-results/');
+  return response.data['results'];
+}

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:get/get.dart';
 import 'package:reme/routes.dart';
 import 'package:reme/themes/color.dart';
+import 'package:reme/utils/retrospect_controller.dart';
 import 'package:reme/widgets/challengeTypeItem.dart';
 import 'package:table_calendar/table_calendar.dart';
 
@@ -14,130 +16,165 @@ class RetroSpectList extends StatefulWidget {
 
 class _RetroSpectListState extends State<RetroSpectList> {
   DateTime _focusedDay = DateTime.now();
+  final RetrospectController retrospectController =
+      Get.put(RetrospectController());
+
+  // 날짜별로 한 번만 표시되는 Map 만들기
+  Map<DateTime, List> getEventMap(List retrospectList) {
+    final Map<DateTime, List> eventMap = {};
+    for (var item in retrospectList) {
+      final date = DateTime.parse(item['created_at']);
+      final day = DateTime(date.year, date.month, date.day);
+      eventMap[day] = [true]; // 여러개여도 그냥 하나만 넣음
+    }
+    return eventMap;
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        TableCalendar(
-          headerStyle: HeaderStyle(
-            titleCentered: true,
-            titleTextStyle: TextStyle(
-              fontSize: 20.sp,
-              fontWeight: FontWeight.w600,
-              color: fontColor,
-            ),
-            leftChevronIcon: Icon(
-              Icons.chevron_left,
-              color: fontColor,
-            ),
-            rightChevronIcon: Icon(
-              Icons.chevron_right,
-              color: fontColor,
-            ),
-          ),
-          calendarStyle: const CalendarStyle(
-            defaultTextStyle: TextStyle(color: fontColor),
-            // weekend
-            weekendTextStyle: TextStyle(color: Colors.red),
-            weekendDecoration: BoxDecoration(
-              color: Colors.transparent,
-              shape: BoxShape.circle,
-            ),
-            // selected
-            selectedDecoration: BoxDecoration(
-              color: c700,
-              shape: BoxShape.circle,
-            ),
-            // today
-            todayDecoration: BoxDecoration(
-              color: Colors.transparent,
-              shape: BoxShape.circle,
-            ),
-          ),
-          locale: "ko_KR",
-          focusedDay: _focusedDay,
-          firstDay: DateTime(2025, 01, 01),
-          lastDay: DateTime(2030, 12, 31),
-          availableCalendarFormats: {
-            CalendarFormat.month: "월",
-          },
-          selectedDayPredicate: (day) {
-            return isSameDay(_focusedDay, day);
-          },
-          onDaySelected: (selectedDay, focusedDay) {
-            setState(() {
-              _focusedDay = focusedDay;
-            });
-          },
-          onPageChanged: (focusedDay) {
-            setState(() {
-              _focusedDay = focusedDay;
-            });
-          },
-        ),
-        Container(
-          margin: EdgeInsets.symmetric(horizontal: 20.w),
-          child: Container(
-            height: 1,
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.centerLeft,
-                end: Alignment.centerRight,
-                colors: [
-                  Color(0xFF1C1B20),
-                  Color(0xFF2C2C34),
-                  Color(0xFF1C1B20),
-                ],
+    final eventMap = getEventMap(retrospectController.retrospectList);
+    final todayList = retrospectController.retrospectList
+        .where((item) =>
+            item['created_at'].split('T')[0] ==
+            _focusedDay.toString().split(' ')[0])
+        .toList();
+    return SafeArea(
+      child: Column(
+        children: [
+          TableCalendar(
+            headerStyle: HeaderStyle(
+              titleCentered: true,
+              titleTextStyle: TextStyle(
+                fontSize: 20.sp,
+                fontWeight: FontWeight.w600,
+                color: fontColor,
+              ),
+              leftChevronIcon: Icon(
+                Icons.chevron_left,
+                color: fontColor,
+              ),
+              rightChevronIcon: Icon(
+                Icons.chevron_right,
+                color: fontColor,
               ),
             ),
+            calendarStyle: const CalendarStyle(
+              defaultTextStyle: TextStyle(color: fontColor),
+              // weekend
+              weekendTextStyle: TextStyle(color: Colors.red),
+              weekendDecoration: BoxDecoration(
+                color: Colors.transparent,
+                shape: BoxShape.circle,
+              ),
+              // selected
+              selectedDecoration: BoxDecoration(
+                color: c700,
+                shape: BoxShape.circle,
+              ),
+              // today
+              todayDecoration: BoxDecoration(
+                color: Colors.transparent,
+                shape: BoxShape.circle,
+              ),
+            ),
+            locale: "ko_KR",
+            focusedDay: _focusedDay,
+            firstDay: DateTime(2025, 01, 01),
+            lastDay: DateTime(2030, 12, 31),
+            availableCalendarFormats: {
+              CalendarFormat.month: "월",
+            },
+            selectedDayPredicate: (day) {
+              return isSameDay(_focusedDay, day);
+            },
+            onDaySelected: (selectedDay, focusedDay) {
+              setState(() {
+                _focusedDay = focusedDay;
+              });
+            },
+            onPageChanged: (focusedDay) {
+              setState(() {
+                _focusedDay = focusedDay;
+              });
+            },
+            eventLoader: (day) {
+              final d = DateTime(day.year, day.month, day.day);
+              return eventMap[d] ?? [];
+            },
+            calendarBuilders: CalendarBuilders(
+              markerBuilder: (context, day, events) {
+                if (events.isNotEmpty) {
+                  return Positioned(
+                    bottom: 1,
+                    child: Container(
+                      width: 6,
+                      height: 6,
+                      decoration: BoxDecoration(
+                        color: Colors.blue, // 점 색상
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  );
+                }
+                return null;
+              },
+            ),
           ),
-        ),
-        Container(
-          height: 300.h,
-          child: Stack(
-            children: [
-              SingleChildScrollView(
-                child: Column(
-                  children: [
-                    ChallengeTypeItem(
-                      title: "1일 1포스팅 및 핫게 댓글 달기",
-                      description:
-                          "오늘 성공적으로 포스팅을 업로드 했어요! 지금 사회 이슈를 다루어 좋은 반응을 보였다니 축하해요!",
-                      score: 90,
-                      hasSuccess: true,
-                      imagePath: 'assets/img/lightning.png',
-                    ),
-                    ChallengeTypeItem(
-                      title: "저속노화 식단하기",
-                      description: "오늘은 저속노화 식단을 하지 않았어요. 내일은 꼭 한번 도전해 봐요",
-                      score: 0,
-                      hasSuccess: false,
-                      imagePath: 'assets/img/food.png',
-                    ),
-                    ChallengeTypeItem(
-                      title: "15분 페이스 3k 달리기",
-                      description: "오늘은 3k 달리기를 20분 페이스에 달렸어요. 조금만 더 빨리 뛰어봐요",
-                      score: 60,
-                      hasSuccess: false,
-                      imagePath: 'assets/img/running.png',
-                    ),
-                    SizedBox(
-                      height: 80.h,
-                    )
+          Container(
+            margin: EdgeInsets.symmetric(horizontal: 20.w),
+            child: Container(
+              height: 1,
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                  colors: [
+                    Color(0xFF1C1B20),
+                    Color(0xFF2C2C34),
+                    Color(0xFF1C1B20),
                   ],
                 ),
               ),
-              Positioned(
-                left: 21.w,
-                bottom: 42.h,
-                child: GestureDetector(
+            ),
+          ),
+          Container(
+            height: 300.h,
+            child: Column(
+              children: [
+                Flexible(
+                  child: SingleChildScrollView(
+                    child: Column(
+                      children: [
+                        if (todayList.isEmpty)
+                          Padding(
+                            padding: EdgeInsets.symmetric(vertical: 32.h),
+                            child: Text(
+                              "오늘 진행한 회고가 없습니다",
+                              style: TextStyle(
+                                color: fontColor,
+                                fontSize: 24.sp,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          )
+                        else
+                          ...todayList.map((item) => ChallengeTypeItem(
+                                title: "챌린지 이름",
+                                description: item['comment'],
+                                score: item['score'] * 100,
+                                hasSuccess: true,
+                                imagePath: 'assets/img/lightning.png',
+                              )),
+                      ],
+                    ),
+                  ),
+                ),
+                GestureDetector(
                   onTap: () {
                     Navigator.pushNamed(context, Routes.retrospectChallenge);
                   },
                   child: Center(
                     child: Container(
-                      padding: EdgeInsets.only(bottom: 10.h),
                       decoration: BoxDecoration(
                         color: background,
                       ),
@@ -162,12 +199,12 @@ class _RetroSpectListState extends State<RetroSpectList> {
                       ),
                     ),
                   ),
-                ),
-              )
-            ],
+                )
+              ],
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
