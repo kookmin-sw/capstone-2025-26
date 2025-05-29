@@ -17,6 +17,8 @@ class CreateChallengeWaitingScreen extends StatefulWidget {
 
 class _CreateChallengeWaitingScreenState
     extends State<CreateChallengeWaitingScreen> {
+  bool _isNavigating = false;
+
   final _challengeApi = ChallengeApi();
   final _logger = Logger();
   @override
@@ -29,6 +31,8 @@ class _CreateChallengeWaitingScreenState
   }
 
   Future<void> _createChallengeAndProceed() async {
+    if (_isNavigating) return; // 이미 네비게이션 중이면 중단
+    _isNavigating = true;
     try {
       try {
         await _challengeApi.getChallenges(); // 이미 있는 GET 메소드 활용
@@ -88,15 +92,21 @@ class _CreateChallengeWaitingScreenState
         _logger.i('=== AI KPI 생성 시작 ===');
         final kpiResponse =
             await _challengeApi.generateAIKPIs(challengeId, planIds);
+        final challengeDataWithKPIs = {
+          'id': challengeId,
+          'challenge_name': challengeName,
+          'generated_kpis': kpiResponse.data['kpis'],
+          'generated_plans': plansResponse.data['plans'], // 플랜도 함께 전달
+        };
 
         _logger.i('AI KPI 생성 응답 상태: ${kpiResponse.statusCode}');
         _logger.i('AI KPI 생성 결과: ${kpiResponse.data}'); // 전체 응답 로깅
         _logger.i('========================');
         // 4. 모든 생성 완료 후 다음 화면으로
         if (mounted) {
-          Navigator.of(context).pushReplacementNamed(
+          await Navigator.of(context).pushReplacementNamed(
             Routes.createChallengePlan,
-            arguments: challengeData,
+            arguments: challengeDataWithKPIs,
           );
         }
       }

@@ -19,7 +19,9 @@ class _CreateChallengePlanScreenState extends State<CreateChallengePlanScreen> {
   final _challengeApi = ChallengeApi();
   final _logger = Logger();
   bool _isLoading = true;
-  bool _hasInitialized = false;
+  final bool _hasInitialized = false;
+
+  List<dynamic>? _savedKPIs;
 
   late List<String> plans;
   late List<String> kpis;
@@ -31,74 +33,128 @@ class _CreateChallengePlanScreenState extends State<CreateChallengePlanScreen> {
   @override
   void initState() {
     super.initState();
-    // _fetchPlansFromAPI();
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    if (!_hasInitialized) {
-      _hasInitialized = true;
+    // 위젯 빌드 완료 후 데이터 처리
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final arguments = ModalRoute.of(context)?.settings.arguments;
+      if (arguments is Map<String, dynamic>) {
+        _savedKPIs = arguments['generated_kpis'];
+        _logger.i('KPI 데이터 영구 저장: $_savedKPIs');
+      }
       _fetchPlansFromAPI();
-    }
+    });
   }
 
   Future<void> _fetchPlansFromAPI() async {
     try {
       final arguments = ModalRoute.of(context)?.settings.arguments;
-      int? challengeId;
 
       if (arguments is Map<String, dynamic>) {
-        challengeId = arguments['id'];
-      }
+        final challengeId = arguments['id'];
+        final generatedPlans = arguments['generated_plans'] as List<dynamic>?;
+        final generatedKPIs = arguments['generated_kpis'] as List<dynamic>?;
 
-      if (challengeId != null) {
-        final response = await _challengeApi.getPlans(challengeId);
+        _logger.i('받은 arguments: $arguments');
+        _logger.i('챌린지 ID: $challengeId');
+        _logger.i('받은 플랜 데이터: $generatedPlans');
+        _logger.i('받은 KPI 데이터: $generatedKPIs');
 
-        if (response.statusCode == 200 && response.data != null) {
-          final responseData = response.data as List<dynamic>;
-
-          List<String> extractedPlans = [];
-
-          for (var item in responseData) {
-            if (item is Map<String, dynamic> && item.containsKey('plans')) {
-              final plansMap = item['plans'] as Map<String, dynamic>;
-
-              for (var planData in plansMap.values) {
-                if (planData is Map<String, dynamic>) {
-                  final planChallengeId = planData['challenge'];
-                  final planText = planData['plan_text'];
-
-                  // 현재 챌린지의 플랜만 추출
-                  if (planChallengeId == challengeId && planText != null) {
-                    extractedPlans.add(planText.toString());
-                  }
-                }
+        // AI 생성된 플랜 파싱
+        List<String> extractedPlans = [];
+        if (generatedPlans != null && generatedPlans.isNotEmpty) {
+          for (var plan in generatedPlans) {
+            _logger.i('플랜 파싱 중: $plan');
+            if (plan is Map<String, dynamic>) {
+              final planText = plan['plan_text'];
+              if (planText != null && planText.toString().isNotEmpty) {
+                extractedPlans.add(planText.toString());
+                _logger.i('추가된 플랜: $planText');
               }
             }
           }
+        }
 
+        // AI 생성된 KPI 파싱
+        List<String> extractedKPIs = [];
+        if (generatedKPIs != null && generatedKPIs.isNotEmpty) {
+          for (var kpi in generatedKPIs) {
+            if (kpi is Map<String, dynamic>) {
+              final kpiName = kpi['name'];
+              if (kpiName != null && kpiName.toString().isNotEmpty) {
+                extractedKPIs.add(kpiName.toString());
+              }
+            }
+          }
+        }
+
+        _logger.i('최종 추출된 플랜들: $extractedPlans');
+        _logger.i('최종 추출된 KPI들: $extractedKPIs');
+
+        if (mounted) {
           setState(() {
+            // AI 생성된 플랜이 있으면 사용, 없으면 기본값
             plans = extractedPlans.isNotEmpty
                 ? extractedPlans
                 : List.generate(5, (i) => '기본 플랜 ${i + 1}');
-            kpis = List.generate(3, (i) => 'KPI ${i + 1}');
+
+            // AI 생성된 KPI가 있으면 사용, 없으면 기본값
+            kpis = extractedKPIs.isNotEmpty
+                ? extractedKPIs
+                : (_savedKPIs != null
+                    ? _extractKPINames(_savedKPIs)
+                    : List.generate(3, (i) => 'KPI ${i + 1}'));
+
             _isLoading = false;
           });
+
+          _logger.i('setState 완료');
+          _logger.i('플랜: $plans');
+          _logger.i('KPI: $kpis');
+        }
+      } else {
+        _logger.w('arguments가 Map이 아닙니다: $arguments');
+        if (mounted) {
+          _setDefaultValues();
         }
       }
     } catch (e) {
-      _logger.e('플랜 조회 실패: $e');
-      _setDefaultValues();
+      _logger.e('플랜/KPI 데이터 처리 실패: $e');
+      if (mounted) {
+        _setDefaultValues();
+      }
+    }
+  }
+
+  void _setDefaultValuesWithKPIs() {
+    if (mounted) {
+      setState(() {
+        plans = List.generate(5, (i) => '기본 플랜 ${i + 1}');
+        kpis = _extractKPINames(_savedKPIs); // 저장된 KPI 사용
+        _isLoading = false;
+      });
     }
   }
 
   void _setDefaultValues() {
-    setState(() {
-      plans = List.generate(5, (i) => '5분 3분 인터벌 트레이닝 10회 실시');
-      kpis = List.generate(3, (i) => 'kpi 설명설명설명설명설명 설명설명설명설명설명 설명설명설명설명설명');
-      _isLoading = false;
-    });
+    if (mounted) {
+      setState(() {
+        plans = List.generate(5, (i) => '기본 플랜 ${i + 1}');
+        kpis = List.generate(3, (i) => 'KPI ${i + 1}');
+        _isLoading = false;
+      });
+    }
+  }
+
+  // 이 메소드를 _setDefaultValues() 메소드 아래에 추가
+  List<String> _extractKPINames(List<dynamic>? kpiData) {
+    if (kpiData != null && kpiData.isNotEmpty) {
+      return kpiData.map((kpi) {
+        if (kpi is Map<String, dynamic>) {
+          return kpi['name']?.toString() ?? 'KPI';
+        }
+        return 'KPI';
+      }).toList();
+    }
+    return List.generate(3, (i) => 'KPI ${i + 1}');
   }
 
   Future<void> _updatePlan(int planId, String planText) async {

@@ -99,4 +99,13 @@ class ChallengeApi {
       rethrow;
     }
   }
+
+  Future<Response> getKPIs(int challengeId) async {
+    try {
+      return await _dio.get('/retrospect/kpis/?challenge=$challengeId');
+    } catch (e) {
+      _logger.e('ChallengeApi.getKPIs 오류: $e');
+      rethrow;
+    }
+  }
 }
