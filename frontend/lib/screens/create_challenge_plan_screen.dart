@@ -3,6 +3,9 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:reme/themes/color.dart';
 import 'package:reme/icon/tab_bar_icon_icons.dart';
 import 'package:reme/routes.dart';
+import 'package:reme/services/challenge_api.dart';
+import 'package:logger/logger.dart';
+import 'package:dio/dio.dart';
 
 class CreateChallengePlanScreen extends StatefulWidget {
   const CreateChallengePlanScreen({super.key});
@@ -13,6 +16,11 @@ class CreateChallengePlanScreen extends StatefulWidget {
 }
 
 class _CreateChallengePlanScreenState extends State<CreateChallengePlanScreen> {
+  final _challengeApi = ChallengeApi();
+  final _logger = Logger();
+  bool _isLoading = true;
+  bool _hasInitialized = false;
+
   late List<String> plans;
   late List<String> kpis;
   int? editingPlanIdx;
@@ -23,9 +31,108 @@ class _CreateChallengePlanScreenState extends State<CreateChallengePlanScreen> {
   @override
   void initState() {
     super.initState();
+    // _fetchPlansFromAPI();
+  }
 
-    plans = List.generate(5, (i) => '5분 3분 인터벌 트레이닝 10회 실시');
-    kpis = List.generate(3, (i) => 'kpi 설명설명설명설명설명 설명설명설명설명설명 설명설명설명설명설명');
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_hasInitialized) {
+      _hasInitialized = true;
+      _fetchPlansFromAPI();
+    }
+  }
+
+  Future<void> _fetchPlansFromAPI() async {
+    try {
+      final arguments = ModalRoute.of(context)?.settings.arguments;
+      int? challengeId;
+
+      if (arguments is Map<String, dynamic>) {
+        challengeId = arguments['id'];
+      }
+
+      if (challengeId != null) {
+        final response = await _challengeApi.getPlans(challengeId);
+
+        if (response.statusCode == 200 && response.data != null) {
+          final responseData = response.data as List<dynamic>;
+
+          List<String> extractedPlans = [];
+
+          for (var item in responseData) {
+            if (item is Map<String, dynamic> && item.containsKey('plans')) {
+              final plansMap = item['plans'] as Map<String, dynamic>;
+
+              for (var planData in plansMap.values) {
+                if (planData is Map<String, dynamic>) {
+                  final planChallengeId = planData['challenge'];
+                  final planText = planData['plan_text'];
+
+                  // 현재 챌린지의 플랜만 추출
+                  if (planChallengeId == challengeId && planText != null) {
+                    extractedPlans.add(planText.toString());
+                  }
+                }
+              }
+            }
+          }
+
+          setState(() {
+            plans = extractedPlans.isNotEmpty
+                ? extractedPlans
+                : List.generate(5, (i) => '기본 플랜 ${i + 1}');
+            kpis = List.generate(3, (i) => 'KPI ${i + 1}');
+            _isLoading = false;
+          });
+        }
+      }
+    } catch (e) {
+      _logger.e('플랜 조회 실패: $e');
+      _setDefaultValues();
+    }
+  }
+
+  void _setDefaultValues() {
+    setState(() {
+      plans = List.generate(5, (i) => '5분 3분 인터벌 트레이닝 10회 실시');
+      kpis = List.generate(3, (i) => 'kpi 설명설명설명설명설명 설명설명설명설명설명 설명설명설명설명설명');
+      _isLoading = false;
+    });
+  }
+
+  Future<void> _updatePlan(int planId, String planText) async {
+    try {
+      await _challengeApi.updatePlan(planId, planText);
+      _logger.i('플랜 수정 성공');
+    } catch (e) {
+      _logger.e('플랜 수정 실패: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('플랜 수정에 실패했습니다.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _createPlan(int challengeId, String planText) async {
+    try {
+      await _challengeApi.createPlan(challengeId, planText);
+      _logger.i('플랜 생성 성공');
+    } catch (e) {
+      _logger.e('플랜 생성 실패: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('플랜 생성에 실패했습니다.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   @override
@@ -37,10 +144,29 @@ class _CreateChallengePlanScreenState extends State<CreateChallengePlanScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final challengeName = ModalRoute.of(context)?.settings.arguments as String?;
+    // arguments를 안전하게 처리
+    final arguments = ModalRoute.of(context)?.settings.arguments;
+    String challengeName = '새 챌린지'; // 기본값
+    Map<String, dynamic>? challengeData;
+
+    if (arguments is String) {
+      challengeName = arguments;
+    } else if (arguments is Map<String, dynamic>) {
+      challengeData = arguments;
+      challengeName = arguments['challenge_name'] ?? '새 챌린지';
+    }
+
     // 키보드 높이 가져오기
     final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
-
+    if (_isLoading) {
+      return Scaffold(
+        backgroundColor: background,
+        appBar: AppBar(/* 기존 AppBar */),
+        body: const Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
     return Scaffold(
       backgroundColor: background,
       resizeToAvoidBottomInset: true,
@@ -180,10 +306,30 @@ class _CreateChallengePlanScreenState extends State<CreateChallengePlanScreen> {
                                                           contentPadding:
                                                               EdgeInsets.zero,
                                                         ),
-                                                        onSubmitted: (value) {
+                                                        onSubmitted:
+                                                            (value) async {
                                                           setState(() {
                                                             plans[idx] = value;
+                                                            editingPlanIdx =
+                                                                null;
                                                           });
+
+                                                          final arguments =
+                                                              ModalRoute.of(
+                                                                      context)
+                                                                  ?.settings
+                                                                  .arguments;
+                                                          if (arguments is Map<
+                                                              String,
+                                                              dynamic>) {
+                                                            final challengeId =
+                                                                arguments['id'];
+                                                            if (challengeId !=
+                                                                null) {
+                                                              await _updatePlan(
+                                                                  idx, value);
+                                                            }
+                                                          }
                                                         },
                                                       )
                                                     : Text(

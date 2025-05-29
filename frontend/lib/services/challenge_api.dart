@@ -1,40 +1,102 @@
 import 'package:dio/dio.dart';
-import 'package:reme/services/mydio.dart'; // MyDio 클래스의 실제 경로로 수정하세요.
+import 'package:reme/services/mydio.dart';
+import 'package:logger/logger.dart';
 
 class ChallengeApi {
   final MyDio _dio = MyDio();
+  final _logger = Logger();
 
-  Future<Response> createChallenge(String name) async {
+  Future<Response> createChallenge(
+    String name,
+    String deadline,
+    String ownerType,
+    String status,
+  ) async {
     try {
-      // _dio.post 호출 시 'data:' 이름표 없이 두 번째 인자로 데이터를 전달합니다.
       final Map<String, dynamic> payload = {
         'challenge_name': name,
-        'owner_type': 'USER',
-        'status': 'LIVE'
+        'deadline': deadline,
+        'owner_type': ownerType,
+        'status': status,
       };
-      return await _dio.post(
-          '/retrospect/challenges/', payload); // <--- 이 부분 수정
+      _logger.i('챌린지 생성 요청 페이로드: $payload');
+      return await _dio.post('/retrospect/challenges/', payload);
     } catch (e) {
+      _logger.e('ChallengeApi.createChallenge 오류: $e');
       rethrow;
     }
   }
 
   Future<Response> getChallenges() async {
     try {
-      // get 메소드는 파라미터가 없으므로 변경 없음
       return await _dio.get('/retrospect/challenges/');
     } catch (e) {
       rethrow;
     }
   }
 
-  // 만약 다른 API 호출 (예: PUT, PATCH)도 있다면 동일하게 수정 필요
-  // 예시:
-  // Future<Response> updateChallenge(String id, Map<String, dynamic> challengeData) async {
-  //   try {
-  //     return await _dio.put('/retrospect/challenges/$id/', challengeData); // 'data:' 없이 전달
-  //   } catch (e) {
-  //     rethrow;
-  //   }
-  // }
+  Future<Response> createPlan(int challengeId, String planText) async {
+    try {
+      final Map<String, dynamic> payload = {
+        'challenge': challengeId,
+        'plan_text': planText,
+      };
+      _logger.i('플랜 생성 요청 페이로드: $payload');
+      return await _dio.post('/retrospect/plans/', payload);
+    } catch (e) {
+      _logger.e('ChallengeApi.createPlan 오류: $e');
+      rethrow;
+    }
+  }
+
+  Future<Response> getPlans(int challengeId) async {
+    try {
+      return await _dio.get('/retrospect/plans/?challenge=$challengeId');
+    } catch (e) {
+      _logger.e('ChallengeApi.getPlans 오류: $e');
+      rethrow;
+    }
+  }
+
+  Future<Response> updatePlan(int planId, String planText) async {
+    try {
+      final Map<String, dynamic> payload = {
+        'plan_text': planText,
+      };
+      return await _dio.patch('/retrospect/plans/$planId/', payload);
+    } catch (e) {
+      _logger.e('ChallengeApi.updatePlan 오류: $e');
+      rethrow;
+    }
+  }
+
+  Future<Response> generateAIPlans(
+      int challengeId, String challengeName) async {
+    try {
+      final Map<String, dynamic> payload = {
+        'challenge_id': challengeId,
+        'user_context': '$challengeName 챌린지를 성공적으로 달성하고 싶습니다',
+        'item_count': 5
+      };
+      return await _dio.post('/ai/generate-plan/', payload);
+    } catch (e) {
+      _logger.e('AI 플랜 생성 오류: $e');
+      rethrow;
+    }
+  }
+
+  Future<Response> generateAIKPIs(int challengeId, List<int> planIds) async {
+    try {
+      final Map<String, dynamic> payload = {
+        'challenge_id': challengeId,
+        'plan_ids': planIds,
+        'context': '측정 가능한 성과 지표가 필요합니다',
+        'item_count': 3
+      };
+      return await _dio.post('/ai/generate-kpi/', payload);
+    } catch (e) {
+      _logger.e('AI KPI 생성 오류: $e');
+      rethrow;
+    }
+  }
 }
