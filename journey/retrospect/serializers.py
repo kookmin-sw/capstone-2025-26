@@ -4,6 +4,7 @@ from user_manager.models import User
 from crew.models import Crew
 import json
 from django.conf import settings
+from ai_manager.serializers import KpiResultOutputSerializer
 
 class RetrospectSerializer(serializers.ModelSerializer):
     """Serializer for the Retrospect model."""
@@ -14,7 +15,8 @@ class RetrospectSerializer(serializers.ModelSerializer):
     challenge = serializers.PrimaryKeyRelatedField(queryset=Challenge.objects.all())
     template = serializers.PrimaryKeyRelatedField(queryset=Template.objects.all(), allow_null=True, required=False)
     crew = serializers.PrimaryKeyRelatedField(queryset=Crew.objects.all(), allow_null=True, required=False)
-
+    kpi_results = serializers.SerializerMethodField(read_only=True)
+    
     # 모델에는 없음 
     initial_plan_description = serializers.CharField(
         write_only=True,
@@ -36,6 +38,7 @@ class RetrospectSerializer(serializers.ModelSerializer):
             'created_at',
             'updated_at',
             'initial_plan_description', # 모델에는 없지만 회고 생성 시 사용
+            'kpi_results',  
         ]
         read_only_fields = ['id', 'created_at', 'updated_at', 'user'] # user is set in the view
 
@@ -66,6 +69,11 @@ class RetrospectSerializer(serializers.ModelSerializer):
         # Add more validation if needed, e.g., user belongs to the crew if crew is specified
 
         return data 
+    
+    def get_kpi_results(self, obj):
+        results = KpiResult.objects.filter(retrospect=obj)
+        return KpiResultOutputSerializer(results, many=True).data
+
 
 class TemplateSerializer(serializers.ModelSerializer):
     """Serializer for the Template model."""
