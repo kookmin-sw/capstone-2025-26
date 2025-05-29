@@ -169,40 +169,40 @@ class _RetroSpectListState extends State<RetroSpectList> {
                     ),
                   ),
                 ),
-                GestureDetector(
-                  onTap: () {
-                    Navigator.pushNamed(context, Routes.retrospectChallenge);
-                  },
-                  child: Center(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: background,
-                      ),
-                      child: Container(
-                        width: 372.w,
-                        height: 38.h,
-                        decoration: BoxDecoration(
-                          color: c900,
-                          borderRadius: BorderRadius.circular(8.r),
-                        ),
-                        child: Center(
-                          child: Text(
-                            "오늘 회고 시작하기",
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 16.sp,
-                              fontWeight: FontWeight.w500,
-                              color: fontColor,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                )
               ],
             ),
           ),
+          GestureDetector(
+            onTap: () {
+              Navigator.pushNamed(context, Routes.retrospectChallenge);
+            },
+            child: Center(
+              child: Container(
+                decoration: BoxDecoration(
+                  color: background,
+                ),
+                child: Container(
+                  width: 372.w,
+                  height: 38.h,
+                  decoration: BoxDecoration(
+                    color: c900,
+                    borderRadius: BorderRadius.circular(8.r),
+                  ),
+                  child: Center(
+                    child: Text(
+                      "오늘 회고 시작하기",
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w500,
+                        color: fontColor,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          )
         ],
       ),
     );
