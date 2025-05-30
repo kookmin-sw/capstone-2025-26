@@ -25,8 +25,8 @@ class RetrospectWritingScreen extends StatefulWidget {
 class _RetrospectWritingScreenState extends State<RetrospectWritingScreen> {
   int _currentChallengeIndex = 0;
   final List<Map<String, dynamic>> _retrospectEntries = [];
-  List<List<String>> _retrospectMethods = [];
-  Map<String, String> _retrospectContent = {};
+  final List<List<String>> _retrospectMethods = [];
+  final Map<String, String> _retrospectContent = {};
 
   @override
   void initState() {
@@ -39,9 +39,15 @@ class _RetrospectWritingScreenState extends State<RetrospectWritingScreen> {
 
     // Initialize entries for each challenge
     for (var challenge in widget.selectedChallenges) {
+      // 각 챌린지마다 새로운 content Map 생성
+      Map<String, String> challengeContent = {};
+      for (var step in _retrospectMethods) {
+        challengeContent[step[0]] = '';
+      }
+
       _retrospectEntries.add({
         'challengeId': challenge['id'],
-        'content': _retrospectContent,
+        'content': challengeContent,
         'isCompleted': false,
         'templateId': widget.selectedMethod['id'],
         'crew_id': widget.crewId,
