@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:reme/routes.dart';
+import 'package:reme/services/retrospect_api.dart';
 import 'package:reme/services/user_update.dart';
 import 'package:reme/themes/color.dart';
 import 'package:reme/utils/challenge_controller.dart';
@@ -63,6 +64,9 @@ class _HomeState extends State<Home> {
 
     // 크루 목록이 있는지 확인하고 없다면 불러오기.
     joinedCrewList = crewController.getJoinedCrewList();
+    getChallengeList(filter: 2).then((value) {
+      challengeController.setChallengeList(value);
+    });
   }
 
   @override

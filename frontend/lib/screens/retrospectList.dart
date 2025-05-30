@@ -142,7 +142,7 @@ class _RetroSpectListState extends State<RetroSpectList> {
             ),
           ),
           Container(
-            height: 300.h,
+            height: 200.h,
             child: Column(
               children: [
                 Flexible(

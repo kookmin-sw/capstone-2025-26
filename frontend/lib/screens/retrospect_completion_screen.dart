@@ -391,7 +391,7 @@ class _ReflectionAnalysisScreenState extends State<ReflectionAnalysisScreen> {
                 '챌린지명 : ${challengeController.idchallenge[item[0]['challenge'].toString()]}', // TODO: 챌린지 아이디 가지고 이름 가져오기
             description: '${item[0]['comment']}',
             score: item[0]['score'] * 100,
-            hasSuccess: item[0]['score'] > 50 ? true : false,
+            hasSuccess: item[0]['score'] * 100 > 50 ? true : false,
             imagePath: '',
           )
       ],
