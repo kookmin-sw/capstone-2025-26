@@ -50,7 +50,7 @@ def extract_meaning_units(text: str) -> List[Dict[str, Any]]:
     회고 텍스트에서 행동/성과/문제 등 의미 단위 추출 (LLM 사용)
     예: [{"category": "행동", "keyword": "공부", "value": "3시간"}, {"category": "성과", "keyword": "몰입", "value": "낮음"}]
     """
-    template_str = (Path(__file__).parent.parent / "templates" / "extract_meaning_units_prompt.txt").read_text()
+    template_str = (Path(__file__).parent.parent / "templates" / "extract_meaning_units_prompt.txt").read_text(encoding="utf-8")
     prompt = PromptTemplate(
         input_variables=["text"],
         template=template_str
