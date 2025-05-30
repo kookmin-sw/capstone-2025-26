@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:reme/routes.dart';
 import 'package:reme/services/user_update.dart';
 import 'package:reme/themes/color.dart';
+import 'package:reme/utils/challenge_controller.dart';
 import 'package:reme/utils/crew_controller.dart';
 import 'package:reme/widgets/crewList.dart';
 import 'package:reme/widgets/customListItem.dart';
@@ -22,6 +23,7 @@ class _HomeState extends State<Home> {
   dynamic challengeList;
   dynamic joinedCrewList;
   final crewController = Get.put(CrewController());
+  final challengeController = Get.put(ChallengeController());
   List<String> topBoxTitle = ["연속 32일째!", "오늘의 탬플릿", "크루를 찾아봐요"];
   List<String> topBoxContent = [
     "오늘도 함꼐 \n회고해요😉",
@@ -50,11 +52,7 @@ class _HomeState extends State<Home> {
   @override
   void initState() {
     super.initState();
-    // getChallengeList(filter: 0).then((value) {
-    //   setState(() {
-    //     challengeList = value;
-    //   });
-    // });
+    challengeList = challengeController.challengeList;
     topBoxTap = [
       widget.switchToRetrospect, // 회고 목록 보는 페이지로 이동
       () {
@@ -142,7 +140,8 @@ class _HomeState extends State<Home> {
             isMore: false,
             marginLTRB: EdgeInsets.only(left: 24.w, right: 24.w),
             children: [
-              if (challengeList != null && challengeList['count'] == 0)
+              if (challengeController.challengeList != null &&
+                  challengeController.challengeList.length == 0)
                 Text(
                   "개인 챌린지가 없어요",
                   style: TextStyle(
@@ -151,16 +150,20 @@ class _HomeState extends State<Home> {
                     color: fontColor,
                   ),
                 )
-              else if (challengeList != null && challengeList['count'] > 0)
-                for (var i = 0; i < challengeList['count']; i++)
-                  if (challengeList['results'][i]['owner_type'] == "USER")
+              else if (challengeController.challengeList != null &&
+                  challengeController.challengeList.length > 0)
+                for (var i = 0;
+                    i < challengeController.challengeList.length;
+                    i++)
+                  if (challengeController.challengeList[i]['owner_type'] ==
+                      "USER")
                     GestureDetector(
                         onTap: () {
                           // TODO: 챌린지 상세 조회 페이지로 이동
                         },
                         child: CustomListitem(
                             height: 46.h,
-                            content: challengeList['results']
+                            content: challengeController.challengeList[i]
                                 ['challenge_name'])),
             ],
           ),

@@ -28,8 +28,7 @@ Future<void> createRetrospect(
     'template': template_id,
     'content': content,
     'visibility': "PRIVATE",
-    'owner_type': isCrew ? "CREW" : "USER",
-    'initial_plan_description': 'asdf', // 추후 지울 필요 있음.
+    'owner_type': isCrew ? "CREW" : "USER"
   });
   return response.data;
 }

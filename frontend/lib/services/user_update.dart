@@ -82,6 +82,14 @@ Future<dynamic> getUserInfo() async {
 Future<dynamic> getChallengeList({required int filter}) async {
   // filter 0: 개인, 1: 크루
   // TODO: 챌린지 목록 가져오기
+  String? isUser = filter == 0 ? 'USER' : null;
   final response = await dio.get('/retrospect/challenges/');
-  return response.data;
+  dynamic challenge = [];
+
+  for (var item in response.data['results']) {
+    if (item['owner_type'] == isUser || isUser == null) {
+      challenge.add(item);
+    }
+  }
+  return challenge;
 }

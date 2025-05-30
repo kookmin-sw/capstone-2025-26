@@ -12,6 +12,7 @@ import 'package:reme/services/retrospect_api.dart';
 import 'package:reme/services/user_update.dart';
 import 'package:reme/themes/color.dart';
 import 'package:reme/icon/tab_bar_icon_icons.dart';
+import 'package:reme/utils/challenge_controller.dart';
 import 'package:reme/utils/crew_controller.dart';
 import 'package:reme/utils/retrospect_controller.dart';
 import 'package:reme/utils/user_info_controller.dart';
@@ -38,6 +39,7 @@ class _InitialpageState extends State<Initialpage>
     Get.put(UserInfoController());
     Get.put(CrewController());
     Get.put(RetrospectController());
+    Get.put(ChallengeController());
     tabController = TabController(length: 4, vsync: this);
     retroTabController = TabController(length: 2, vsync: this);
     int loadingCount = 0;
@@ -66,8 +68,10 @@ class _InitialpageState extends State<Initialpage>
       getCrewList().then((value) {
         Get.find<CrewController>().setNotJoinedCrewList(value.data['results']);
       }),
-      getChallengeList(filter: 0).then((value) {
+      getChallengeList(filter: 2).then((value) {
         // TODO: 챌린지 리스트 상태관리
+        // 모든 챌린지 상태 저장
+        Get.find<ChallengeController>().setChallengeList(value);
       }),
       getMyCrewMembership().then((value) {
         Get.find<CrewController>().setMyCrewMembership(value.data);
