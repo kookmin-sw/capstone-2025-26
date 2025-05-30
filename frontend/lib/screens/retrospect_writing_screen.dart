@@ -26,7 +26,18 @@ class _RetrospectWritingScreenState extends State<RetrospectWritingScreen> {
   int _currentChallengeIndex = 0;
   final List<Map<String, dynamic>> _retrospectEntries = [];
   final List<List<String>> _retrospectMethods = [];
-  final Map<String, String> _retrospectContent = {};
+
+  // TextEditingController 맵 추가
+  final Map<String, TextEditingController> _controllers = {};
+
+  @override
+  void dispose() {
+    // Controller들 정리
+    for (var controller in _controllers.values) {
+      controller.dispose();
+    }
+    super.dispose();
+  }
 
   @override
   void initState() {
