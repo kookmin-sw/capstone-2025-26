@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:reme/routes.dart';
 import 'package:reme/themes/color.dart';
+import 'package:reme/utils/challenge_controller.dart';
 import 'package:reme/utils/retrospect_controller.dart';
 import 'package:reme/widgets/challengeTypeItem.dart';
 import 'package:table_calendar/table_calendar.dart';
@@ -18,6 +19,9 @@ class _RetroSpectListState extends State<RetroSpectList> {
   DateTime _focusedDay = DateTime.now();
   final RetrospectController retrospectController =
       Get.put(RetrospectController());
+
+  final ChallengeController challengeController =
+      Get.put(ChallengeController());
 
   // 날짜별로 한 번만 표시되는 Map 만들기
   Map<DateTime, List> getEventMap(List retrospectList) {
@@ -159,10 +163,13 @@ class _RetroSpectListState extends State<RetroSpectList> {
                           )
                         else
                           ...todayList.map((item) => ChallengeTypeItem(
-                                title: "챌린지 이름",
+                                title: "챌린지명 : " +
+                                    challengeController.idchallenge[
+                                        item['challenge'].toString()],
                                 description: item['comment'],
                                 score: item['score'] * 100,
-                                hasSuccess: true,
+                                hasSuccess:
+                                    item['score'] * 100 > 50 ? true : false,
                                 imagePath: 'assets/img/lightning.png',
                               )),
                       ],

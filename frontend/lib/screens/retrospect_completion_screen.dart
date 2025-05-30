@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:reme/icon/tab_bar_icon_icons.dart';
 import 'package:reme/screens/animation_test.dart';
 import 'package:reme/services/retrospect_api.dart';
 import 'package:reme/themes/color.dart';
 import 'dart:async';
 import 'package:reme/routes.dart';
+import 'package:reme/utils/challenge_controller.dart';
 import 'package:reme/widgets/challengeTypeItem.dart';
 
 class RetrospectCompletionScreen extends StatefulWidget {
@@ -161,6 +163,9 @@ class _ReflectionAnalysisScreenState extends State<ReflectionAnalysisScreen> {
   int _selectedTabIndex = 0;
   late String month;
   late String day;
+
+  final ChallengeController challengeController =
+      Get.put(ChallengeController());
 
   @override
   void initState() {
@@ -382,9 +387,10 @@ class _ReflectionAnalysisScreenState extends State<ReflectionAnalysisScreen> {
       children: [
         for (var item in data)
           ChallengeTypeItem(
-            title: '건강하게 운동하기', // TODO: 챌린지 아이디 가지고 이름 가져오기
+            title:
+                '챌린지명 : ${challengeController.idchallenge[item[0]['challenge'].toString()]}', // TODO: 챌린지 아이디 가지고 이름 가져오기
             description: '${item[0]['comment']}',
-            score: item[0]['score'],
+            score: item[0]['score'] * 100,
             hasSuccess: item[0]['score'] > 50 ? true : false,
             imagePath: '',
           )
