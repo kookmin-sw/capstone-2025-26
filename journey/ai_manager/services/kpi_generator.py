@@ -117,16 +117,9 @@ def generate_kpis_for_challenge(challenge: Challenge, plan_ids: List[int], user_
     :param item_count: Number of KPIs to generate.
     :return: A list of created Kpi objects.
     """
-    # Langfuse 트레이스 생성
-    trace_id = f"kpi_gen_{challenge.id}_{user.id}_{str(os.urandom(4).hex())}"
+    # Langfuse 콜백 설정 (자동 트레이싱만 사용)
     callbacks = []
     if langfuse_handler:
-        langfuse_handler.langfuse.trace(
-            name="generate_kpis",
-            id=trace_id,
-            tags=["kpi_generation"],
-            metadata={"challenge_id": challenge.id, "user_id": user.id}
-        )
         callbacks = [langfuse_handler]
     
     # 계획 데이터 조회
@@ -154,14 +147,18 @@ def generate_kpis_for_challenge(challenge: Challenge, plan_ids: List[int], user_
         "user_context": user_context or "None provided.",
         "data_type_options": data_type_options,
         "item_count": item_count,
-    }
-
-    # LLM 체인 생성 및 실행
+    }    # LLM 체인 생성 및 실행
     chain = prompt | llm
     
-    try:        # LLM 호출 및 응답 처리
-        response = chain.invoke(input_data, config={"callbacks": callbacks})
-        # 응답 객체가 AIMessage인 경우 .content 속성을 사용
+    try:
+        # LLM 호출 및 응답 처리 (자동 트레이싱 사용)
+        response = chain.invoke(
+            input_data, 
+            config={
+                "callbacks": callbacks,
+                "tags": ["kpi_generation"]
+            }
+        )        # 응답 객체가 AIMessage인 경우 .content 속성을 사용
         if hasattr(response, 'content'):
             response_text = str(response.content).strip()
         # 응답이 dict 형태이고 "text" 키가 있는 경우
@@ -170,14 +167,8 @@ def generate_kpis_for_challenge(challenge: Challenge, plan_ids: List[int], user_
         # 기타 경우
         else:
             response_text = str(response).strip()
+            
         logger.info(f"KPI 생성을 위한 LLM 응답 수신: {len(response_text)} 자")
-        
-        if langfuse_handler:
-            langfuse_handler.langfuse.span(
-                trace_id=trace_id,
-                name="llm_response_received",
-                metadata={"response_length": len(response_text)}
-            )
         
         # 응답 파싱
         kpi_data_list = parse_llm_response(response_text)
@@ -202,61 +193,36 @@ def generate_kpis_for_challenge(challenge: Challenge, plan_ids: List[int], user_
                         'definition': kpi_data.get("definition", ""),
                         'measurement_unit': kpi_data.get("measurement_unit", ""),
                         'data_type': llm_data_type,
-                        'measurement_method': kpi_data.get("measurement_method", "")
-                    }
+                        'measurement_method': kpi_data.get("measurement_method", "")                    }
                 )
                 created_kpis.append(kpi_instance)
-                
-                # Langfuse에 생성된 KPI 기록
-                if langfuse_handler:
-                    status = "created" if created else "updated"
-                    langfuse_handler.langfuse.event(
-                        trace_id=trace_id, 
-                        name=f"kpi_{status}",
-                        metadata={
-                            "kpi_id": kpi_instance.id,
-                            "kpi_name": kpi_instance.name,
-                            "data_type": kpi_instance.data_type
-                        }
-                    )
-                
+                                
                 logger.info(f"KPI {'생성' if created else '업데이트'}: {kpi_instance.name} (사용자 {user.id}, 챌린지 {challenge.id})")
             except Exception as db_err:
                 logger.error(f"KPI '{kpi_data.get('name')}' 저장 실패: {db_err}")
                 if langfuse_handler:
                     langfuse_handler.langfuse.event(
-                        trace_id=trace_id,
                         name="kpi_save_error",
                         metadata={"error": str(db_err), "kpi_name": kpi_data.get("name", "")}
-                    )
-
-        # 결과 검증 및 반환
+                    )        # 결과 검증 및 반환
         if not created_kpis:
             error_msg = "KPI 생성 실패: 유효한 KPI 데이터를 생성하지 못했습니다."
             logger.error(error_msg)
             if langfuse_handler:
-                langfuse_handler.langfuse.event(trace_id=trace_id, name="kpi_gen_failed", 
-                                              metadata={"reason": "no_valid_kpis"})
+                langfuse_handler.langfuse.event(
+                    name="kpi_gen_failed", 
+                    metadata={"reason": "no_valid_kpis"}
+                )
             raise RuntimeError(error_msg)
-        
-        # 성공 로깅
-        if langfuse_handler:
-            langfuse_handler.langfuse.event(
-                trace_id=trace_id, 
-                name="kpi_gen_success",
-                metadata={"kpi_count": len(created_kpis)}
-            )
-        
+          
         return created_kpis
 
     except Exception as e:
         error_msg = f"KPI 생성 중 오류 발생: {e}"
         logger.error(error_msg)
-        
-        # Langfuse에 오류 기록
+          # Langfuse에 오류 기록
         if langfuse_handler:
             langfuse_handler.langfuse.event(
-                trace_id=trace_id,
                 name="kpi_gen_error",
                 metadata={"error": str(e)}
             )

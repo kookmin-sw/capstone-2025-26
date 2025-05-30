@@ -96,13 +96,33 @@ def generate_plan_from_retrospect(challenge, retrospect):
         "challenge_name": challenge.challenge_name,
         "kpi_info": json.dumps(kpi_info, ensure_ascii=False) if kpi_info else "KPI 정보가 없습니다.",
         "retrospect_content": retrospect.content,
-    }
-
-    # 🔹 4. LLM 실행 + Plan 저장
+    }    # 🔹 4. LLM 실행 + Plan 저장
     try:
-        # Langfuse 핸들러가 None이면 콜백 없이 실행
-        callbacks = [langfuse_handler] if langfuse_handler else []
-        response = chain.invoke(input_data, config={"callbacks": callbacks})
+        # Langfuse 트레이스 생성
+        trace_id = f"plan_retrospect_{challenge.id}_{retrospect.id}_{str(os.urandom(4).hex())}"
+        callbacks = []
+        
+        if langfuse_handler:
+            # 트레이스 생성
+            langfuse_handler.langfuse.trace(
+                name="generate_plan_from_retrospect",
+                id=trace_id,
+                tags=["plan_generation", "retrospect_based"],
+                metadata={"challenge_id": challenge.id, "retrospect_id": retrospect.id}
+            )
+            # 트레이스 ID 설정
+            langfuse_handler.trace_id = trace_id
+            callbacks = [langfuse_handler]
+            
+        # 트레이스 ID를 메타데이터에 포함하여 LLM 호출
+        response = chain.invoke(
+            input_data, 
+            config={
+                "callbacks": callbacks,
+                "metadata": {"trace_id": trace_id},
+                "tags": ["plan_generation"]
+            }
+        )
         
         # 응답이 dict 형태이고 "text" 키가 있다면 해당 값을 사용
         if isinstance(response, dict) and "text" in response:
@@ -157,7 +177,7 @@ def generate_plan_from_challenge(challenge, user_context="", item_count=3):
     )
 
     # LLMChain 생성
-    chain = LLMChain(llm=llm, prompt=prompt_template)
+    chain = prompt_template | llm
 
     # 입력값 구성
     input_data = {
@@ -165,12 +185,33 @@ def generate_plan_from_challenge(challenge, user_context="", item_count=3):
         "challenge_description": challenge.description or "설명 없음",
         "user_context": user_context or "추가 컨텍스트 없음",
         "item_count": item_count,
-    }
-
-    # LLM 실행 + Plan 저장
+    }    # LLM 실행 + Plan 저장
     try:
-        callbacks = [langfuse_handler] if langfuse_handler else []
-        response = chain.invoke(input_data, config={"callbacks": callbacks})
+        # Langfuse 트레이스 생성
+        trace_id = f"plan_challenge_{challenge.id}_{str(os.urandom(4).hex())}"
+        callbacks = []
+        
+        if langfuse_handler:
+            # 트레이스 생성
+            langfuse_handler.langfuse.trace(
+                name="generate_plan_from_challenge",
+                id=trace_id,
+                tags=["plan_generation", "challenge_based"],
+                metadata={"challenge_id": challenge.id}
+            )
+            # 트레이스 ID 설정
+            langfuse_handler.trace_id = trace_id
+            callbacks = [langfuse_handler]
+            
+        # 트레이스 ID를 메타데이터에 포함하여 LLM 호출
+        response = chain.invoke(
+            input_data, 
+            config={
+                "callbacks": callbacks,
+                "metadata": {"trace_id": trace_id},
+                "tags": ["plan_generation"]
+            }
+        )
         
         # 응답 처리
         if isinstance(response, dict) and "text" in response:
