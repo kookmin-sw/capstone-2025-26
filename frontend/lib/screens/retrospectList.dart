@@ -49,11 +49,11 @@ class _RetroSpectListState extends State<RetroSpectList> {
                 fontWeight: FontWeight.w600,
                 color: fontColor,
               ),
-              leftChevronIcon: Icon(
+              leftChevronIcon: const Icon(
                 Icons.chevron_left,
                 color: fontColor,
               ),
-              rightChevronIcon: Icon(
+              rightChevronIcon: const Icon(
                 Icons.chevron_right,
                 color: fontColor,
               ),
@@ -81,7 +81,7 @@ class _RetroSpectListState extends State<RetroSpectList> {
             focusedDay: _focusedDay,
             firstDay: DateTime(2025, 01, 01),
             lastDay: DateTime(2030, 12, 31),
-            availableCalendarFormats: {
+            availableCalendarFormats: const {
               CalendarFormat.month: "월",
             },
             selectedDayPredicate: (day) {
@@ -109,7 +109,7 @@ class _RetroSpectListState extends State<RetroSpectList> {
                     child: Container(
                       width: 6,
                       height: 6,
-                      decoration: BoxDecoration(
+                      decoration: const BoxDecoration(
                         color: Colors.blue, // 점 색상
                         shape: BoxShape.circle,
                       ),
@@ -137,8 +137,8 @@ class _RetroSpectListState extends State<RetroSpectList> {
               ),
             ),
           ),
-          Container(
-            height: 300.h,
+          SizedBox(
+            height: 200.h,
             child: Column(
               children: [
                 Flexible(
@@ -178,7 +178,7 @@ class _RetroSpectListState extends State<RetroSpectList> {
             },
             child: Center(
               child: Container(
-                decoration: BoxDecoration(
+                decoration: const BoxDecoration(
                   color: background,
                 ),
                 child: Container(
