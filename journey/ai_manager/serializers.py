@@ -2,6 +2,7 @@ from rest_framework import serializers
 from retrospect.models import Challenge, Kpi, Plan, Retrospect
 import json
 from datetime import date
+from retrospect.models import KpiResult
 
 class LLMRequestSerializer(serializers.Serializer):
     query = serializers.CharField(required=True)
@@ -63,6 +64,13 @@ class KpiOutputSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'definition', 'measurement_unit', 'data_type', 'challenge', 'user']
         read_only_fields = ['id', 'challenge', 'user'] # challenge and user are set contextually
 
+class KpiResultOutputSerializer(serializers.ModelSerializer):
+    kpi_name = serializers.CharField(source='kpi.name', read_only=True)
+
+    class Meta:
+        model = KpiResult
+        fields = ['id', 'kpi_name', 'score', 'comment']
+        
 # Separate serializer for the API response that contains a list of KPIs
 class KpiListResponseSerializer(serializers.Serializer):
     kpis = KpiOutputSerializer(many=True)
@@ -135,4 +143,40 @@ class TriggerWeeklyAnalysisSerializer(serializers.Serializer):
         # 이 경우, tasks.py의 trigger_chunked_finalize_weekly_analyses 가 호출되어 자체적으로 날짜를 결정함.
 
         return data
+
+
+class SimplePlanItemSerializer(serializers.ModelSerializer):
+    """Simple serializer for individual plan items."""
+    class Meta:
+        model = Plan
+        fields = ['id', 'plan_text']
+
+class GeneratePlanResponseSerializer(serializers.Serializer):
+    """Serializer for the generate plan API response."""
+    user = serializers.IntegerField() 
+    challenge = serializers.IntegerField()
+    plans = SimplePlanItemSerializer(many=True, read_only=True)
+
+    def to_representation(self, instance):
+        """
+        Override to_representation to handle both dictionary and object instances.
+        This makes the serializer more flexible to work with different input types.
+        """
+        if isinstance(instance, dict):
+            # If instance is a dict, format accordingly
+            return {
+                'user': instance.get('user'),
+                'challenge': instance.get('challenge'),
+                'plans': SimplePlanItemSerializer(instance.get('plans', []), many=True).data
+            }
+        # For other cases, use default behavior
+        return super().to_representation(instance)
+
+    def create(self, validated_data):
+        # This serializer is for response representation, not for creating objects.
+        raise NotImplementedError("This serializer is not meant for object creation.")
+
+    def update(self, instance, validated_data):
+        # This serializer is for response representation, not for updating objects.
+        raise NotImplementedError("This serializer is not meant for object update.")
 

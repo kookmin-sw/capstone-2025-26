@@ -134,7 +134,7 @@ def generate_kpis_for_challenge(challenge: Challenge, plan_ids: List[int], user_
     if not plans_data:
         raise ValueError("유효한 계획 데이터가 없습니다. 적어도 하나의 계획이 필요합니다.")
     
-    template_str = (Path(__file__).parent.parent / "templates" / "kpi_generator_prompt.txt").read_text()
+    template_str = (Path(__file__).parent.parent / "templates" / "kpi_generator_prompt.txt").read_text(encoding="utf-8")
     prompt = PromptTemplate(
         input_variables=["challenge_name", "challenge_description", "plans", "user_context", "item_count"],
         template=template_str
@@ -159,10 +159,17 @@ def generate_kpis_for_challenge(challenge: Challenge, plan_ids: List[int], user_
     # LLM 체인 생성 및 실행
     chain = prompt | llm
     
-    try:
-        # LLM 호출 및 응답 처리
+    try:        # LLM 호출 및 응답 처리
         response = chain.invoke(input_data, config={"callbacks": callbacks})
-        response_text = response.get("text", str(response)).strip()
+        # 응답 객체가 AIMessage인 경우 .content 속성을 사용
+        if hasattr(response, 'content'):
+            response_text = str(response.content).strip()
+        # 응답이 dict 형태이고 "text" 키가 있는 경우
+        elif isinstance(response, dict) and "text" in response:
+            response_text = str(response["text"]).strip()
+        # 기타 경우
+        else:
+            response_text = str(response).strip()
         logger.info(f"KPI 생성을 위한 LLM 응답 수신: {len(response_text)} 자")
         
         if langfuse_handler:

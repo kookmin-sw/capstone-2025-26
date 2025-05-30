@@ -23,7 +23,7 @@ class _RetroSpectListState extends State<RetroSpectList> {
   Map<DateTime, List> getEventMap(List retrospectList) {
     final Map<DateTime, List> eventMap = {};
     for (var item in retrospectList) {
-      final date = DateTime.parse(item['created_at']);
+      final date = DateTime.parse(item['created_at'].split('T')[0]);
       final day = DateTime(date.year, date.month, date.day);
       eventMap[day] = [true]; // 여러개여도 그냥 하나만 넣음
     }
@@ -202,7 +202,7 @@ class _RetroSpectListState extends State<RetroSpectList> {
                 ),
               ),
             ),
-          )
+          ),
         ],
       ),
     );

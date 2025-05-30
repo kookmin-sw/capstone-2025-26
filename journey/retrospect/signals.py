@@ -14,23 +14,23 @@ llm = ChatVertexAI(
     temperature=0.7,
 )
 
+# # 따로 일일회고 분석하는 API 생성 필요
+# @receiver(post_save, sender=Retrospect)
+# def generate_or_update_kpi_scores_on_retrospect_save(sender, instance, created, **kwargs):
+#     """
+#     회고가 생성되거나 수정될 때 KPI 점수 생성 및 업데이트
+#     """
+#     print(f"[Signal] 회고 저장 감지됨 → KPI 스코어 생성 시작 (회고 ID: {instance.id})")
 
-@receiver(post_save, sender=Retrospect)
-def generate_or_update_kpi_scores_on_retrospect_save(sender, instance, created, **kwargs):
-    """
-    회고가 생성되거나 수정될 때 KPI 점수 생성 및 업데이트
-    """
-    print(f"[Signal] 회고 저장 감지됨 → KPI 스코어 생성 시작 (회고 ID: {instance.id})")
+#     # 이미 존재하는 KPI 결과가 있으면 삭제 (재생성)
+#     existing_results = KpiResult.objects.filter(retrospect=instance)
+#     if existing_results.exists():
+#         print(f"[Signal] 기존 KPI 결과 {existing_results.count()}개 삭제 후 재생성")
+#         existing_results.delete()
 
-    # 이미 존재하는 KPI 결과가 있으면 삭제 (재생성)
-    existing_results = KpiResult.objects.filter(retrospect=instance)
-    if existing_results.exists():
-        print(f"[Signal] 기존 KPI 결과 {existing_results.count()}개 삭제 후 재생성")
-        existing_results.delete()
-
-    # KPI 점수 생성
-    score_kpis_from_retrospect(instance, llm)
-    print(f"[Signal] KPI 점수 생성 완료")
+#     # KPI 점수 생성
+#     score_kpis_from_retrospect(instance, llm)
+#     print(f"[Signal] KPI 점수 생성 완료")
 
 @receiver(pre_delete, sender=Retrospect)
 def delete_kpi_results_on_retrospect_delete(sender, instance, **kwargs):

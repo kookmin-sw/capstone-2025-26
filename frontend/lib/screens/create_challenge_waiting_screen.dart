@@ -3,6 +3,9 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:reme/themes/color.dart';
 import 'package:reme/routes.dart';
 import 'package:reme/icon/tab_bar_icon_icons.dart';
+import 'package:reme/services/challenge_api.dart';
+import 'package:logger/logger.dart';
+import 'package:dio/dio.dart';
 
 class CreateChallengeWaitingScreen extends StatefulWidget {
   const CreateChallengeWaitingScreen({super.key});
@@ -14,38 +17,123 @@ class CreateChallengeWaitingScreen extends StatefulWidget {
 
 class _CreateChallengeWaitingScreenState
     extends State<CreateChallengeWaitingScreen> {
+  bool _isNavigating = false;
+
+  final _challengeApi = ChallengeApi();
+  final _logger = Logger();
   @override
   void initState() {
     super.initState();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      startTimer();
+      _createChallengeAndProceed();
     });
   }
 
-  void startTimer() {
-    Future.delayed(const Duration(seconds: 2), () {
-      if (mounted) {
-        try {
-          final challengeName =
-              ModalRoute.of(context)?.settings.arguments as String?;
+  Future<void> _createChallengeAndProceed() async {
+    if (_isNavigating) return; // 이미 네비게이션 중이면 중단
+    _isNavigating = true;
+    try {
+      try {
+        await _challengeApi.getChallenges(); // 이미 있는 GET 메소드 활용
+      } catch (e) {
+        // GET 요청 실패는 무시 (토큰 초기화가 목적)
+      }
+      final arguments = ModalRoute.of(context)?.settings.arguments;
+      String challengeName = '새 챌린지';
 
-          Navigator.of(context).pushReplacementNamed(
+      if (arguments is String) {
+        challengeName = arguments;
+      }
+      final String deadlineValue =
+          DateTime.now().add(const Duration(days: 7)).toIso8601String();
+      const String ownerTypeValue = 'USER';
+      const String statusValue = 'LIVE';
+
+      // 1. 챌린지 생성
+      final challengeResponse = await _challengeApi.createChallenge(
+        challengeName,
+        deadlineValue,
+        ownerTypeValue,
+        statusValue,
+      );
+
+      if (challengeResponse.statusCode == 201) {
+        final challengeData = challengeResponse.data as Map<String, dynamic>;
+        final challengeId = challengeData['id'];
+
+        _logger.i('챌린지 생성 성공: $challengeId');
+
+        // 2. AI 플랜 생성
+        _logger.i('=== AI 플랜 생성 시작 ===');
+        _logger.i('챌린지 ID: $challengeId, 이름: $challengeName');
+
+        final plansResponse =
+            await _challengeApi.generateAIPlans(challengeId, challengeName);
+
+        _logger.i('AI 플랜 생성 응답 상태: ${plansResponse.statusCode}');
+        _logger.i('AI 플랜 생성 결과: ${plansResponse.data}'); // 전체 응답 로깅
+        // 생성된 플랜에서 planIds 추출
+        List<int> planIds = [];
+        if (plansResponse.statusCode == 201 && plansResponse.data != null) {
+          final plansData = plansResponse.data;
+
+          // AI 플랜 응답 구조에 따라 planIds 추출
+          if (plansData is Map<String, dynamic> &&
+              plansData.containsKey('plans')) {
+            final plans = plansData['plans'] as List<dynamic>;
+            planIds = plans.map((plan) => plan['id'] as int).toList();
+          }
+
+          _logger.i('추출된 planIds: $planIds');
+        }
+
+        // AI KPI 생성
+        _logger.i('=== AI KPI 생성 시작 ===');
+        final kpiResponse =
+            await _challengeApi.generateAIKPIs(challengeId, planIds);
+        final challengeDataWithKPIs = {
+          'id': challengeId,
+          'challenge_name': challengeName,
+          'generated_kpis': kpiResponse.data['kpis'],
+          'generated_plans': plansResponse.data['plans'], // 플랜도 함께 전달
+        };
+
+        _logger.i('AI KPI 생성 응답 상태: ${kpiResponse.statusCode}');
+        _logger.i('AI KPI 생성 결과: ${kpiResponse.data}'); // 전체 응답 로깅
+        _logger.i('========================');
+        // 4. 모든 생성 완료 후 다음 화면으로
+        if (mounted) {
+          await Navigator.of(context).pushReplacementNamed(
             Routes.createChallengePlan,
-            arguments: challengeName ?? '새 챌린지',
+            arguments: challengeDataWithKPIs,
           );
-        } catch (e) {
-          // 오류 발생시 디버그 메시지 표시
-          debugPrint('오류 발생: $e');
         }
       }
-    });
+    } catch (e) {
+      _logger.e('챌린지 생성 실패: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('챌린지 생성에 실패했습니다.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        Navigator.of(context).pop(); // 이전 화면으로 돌아가기
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final challengeName =
-        ModalRoute.of(context)?.settings.arguments as String? ?? '새 챌린지';
+    final arguments = ModalRoute.of(context)?.settings.arguments;
+    String challengeName = '새 챌린지'; // 기본값
+
+    if (arguments is String) {
+      challengeName = arguments;
+    } else if (arguments is Map<String, dynamic>) {
+      challengeName = arguments['challenge_name'] ?? '새 챌린지';
+    }
 
     return Scaffold(
       backgroundColor: background,

@@ -7,7 +7,7 @@ from django.db.models import Q
 import logging
 from .serializers import (
     GenerateKpiRequestSerializer, GeneratePlanRequestSerializer, KpiListResponseSerializer,
-    GenerateNextPlanSerializer, TriggerWeeklyAnalysisSerializer
+    GenerateNextPlanSerializer, TriggerWeeklyAnalysisSerializer, GeneratePlanResponseSerializer
 )
 from .permissions import IsAuthenticated
 from drf_yasg import openapi
@@ -161,8 +161,15 @@ class GeneratePlanFromChallengeAPIView(generics.GenericAPIView):
         responses={
             201: openapi.Response(
                 description="Plan successfully created",
-                schema=PlanResponseSerializer(many=True),
-                examples={'application/json': plan_list_example}
+                schema=GeneratePlanResponseSerializer,
+                examples={'application/json': {
+                    "user": 1,
+                    "challenge": 1,
+                    "plans": [
+                        {"id": 1, "plan_text": "Complete Chapter 1 of 'Advanced Python'"},
+                        {"id": 2, "plan_text": "Practice 5 LeetCode problems (Easy)"}
+                    ]
+                }},
             ),
             400: openapi.Response("Bad request, invalid input parameters"),
             403: openapi.Response("Permission Denied"),
@@ -203,10 +210,15 @@ class GeneratePlanFromChallengeAPIView(generics.GenericAPIView):
                     )
             
             # Plan 생성
-            generated_plans = generate_plan_from_challenge(challenge, user_context, item_count)
-        
-            # 새로운 직렬화 클래스로 응답 생성
-            response_serializer = PlanResponseSerializer(generated_plans)
+            generated_plans = generate_plan_from_challenge(challenge, user_context, item_count)            # 새로운 직렬화 클래스로 응답 생성
+            response_data = {
+                "user": request.user.id,
+                "challenge": challenge.id,
+                "plans": generated_plans  # Plan model instances
+            }
+            
+            # Use the improved serializer with the response data
+            response_serializer = GeneratePlanResponseSerializer(response_data)
             return Response(response_serializer.data, status=status.HTTP_201_CREATED)
             
         except Challenge.DoesNotExist:
