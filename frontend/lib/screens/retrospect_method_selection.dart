@@ -3,14 +3,19 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:reme/icon/tab_bar_icon_icons.dart';
 import 'package:reme/routes.dart';
 import 'package:reme/screens/retrospect_writing_screen.dart';
+import 'package:reme/services/retrospect_api.dart';
 import 'package:reme/themes/color.dart';
 
 class RetrospectMethodSelection extends StatefulWidget {
   final List<Map<String, dynamic>> selectedChallenges;
+  final String retrospectType;
+  int? crewId;
 
-  const RetrospectMethodSelection({
+  RetrospectMethodSelection({
     super.key,
     required this.selectedChallenges,
+    required this.retrospectType,
+    this.crewId,
   });
 
   @override
@@ -20,38 +25,35 @@ class RetrospectMethodSelection extends StatefulWidget {
 
 class _RetrospectMethodSelectionState extends State<RetrospectMethodSelection> {
   int _selectedMethodIndex = -1;
+  bool _isLoaded = false;
 
   // 회고 방법 데이터
-  final List<Map<String, dynamic>> _retrospectMethods = [
-    {
-      'name': 'KPT',
-      'description': '요즘 핫한 회고 방법',
-      'tags': ['정석', '트렌디'],
-    },
-    {
-      'name': 'CSS',
-      'description': '프론트엔드가 아니에요! Continue, Stop, Start',
-      'tags': ['직관적', '빠르게'],
-    },
-    {
-      'name': '4L',
-      'description': 'Liked, Learned, Lacked, Longed for',
-      'tags': ['상세하게', '꼼꼼히'],
-    },
-    {
-      'name': 'KIPET',
-      'description': '내가 만든 차세대 회고 기법',
-      'tags': [],
-    },
-    {
-      'name': 'KIPE',
-      'description': '내가 만든 차세대 회고 기법',
-      'tags': [],
-    },
-  ];
+  late final List<Map<String, dynamic>> _retrospectMethods = [];
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    getTemplateList().then((value) {
+      for (var template in value) {
+        if (template['owner_type'] == widget.retrospectType ||
+            template['owner_type'] == "COMMON") {
+          _retrospectMethods.add(template);
+        }
+      }
+      setState(() {
+        _isLoaded = true;
+      });
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
+    if (!_isLoaded) {
+      return const Center(
+        child: CircularProgressIndicator(),
+      );
+    }
     return Scaffold(
       backgroundColor: background,
       appBar: AppBar(
@@ -196,7 +198,7 @@ class _RetrospectMethodSelectionState extends State<RetrospectMethodSelection> {
                           Padding(
                             padding: const EdgeInsets.only(top: 4.0),
                             child: Text(
-                              method['description'],
+                              method['description'] ?? '',
                               style: TextStyle(
                                 color: const Color(0xFFC3C3C3),
                                 fontFamily: 'Pretendard',
@@ -231,6 +233,8 @@ class _RetrospectMethodSelectionState extends State<RetrospectMethodSelection> {
                     methodName: _retrospectMethods[_selectedMethodIndex]
                         ['name'],
                     selectedChallenges: widget.selectedChallenges,
+                    selectedMethod: _retrospectMethods[_selectedMethodIndex],
+                    crewId: widget.crewId,
                   ),
                 ),
               );
