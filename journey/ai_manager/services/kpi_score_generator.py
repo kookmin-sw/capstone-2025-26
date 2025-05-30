@@ -13,6 +13,9 @@ from typing import List, Dict, Any
 from datetime import datetime, timedelta
 from pathlib import Path
 import difflib
+import math
+
+from collections import Counter
 from datetime import timedelta
 from dotenv import load_dotenv
 
@@ -41,9 +44,6 @@ try:
 except Exception as e:
     logger.warning(f"Langfuse 핸들러 초기화 오류: {str(e)}. 토큰 사용량 추적이 비활성화됩니다.")
 
-def is_similar(keyword1, keyword2, threshold=0.5):
-    ratio = difflib.SequenceMatcher(None, keyword1, keyword2).ratio()
-    return ratio >= threshold
 
 def extract_meaning_units(text: str) -> List[Dict[str, Any]]:
     """
@@ -63,42 +63,156 @@ def extract_meaning_units(text: str) -> List[Dict[str, Any]]:
     except Exception as e:
         logger.warning(f"의미 단위 추출 실패: {e}")
         return []
+    
 
-def match_meaning_units_to_kpi(kpi: Kpi, units: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-    matched = []
-    kpi_keywords = [kpi.name, kpi.definition]
+# 새로운 코사인 유사도 계산 함수
+def get_cosine_similarity(text1: str, text2: str) -> float:
+    """두 텍스트 간의 코사인 유사도를 계산합니다 (Bag-of-Words 기반)."""
+    
+    # 텍스트를 단어 빈도 벡터로 변환하는 내부 헬퍼 함수
+    def text_to_vector(text: str) -> Counter:
+        words = re.findall(r'\w+', text.lower()) # 간단한 토큰화 (알파벳, 숫자만)
+        return Counter(words)
 
+    vec1 = text_to_vector(text1)
+    vec2 = text_to_vector(text2)
+
+    intersection = set(vec1.keys()) & set(vec2.keys())
+    numerator = sum([vec1[x] * vec2[x] for x in intersection])
+
+    sum1 = sum([vec1[x]**2 for x in vec1.keys()])
+    sum2 = sum([vec2[x]**2 for x in vec2.keys()])
+    denominator = math.sqrt(sum1) * math.sqrt(sum2)
+
+    if not denominator:
+        return 0.0
+    else:
+        return float(numerator) / denominator
+
+def match_meaning_units_to_kpi(kpi: Kpi, units: List[Dict[str, Any]], threshold: float = 0.3) -> List[Dict[str, Any]]:
+    """
+    KPI의 이름 및 정의와 의미 단위의 키워드 간의 코사인 유사도를 기반으로 매칭합니다.
+    """
+    matched_units_list = []
+    
+    # KPI에서 비교할 텍스트 목록 (이름, 정의)
+    kpi_comparison_texts = []
+    if isinstance(kpi.name, str) and kpi.name.strip():
+        kpi_comparison_texts.append(kpi.name)
+    # kpi 객체에 definition 속성이 있고, 문자열이며, 비어있지 않은 경우에만 추가
+    if hasattr(kpi, 'definition') and isinstance(kpi.definition, str) and kpi.definition.strip():
+        kpi_comparison_texts.append(kpi.definition)
+
+    if not kpi_comparison_texts: # KPI 이름이나 정의가 없으면 매칭할 대상이 없음
+        return []
+            
     for unit in units:
-        for kw in kpi_keywords:
-            if is_similar(unit["keyword"], kw):
-                matched.append(unit)
-                break  # 중복 매칭 방지
-    return matched
+        unit_keyword = unit.get("keyword", "")
+        # 의미 단위의 키워드가 문자열이고 비어있지 않은 경우에만 처리
+        if not isinstance(unit_keyword, str) or not unit_keyword.strip():
+            continue
+            
+        for kpi_text in kpi_comparison_texts:
+            similarity_score = get_cosine_similarity(unit_keyword, kpi_text)
+            
+            if similarity_score >= threshold:
+                matched_units_list.append(unit)
+                # 이 의미 단위는 현재 KPI와 매칭되었으므로, 다음 의미 단위로 넘어감
+                break 
+                
+    return matched_units_list
+
 
 
 def score_matched_units(units: List[Dict[str, Any]]) -> float:
     """
-    매핑된 의미 단위들을 기반으로 KPI 스코어 계산
-    - 간단히 키워드 기준 점수 부여 또는 정규화
+    매핑된 의미 단위들을 기반으로 KPI 스코어 계산 (개선된 범용 로직)
     """
     if not units:
-        return 0.3
-    
-    scores = []
+        return 30  # 매칭된 단위가 없으면 30점
+
+    unit_scores = []
+
+    positive_keywords = ["완료", "달성", "성공", "충분히", "잘함", "잘 했음", "개선", "늘었", "100%", "성장", "해냄", "만족", "좋았","완수됨", "이루어짐", "성취", 
+                         "만점", "탁월함", "훌륭함", "우수함", "뛰어남", "빛남", "완벽함", "자부심", "기대이상", "감사함", "즐거움", "행복함", "뿌듯함", "자신감", 
+                         "안정감", "열정적", "노력함", "성장함", "발전함", "향상됨", "진전", "원활함", "순조로움", "원숙함", "조화로움", "효율적", "생산적", "적극적", 
+                         "의욕적", "몰입", "집중", "완성", "기여함", "지원됨", "발휘됨", "권장", "축하", "추천", "강화됨", "강력함", "명확함", "이해도증가", 
+                         "통과", "합격", "통달", "해소됨", "보완됨"]
+    negative_keywords = ["못했다", "못 했음", "실패", "부족", "미흡", "문제", "어려움", "0%", "힘들었", "안 함", "놓침", "불만족", "아쉽"]
+
     for unit in units:
-        val = unit["value"]
-        if "완료" in val or "100%" in val:
-            scores.append(1.0)
-        elif "절반" in val or "50%" in val:
-            scores.append(0.5)
-        elif m := re.match(r"(\d+)\s*시간", val):
-            hours = float(m.group(1))
-            scores.append(min(hours / 5.0, 1.0))
-        elif "못했다" in val or "실패" in val:
-            scores.append(0.0)
-        else:
-            scores.append(0.5)
-    return sum(scores) / len(scores) if scores else 0.0
+        value_str = str(unit.get("value", "")).lower()
+        keyword_str = str(unit.get("keyword", "")).lower()
+        category_str = str(unit.get("category", "")).lower()
+        
+        base_score = 50  # 각 단위의 기본 점수는 50 (중립)
+
+        # 1. 긍정/부정 키워드 확인 (value와 keyword 모두에서)
+        combined_text = value_str + " " + keyword_str
+        
+        has_positive = any(p_kw in combined_text for p_kw in positive_keywords)
+        has_negative = any(n_kw in combined_text for n_kw in negative_keywords)
+
+        if has_positive and not has_negative:
+            base_score += 35 # 긍정적 표현이 있으면 점수 상승폭 약간 더
+        elif has_negative and not has_positive:
+            base_score -= 35 # 부정적 표현이 있으면 점수 하락폭 약간 더
+        elif has_positive and has_negative: # 긍정, 부정 혼재 시 중립에 가깝게 (약간 긍정)
+            base_score += 15
+        # 둘 다 없으면 base_score (50) 유지
+
+
+        # 2. 수치 데이터 처리 (시간, 횟수 등)
+        # 시간 처리 (예: "3시간", "2 hours")
+        # 정규식에서 소수점도 인식하도록 수정: (\d+(\.\d+)?)
+        time_match = re.search(r'(\d+(?:\.\d+)?)\s*(시간|hour|hr)', value_str)
+        if time_match:
+            hours = float(time_match.group(1))
+            # 3시간 이상 활동 시 만점에 가깝게 (40점 추가), 그 이하는 비례적으로
+            # KPI의 성격에 따라 기준 시간(여기서는 30)은 조절 필요
+            time_score_adjustment = (hours / 30) * 40 
+            base_score += min(time_score_adjustment, 40) # 최대 40점까지만 반영
+        
+        # 횟수 처리 (예: "3회", "5 times", "세 번")
+        count_match = re.search(r'(\d+)\s*(회|번|times|count|개)', value_str)
+        if count_match:
+            count = int(count_match.group(1))
+            # KPI 성격에 따라 횟수에 대한 점수 부여 방식은 매우 달라질 수 있음
+            if count >= 5: # 5회 이상이면 높은 가산점
+                base_score += 20
+            elif count >= 3: # 3-4회면 가산점
+                base_score += 10
+            elif count == 1: # 1회면 KPI에 따라 감점 또는 낮은 점수
+                base_score -= 10 
+            # 0회는 negative_keywords에서 "안 함" 등으로 처리되거나, units에 포함되지 않을 수 있음
+
+        # 퍼센트 처리 (예: "80%", "달성률 50퍼센트")
+        percent_match = re.search(r'(\d+)\s*(%|퍼센트|프로)', value_str)
+        if percent_match:
+            percent_val = int(percent_match.group(1))
+            # 100%는 positive_keywords 에서도 처리될 수 있지만, 여기서 직접 점수화
+            percent_score_adjustment = (percent_val / 100.0) * 5 # 100% 달성 시 5점 추가 기여
+            base_score += percent_score_adjustment
+
+
+        # 3. 특정 카테고리 또는 키워드에 따른 가중치 (선택적 확장)
+        if category_str == "성과" and has_positive:
+            base_score += 10 # 긍정적 성과는 추가점
+        if category_str == "문제": # '문제' 카테고리 자체로 약간 감점
+            base_score -= 10
+            if has_negative: # 문제가 부정적 키워드와 함께면 더 감점
+                 base_score -= 10
+
+
+        # 점수는   0 에서 100 사이로 제한
+        unit_scores.append(max(0, min(100, base_score)))
+
+    # 모든 단위 점수의 평균 계산
+    if not unit_scores: # 이 경우는 거의 없지만, 방어 코드
+        return 30 
+
+    final_score = sum(unit_scores) / len(unit_scores)
+    return round(final_score, 2)
 
 def score_kpi_using_meaning_units(kpi: Kpi, retrospect_text: str) -> float:
     units = extract_meaning_units(retrospect_text)
@@ -117,7 +231,7 @@ def get_previous_retrospect(current_retrospect):
     ).order_by('-created_at').first()
 
 
-def build_improvement_evaluator(llm_instance) -> LLMChain:
+def build_improvement_evaluator(llm) -> LLMChain:
     prompt = PromptTemplate(
         input_variables=["prev", "curr", "kpi_name"],
         template=(
@@ -131,23 +245,23 @@ def build_improvement_evaluator(llm_instance) -> LLMChain:
             "다른 말은 하지 말고 위 단어 중 하나만 출력해."
         )
     )
-    return LLMChain(prompt=prompt, llm=llm_instance)
+    return LLMChain(prompt=prompt, llm=llm)
 
 
 def evaluate_improvement_with_llm(prev_text: str, curr_text: str, kpi_name: str, chain: LLMChain) -> float:
     try:
         result = chain.run(prev=prev_text, curr=curr_text, kpi_name=kpi_name).strip().upper()
         if result == "IMPROVED":
-            return 0.1
+            return 10
         elif result == "SAME":
-            return 0.0
+            return 0
         elif result == "WORSENED":
-            return -0.1
+            return -10
         else:
-            return 0.0
+            return 0
     except Exception as e:
         print(f"[evaluate_improvement_with_llm] Error: {e}")
-        return 0.0
+        return 0
 
 def compare_retrospects(prev, curr, kpi, chain):
     """전날과 오늘 회고 비교하여 KPI 개선 여부 판단"""
@@ -183,7 +297,7 @@ def score_kpis_from_retrospect(retrospect: Retrospect, llm_chain: ChatVertexAI) 
     prev = get_previous_retrospect(retrospect)
     
     # 개선 여부 평가에 사용할 LLM 체인 생성
-    improvement_chain = build_improvement_evaluator()
+    improvement_chain = build_improvement_evaluator(llm)
     results = []  # 저장된 KpiResult 객체를 담을 리스트
 
     # 각 KPI에 대해 점수 계산 및 저장 반복
@@ -196,7 +310,7 @@ def score_kpis_from_retrospect(retrospect: Retrospect, llm_chain: ChatVertexAI) 
 
             if prev:  
                 adj = evaluate_improvement_with_llm(prev.content, retrospect.content, kpi.name, improvement_chain) # 4) 전날 회고가 있으면 개선 여부 평가하여 점수 보정
-                score = min(base_score + adj, 1.0)
+                score = min(base_score + adj, 100)
             else:
                 score = base_score
 
@@ -237,7 +351,7 @@ Input: 1일치 회고 (Retrospect), LLM 인스턴스
 ↓
 3. 전날 회고 존재 여부 확인
     ↓ 있음 → LLM 기반 비교 평가 → 보정 점수 계산
-    ↓ 없음 → 0.0 보정 점수 계산
+    ↓ 없음 → 0 보정 점수 계산
 ↓
 4. 점수 보정 및 feedback 생성
 ↓
@@ -289,17 +403,28 @@ def generate_feedback(kpi: Kpi, units: List[Dict[str, Any]], score: float) -> st
     prompt = PromptTemplate(
         input_variables=["kpi_name", "units", "score"],
         template="""
-        KPI 이름: {kpi_name}
-        의미 단위: {units}
-        점수: {score}
-        문체 가이드: {style_hint}
+        다음은 사용자의 회고 내용에서 추출된 의미 단위(행동, 성과, 문제 등)입니다. 이를 기반으로 KPI에 대한 피드백 문장을 생성해야 합니다.
 
-        위 정보를 바탕으로 사용자의 행동을 칭찬하거나, 개선하거나, 격려하는 자연어 피드백 문장을 작성하세요.
-        - 가능하면 구체적인 행동과 수치를 반영하세요.
-        - 점수가 낮으면 개선 제안을 포함하세요.
-        - 점수가 높으면 칭찬 위주의 문장을 작성하세요.
+        [KPI 정보]
+        - 이름: {kpi_name}
+        - 점수: {score} (0 ~ 100 사이의 값)
 
-        한 문장 내외로 작성하세요.
+        [의미 단위 목록]
+        {units}
+
+        [문체 가이드]
+        {style_hint}
+
+        [작성 지침]
+        - 의미 단위에서 드러난 행동, 수치, 감정, 키워드 등을 적극 반영합니다.
+        - 점수가 낮으면 개선 제안을 포함하고, 점수가 높으면 칭찬 위주의 문장을 사용합니다.
+        - 피드백은 사용자의 동기부여를 높이도록 구성합니다.
+        - 반드시 "문장 형태"로 작성합니다. 제목, 목록, 해설, 주석 등은 절대 포함하지 마세요.
+        - 절대 예시나 설명을 넣지 마세요. 피드백 문장 하나만 생성하세요.
+        - 오직 하나의 문장 또는 두 문장 이내로 작성합니다. 줄바꿈 없이 출력하세요.
+
+        [출력 형식]
+        피드백 문장만 출력하세요. 여는 문구, 설명, 형식 지시 없이 피드백만 단독으로 생성해야 합니다.
         """
     )
 
@@ -308,14 +433,29 @@ def generate_feedback(kpi: Kpi, units: List[Dict[str, Any]], score: float) -> st
     try:
         response = chain.invoke({
             "kpi_name": kpi.name,
-            "units": json.dumps(units, ensure_ascii=False),
+            "units": json.dumps(units, ensure_ascii=False), # units를 JSON 문자열로 변환
             "score": f"{score:.2f}",
-            "style_hint": style_hint
+            "style_hint": style_hint # style_hint 변수 전달
         })
-        return response.get("text", "").strip()
+        feedback_text = response.get("text", "").strip()
+
+        # 후처리 로직: 특정 패턴 제거 (예시)
+        patterns_to_remove = [
+            r"^## 피드백 문장 예시:\s*",
+            r"^\*\*점수 \d\.\d+:\*\*\s*",
+            r"^\*\*피드백:\*\*\s*",
+            r"^\s*피드백:\s*",
+        ]
+        for pattern in patterns_to_remove:
+            feedback_text = re.sub(pattern, "", feedback_text, flags=re.IGNORECASE | re.MULTILINE).strip()
+        
+        # 추가적으로, 응답이 너무 길 경우 자르거나, 특정 키워드로 시작하지 않으면 기본 메시지 반환 등의 로직도 가능
+        if not feedback_text: # 후처리 후 비어있으면 기본 메시지
+             logger.warning(f"피드백 생성 후처리 결과 비어있음. KPI: {kpi.name}")
+             return "결과를 바탕으로 다음 행동을 계획해보세요!"
+        
+        return feedback_text
     
     except Exception as e:
-        logger.warning(f"피드백 생성 실패: {e}")
-        return "좋은 시도였어요! 다음에도 도전해보세요."
-
-
+        logger.warning(f"피드백 생성 실패 (KPI: {kpi.name}): {e}")
+        return "좋은 시도였어요! 다음에도 도전해보세요." # 기본 피드백 메시지 유지 또는 변경
