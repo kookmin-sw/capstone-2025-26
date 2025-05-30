@@ -52,55 +52,72 @@ class _WebViewState extends State<SocialLoginWebView>
         onNavigationRequest: (request) {
           final url = request.url;
           if (url.contains("/callback/")) {
-            setState(() {
-              showWebView = false;
-            });
+            if (mounted) {
+              setState(() {
+                showWebView = false;
+              });
+            }
           }
           return NavigationDecision.navigate;
         },
         onPageStarted: (url) {
-          setState(() {
-            loading = 0;
-          });
+          if (mounted) {
+            setState(() {
+              loading = 0;
+            });
+          }
         },
         onProgress: (int percent) {
-          setState(() {
-            loading = percent;
-          });
+          if (mounted) {
+            setState(() {
+              loading = percent;
+            });
+          }
         },
         onPageFinished: (String url) async {
-          if (url.contains("/callback/")) {
+          if (url.contains("/api/${service}/callback/")) {
             try {
-              String json = await extractJson();
-              jsonData = jsonDecode(json);
-              access_token = jsonData['access'];
-              refresh_token = jsonData['refresh'];
-              String? user_name = jsonData['user']['username'];
-              String? email = jsonData['user']['email'];
-              String id = jsonData['user']['id'].toString();
-              String? profile_image = jsonData['user']['profile_image'];
-              String dateTime = jsonData['user']['date_joined'].split('T')[0];
-              DateTime joinedDate = DateTime.parse(dateTime);
+              extractJson().then((json) async {
+                jsonData = jsonDecode(json);
+                access_token = jsonData['access'];
+                refresh_token = jsonData['refresh'];
+                String? user_name = jsonData['user']['username'];
+                String? email = jsonData['user']['email'];
+                String id = jsonData['user']['id'].toString();
+                String? profile_image = jsonData['user']['profile_image'];
+                String dateTime = jsonData['user']['date_joined'].split('T')[0];
+                DateTime joinedDate = DateTime.parse(dateTime);
 
-              bool needSignup = joinedDate.isAtSameMomentAs(DateTime(
-                  DateTime.now().year,
-                  DateTime.now().month,
-                  DateTime.now().day));
-              await Future.delayed(const Duration(milliseconds: 500));
-              Navigator.pop(
-                  context,
-                  UserInfo(
-                    access_token,
-                    refresh_token,
-                    user_name,
-                    email,
-                    id,
-                    profile_image,
-                    needSignup,
-                  ));
+                bool needSignup = joinedDate.isAtSameMomentAs(DateTime(
+                    DateTime.now().year,
+                    DateTime.now().month,
+                    DateTime.now().day));
+                await Future.delayed(const Duration(milliseconds: 500));
+                if (mounted) {
+                  Navigator.pop(
+                      context,
+                      UserInfo(
+                        access_token,
+                        refresh_token,
+                        user_name,
+                        email,
+                        id,
+                        profile_image,
+                        needSignup,
+                      ));
+                }
+              });
             } catch (e) {
               print(e is Error);
-              Navigator.pop(context, e);
+              if (mounted) {
+                Navigator.pop(context, e);
+              }
+            }
+          } else {
+            if (mounted) {
+              setState(() {
+                loading = 0;
+              });
             }
           }
         },

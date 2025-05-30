@@ -6,11 +6,15 @@ import 'package:reme/themes/color.dart';
 class RetrospectWritingScreen extends StatefulWidget {
   final String methodName;
   final List<Map<String, dynamic>> selectedChallenges;
+  final dynamic selectedMethod;
+  int? crewId;
 
-  const RetrospectWritingScreen({
+  RetrospectWritingScreen({
     super.key,
     required this.methodName,
     required this.selectedChallenges,
+    required this.selectedMethod,
+    this.crewId,
   });
 
   @override
@@ -21,19 +25,26 @@ class RetrospectWritingScreen extends StatefulWidget {
 class _RetrospectWritingScreenState extends State<RetrospectWritingScreen> {
   int _currentChallengeIndex = 0;
   final List<Map<String, dynamic>> _retrospectEntries = [];
+  List<List<String>> _retrospectMethods = [];
+  Map<String, String> _retrospectContent = {};
 
   @override
   void initState() {
     super.initState();
 
+    (widget.selectedMethod['steps']).entries.forEach((entry) {
+      _retrospectMethods.add([entry.key, entry.value]);
+      _retrospectContent[entry.key] = '';
+    });
+
     // Initialize entries for each challenge
     for (var challenge in widget.selectedChallenges) {
       _retrospectEntries.add({
         'challengeId': challenge['id'],
-        'keepText': '',
-        'problemText': '',
-        'tryText': '',
+        'content': _retrospectContent,
         'isCompleted': false,
+        'templateId': widget.selectedMethod['id'],
+        'crew_id': widget.crewId,
       });
     }
   }
@@ -164,48 +175,21 @@ class _RetrospectWritingScreenState extends State<RetrospectWritingScreen> {
                 padding: const EdgeInsets.fromLTRB(21.0, 0.0, 21.0, 10.0),
                 child: Column(
                   children: [
-                    // Keep 항목
-                    _buildRetrospectField(
-                      index: 0,
-                      title: "Keep, 오늘 하루동안 유지하고 싶은 내용을 적어주세요",
-                      hintText: "회고를 작성해 주세요",
-                      value: currentEntry['keepText'],
-                      onChanged: (value) {
-                        setState(() {
-                          currentEntry['keepText'] = value;
-                        });
-                      },
-                    ),
-
-                    const SizedBox(height: 10),
-
-                    // Problem 항목
-                    _buildRetrospectField(
-                      index: 1,
-                      title: "Problem, 오늘 어떤 문제가 있었죠?",
-                      hintText: "회고를 작성해 주세요",
-                      value: currentEntry['problemText'],
-                      onChanged: (value) {
-                        setState(() {
-                          currentEntry['problemText'] = value;
-                        });
-                      },
-                    ),
-
-                    const SizedBox(height: 10),
-
-                    // Try 항목
-                    _buildRetrospectField(
-                      index: 2,
-                      title: "Try, 오늘 있었던 문제를 개선하기 위해 무엇을 시도해 볼까요?",
-                      hintText: "회고를 작성해 주세요",
-                      value: currentEntry['tryText'],
-                      onChanged: (value) {
-                        setState(() {
-                          currentEntry['tryText'] = value;
-                        });
-                      },
-                    ),
+                    for (var step in _retrospectMethods)
+                      Column(children: [
+                        _buildRetrospectField(
+                          index: 0,
+                          title: '${step[0]}, ${step[1]}',
+                          hintText: "회고를 작성해 주세요",
+                          value: currentEntry['content'][step[0]],
+                          onChanged: (value) {
+                            setState(() {
+                              currentEntry['content'][step[0]] = value;
+                            });
+                          },
+                        ),
+                        const SizedBox(height: 10),
+                      ]),
                   ],
                 ),
               ),
@@ -266,11 +250,13 @@ class _RetrospectWritingScreenState extends State<RetrospectWritingScreen> {
                     });
                   } else {
                     // 모든 챌린지의 회고가 완료됨 - 애니메이션 화면으로 이동
+                    print(currentEntry);
                     Navigator.pushReplacement(
                       context,
                       MaterialPageRoute(
-                        builder: (context) =>
-                            const RetrospectCompletionScreen(),
+                        builder: (context) => RetrospectCompletionScreen(
+                          retrospectEntries: _retrospectEntries,
+                        ),
                       ),
                     );
                   }

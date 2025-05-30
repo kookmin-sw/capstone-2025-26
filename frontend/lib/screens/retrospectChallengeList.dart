@@ -4,7 +4,8 @@ import 'package:reme/screens/retrospect_method_selection.dart';
 import 'package:reme/themes/color.dart';
 
 class RetrospectChallengeList extends StatefulWidget {
-  const RetrospectChallengeList({super.key});
+  int? crewId;
+  RetrospectChallengeList({super.key, this.crewId});
 
   @override
   State<RetrospectChallengeList> createState() =>
@@ -16,7 +17,14 @@ class _RetrospectChallengeListState extends State<RetrospectChallengeList> {
   final Set<int> _selectedChallenges = {};
 
   // 현재 선택된 카테고리 (0: 전체, 1: 개인, 2: 크루)
-  int _selectedCategory = 0;
+  late int _selectedCategory;
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    _selectedCategory = (widget.crewId == null) ? 0 : 2;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -136,6 +144,8 @@ class _RetrospectChallengeListState extends State<RetrospectChallengeList> {
               MaterialPageRoute(
                 builder: (context) => RetrospectMethodSelection(
                   selectedChallenges: selectedChallenges,
+                  retrospectType: widget.crewId == null ? "COMMON" : "CREW",
+                  crewId: widget.crewId,
                 ),
               ),
             );

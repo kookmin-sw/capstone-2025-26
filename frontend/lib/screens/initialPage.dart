@@ -8,10 +8,12 @@ import 'package:reme/screens/feed.dart';
 import 'package:reme/screens/home.dart';
 import 'package:reme/screens/retrospectPage.dart';
 import 'package:reme/services/crew_api.dart';
+import 'package:reme/services/retrospect_api.dart';
 import 'package:reme/services/user_update.dart';
 import 'package:reme/themes/color.dart';
 import 'package:reme/icon/tab_bar_icon_icons.dart';
 import 'package:reme/utils/crew_controller.dart';
+import 'package:reme/utils/retrospect_controller.dart';
 import 'package:reme/utils/user_info_controller.dart';
 
 class Initialpage extends StatefulWidget {
@@ -35,6 +37,7 @@ class _InitialpageState extends State<Initialpage>
     super.initState();
     Get.put(UserInfoController());
     Get.put(CrewController());
+    Get.put(RetrospectController());
     tabController = TabController(length: 4, vsync: this);
     retroTabController = TabController(length: 2, vsync: this);
     int loadingCount = 0;
@@ -68,6 +71,9 @@ class _InitialpageState extends State<Initialpage>
       }),
       getMyCrewMembership().then((value) {
         Get.find<CrewController>().setMyCrewMembership(value.data);
+      }),
+      getAllRetrospectList().then((value) {
+        Get.find<RetrospectController>().setRetrospectList(value);
       }),
     ]).then((_) {
       FlutterNativeSplash.remove();
