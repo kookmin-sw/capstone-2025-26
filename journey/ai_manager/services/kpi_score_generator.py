@@ -52,7 +52,7 @@ def extract_meaning_units(text: str) -> List[Dict[str, Any]]:
     """
     template_str = (Path(__file__).parent.parent / "templates" / "extract_meaning_units_prompt.txt").read_text(encoding="utf-8")
     prompt = PromptTemplate(
-        input_variables=["text"],
+        input_variables=["text", "category", "keyword", "value"],
         template=template_str
     )
     chain = LLMChain(llm=llm, prompt=prompt)
@@ -313,8 +313,9 @@ def score_kpis_from_retrospect(retrospect, llm):
 
             else:
                 print(f"[DEBUG] 개선 비교 생략 (전날 회고 없음)")
+                score = base_score # 'prev'가 없을 때 'score'가 여기서 할당됨
 
-            feedback = generate_feedback(kpi, matched_units, score)
+            feedback = generate_feedback(kpi, matched, score)
 
             # KPIResult 저장
             result = KpiResult.objects.create(
