@@ -34,10 +34,9 @@ class _RetrospectWritingScreenState extends State<RetrospectWritingScreen> {
 
     (widget.selectedMethod['steps']).entries.forEach((entry) {
       _retrospectMethods.add([entry.key, entry.value]);
-      _retrospectContent[entry.key] = '';
     });
 
-    // Initialize entries for each challenge
+    // Initialize entries for each challenge - 각 챌린지마다 별도의 content Map 생성
     for (var challenge in widget.selectedChallenges) {
       // 각 챌린지마다 새로운 content Map 생성
       Map<String, String> challengeContent = {};
@@ -47,7 +46,7 @@ class _RetrospectWritingScreenState extends State<RetrospectWritingScreen> {
 
       _retrospectEntries.add({
         'challengeId': challenge['id'],
-        'content': challengeContent,
+        'content': challengeContent, // 각 챌린지마다 독립적인 Map
         'isCompleted': false,
         'templateId': widget.selectedMethod['id'],
         'crew_id': widget.crewId,

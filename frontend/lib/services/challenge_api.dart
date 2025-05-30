@@ -108,4 +108,49 @@ class ChallengeApi {
       rethrow;
     }
   }
+
+  /// 회고 가능한 챌린지 목록 조회
+  Future<Response> getRetrospectChallenges({int? limit}) async {
+    try {
+      String endpoint = '/retrospect/challenges/';
+      if (limit != null) {
+        endpoint += '?limit=$limit';
+      }
+
+      _logger.i('회고 챌린지 조회 요청: $endpoint');
+      return await _dio.get(endpoint);
+    } catch (e) {
+      _logger.e('회고 챌린지 조회 오류: $e');
+      rethrow;
+    }
+  }
+
+  /// 특정 사용자의 완료된 챌린지 조회 (회고 대상)
+  Future<Response> getCompletedChallenges({int? userId}) async {
+    try {
+      String endpoint = '/challenges/completed/';
+      if (userId != null) {
+        endpoint += '?user_id=$userId';
+      }
+
+      _logger.i('완료된 챌린지 조회 요청: $endpoint');
+      return await _dio.get(endpoint);
+    } catch (e) {
+      _logger.e('완료된 챌린지 조회 오류: $e');
+      rethrow;
+    }
+  }
+
+  /// 회고 데이터가 있는 챌린지 조회
+  Future<Response> getChallengesWithRetrospect() async {
+    try {
+      const endpoint = '/challenges/with-retrospect/';
+
+      _logger.i('회고 데이터 포함 챌린지 조회 요청');
+      return await _dio.get(endpoint);
+    } catch (e) {
+      _logger.e('회고 데이터 포함 챌린지 조회 오류: $e');
+      rethrow;
+    }
+  }
 }

@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:reme/icon/tab_bar_icon_icons.dart';
 import 'package:reme/screens/retrospect_method_selection.dart';
 import 'package:reme/themes/color.dart';
+import 'package:reme/services/challenge_api.dart';
+import 'package:reme/models/retrospect_challenge_model.dart';
+import 'package:logger/logger.dart';
 
 class RetrospectChallengeList extends StatefulWidget {
   int? crewId;
@@ -13,17 +16,94 @@ class RetrospectChallengeList extends StatefulWidget {
 }
 
 class _RetrospectChallengeListState extends State<RetrospectChallengeList> {
+  final _challengeApi = ChallengeApi();
+  final _logger = Logger();
+
   // 선택된 챌린지
   final Set<int> _selectedChallenges = {};
 
   // 현재 선택된 카테고리 (0: 전체, 1: 개인, 2: 크루)
-  late int _selectedCategory;
+
+  int _selectedCategory = 0;
+
+  // API에서 가져온 챌린지 데이터
+  List<Map<String, dynamic>> _allChallenges = [];
+  bool _isLoading = true;
+  String? _errorMessage;
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
-    _selectedCategory = (widget.crewId == null) ? 0 : 2;
+    _fetchRetrospectChallenges();
+  }
+
+  /// 회고할 챌린지 목록 API에서 가져오기
+  Future<void> _fetchRetrospectChallenges() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final response = await _challengeApi.getChallenges();
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseBody =
+            response.data as Map<String, dynamic>;
+
+        if (responseBody.containsKey('results') &&
+            responseBody['results'] is List) {
+          final List<dynamic> challengesFromServer =
+              responseBody['results'] as List<dynamic>;
+
+          final List<Map<String, dynamic>> processedChallenges =
+              challengesFromServer
+                  .map<Map<String, dynamic>>((challenge) {
+                    if (challenge is Map<String, dynamic>) {
+                      return <String, dynamic>{
+                        'id': challenge['id'],
+                        'icon': Icons.flash_on, // 기본 아이콘
+                        'title': challenge['challenge_name'] ?? '이름 없음',
+                        'type': challenge['owner_type'] == 'USER'
+                            ? 'personal'
+                            : 'crew',
+                        'iconBgColor': challenge['owner_type'] == 'USER'
+                            ? const Color(0xFFE75C3C)
+                            : const Color(0xFF3F51B5),
+                        'status': challenge['status'] ?? 'ACTIVE',
+                        'description': challenge['description'],
+                        'created_at': challenge['created_at'],
+                        // 원본 데이터도 저장
+                        'original_data': challenge,
+                      };
+                    }
+                    return <String, dynamic>{};
+                  })
+                  .where((challengeMap) => challengeMap.containsKey('id'))
+                  .toList();
+
+          setState(() {
+            _allChallenges = processedChallenges;
+            _isLoading = false;
+          });
+
+          _logger.i('회고 챌린지 ${_allChallenges.length}개 로드됨');
+        }
+      } else {
+        throw Exception('서버 응답 오류: ${response.statusCode}');
+      }
+    } catch (e) {
+      _logger.e('회고 챌린지 조회 실패: $e');
+      setState(() {
+        _errorMessage = '챌린지 목록을 불러오는데 실패했습니다: $e';
+        _isLoading = false;
+      });
+    }
+  }
+
+  /// 새로고침
+  Future<void> _onRefresh() async {
+    await _fetchRetrospectChallenges();
   }
 
   @override
@@ -121,10 +201,8 @@ class _RetrospectChallengeListState extends State<RetrospectChallengeList> {
           onTap: () {
             // 선택한 챌린지들 가져오기
             final List<Map<String, dynamic>> selectedChallenges = [];
-            final challenges = _getChallenges();
-
             for (var id in _selectedChallenges) {
-              final challenge = challenges.firstWhere((c) => c['id'] == id);
+              final challenge = _allChallenges.firstWhere((c) => c['id'] == id);
               selectedChallenges.add(challenge);
             }
 
@@ -180,6 +258,8 @@ class _RetrospectChallengeListState extends State<RetrospectChallengeList> {
         onPressed: () {
           setState(() {
             _selectedCategory = index;
+            // 카테고리 변경 시 선택된 챌린지 초기화
+            _selectedChallenges.clear();
           });
         },
         style: ElevatedButton.styleFrom(
@@ -209,15 +289,85 @@ class _RetrospectChallengeListState extends State<RetrospectChallengeList> {
   }
 
   Widget _buildChallengeList({String type = 'all'}) {
-    // 챌린지 목록 데이터
-    final challenges = _getChallenges();
-    final filteredChallenges = type == 'all'
-        ? challenges
-        : challenges.where((c) => c['type'] == type).toList();
+    if (_isLoading) {
+      return const Center(
+        child: CircularProgressIndicator(color: c900),
+      );
+    }
+
+    if (_errorMessage != null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.error_outline,
+              size: 64,
+              color: Colors.red,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              _errorMessage!,
+              style: const TextStyle(
+                color: fontColor,
+                fontSize: 16,
+                fontFamily: 'Pretendard',
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: _fetchRetrospectChallenges,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: c900,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: const Text(
+                '다시 시도',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontFamily: 'Pretendard',
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (_allChallenges.isEmpty) {
+      return const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.assignment_outlined,
+              size: 64,
+              color: greyColor,
+            ),
+            SizedBox(height: 16),
+            Text(
+              '회고할 챌린지가 없습니다',
+              style: TextStyle(
+                color: fontColor,
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                fontFamily: 'Pretendard',
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // API 데이터 사용
+    final filteredChallenges = _getFilteredChallenges();
 
     return ListView.builder(
       padding: const EdgeInsets.only(top: 12.0, bottom: 60.0),
-      itemCount: filteredChallenges.length + 1, // +1 for the 모두 선택 button
+      itemCount: filteredChallenges.length + 1,
       itemBuilder: (context, index) {
         // 마지막 아이템인 경우 모두 선택 버튼 표시
         if (index == filteredChallenges.length) {
@@ -241,18 +391,6 @@ class _RetrospectChallengeListState extends State<RetrospectChallengeList> {
                   ),
                   onPressed: () {
                     setState(() {
-                      // 현재 카테고리에 맞는 챌린지 목록 가져오기
-                      final challenges = _getChallenges();
-                      final filteredChallenges = _selectedCategory == 0
-                          ? challenges
-                          : challenges
-                              .where((c) =>
-                                  c['type'] ==
-                                  (_selectedCategory == 1
-                                      ? 'personal'
-                                      : 'crew'))
-                              .toList();
-
                       // 현재 탭에 맞는 챌린지들의 ID를 가져옴
                       final tabChallengeIds =
                           filteredChallenges.map((c) => c['id'] as int).toSet();
@@ -298,7 +436,6 @@ class _RetrospectChallengeListState extends State<RetrospectChallengeList> {
                           challenge['image'] as String,
                           fit: BoxFit.cover,
                           errorBuilder: (context, error, stackTrace) {
-                            // 이미지 로드 실패시 아이콘 표시
                             return Icon(
                               challenge['icon'] as IconData,
                               color: Colors.white,
@@ -315,12 +452,18 @@ class _RetrospectChallengeListState extends State<RetrospectChallengeList> {
               ),
               const SizedBox(width: 15),
               Expanded(
-                child: Text(
-                  challenge['title'] as String,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 15,
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      challenge['title'] as String,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
                 ),
               ),
               SizedBox(
@@ -359,61 +502,15 @@ class _RetrospectChallengeListState extends State<RetrospectChallengeList> {
   }
 
   // 챌린지 데이터 가져오기
-  List<Map<String, dynamic>> _getChallenges() {
-    return [
-      {
-        'id': 1,
-        'icon': Icons.flash_on,
-        'title': '물 1L 마시기, 커피 줄이기',
-        'type': 'personal',
-        'iconBgColor': const Color(0xFFE75C3C)
-      },
-      {
-        'id': 2,
-        'icon': Icons.flash_on,
-        'title': '어그로 끌리는 체육 연구',
-        'type': 'personal',
-        'iconBgColor': const Color(0xFFE75C3C)
-      },
-      {
-        'id': 3,
-        'icon': Icons.flash_on,
-        'title': '1일 1포스팅 및 핫게 댓글 달기',
-        'type': 'personal',
-        'iconBgColor': const Color(0xFFE75C3C)
-      },
-      {
-        'id': 4,
-        'icon': Icons.nature_people,
-        'title': '저속노화 식단하기',
-        'type': 'crew',
-        'image': 'assets/images/health_food.png',
-        'iconBgColor': const Color(0xFF3F51B5)
-      },
-      {
-        'id': 5,
-        'icon': Icons.nature_people,
-        'title': '저속노화에 대한 포스팅 올리기',
-        'type': 'crew',
-        'image': 'assets/images/health_post.png',
-        'iconBgColor': const Color(0xFF3F51B5)
-      },
-      {
-        'id': 6,
-        'icon': Icons.directions_run,
-        'title': '15분 페이스 3k 달리기',
-        'type': 'crew',
-        'image': 'assets/images/running.png',
-        'iconBgColor': const Color(0xFF00BCD4)
-      },
-      {
-        'id': 7,
-        'icon': Icons.directions_run,
-        'title': '마라톤 같이 할 러너 구하기',
-        'type': 'crew',
-        'image': 'assets/images/running_friends.png',
-        'iconBgColor': const Color(0xFF00BCD4)
-      },
-    ];
+  List<Map<String, dynamic>> _getFilteredChallenges() {
+    final type = _selectedCategory == 0
+        ? 'all'
+        : _selectedCategory == 1
+            ? 'personal'
+            : 'crew';
+
+    return type == 'all'
+        ? _allChallenges
+        : _allChallenges.where((c) => c['type'] == type).toList();
   }
 }
